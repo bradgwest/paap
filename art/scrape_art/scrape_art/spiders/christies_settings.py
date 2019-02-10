@@ -37,3 +37,8 @@ def create_urls():
                                         artcat=c)
                 urls.append(url)
     return urls
+
+
+TAGS = {
+    "sales_or_events": "cc-sales-or-events-list"
+}
