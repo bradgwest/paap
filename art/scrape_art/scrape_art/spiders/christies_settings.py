@@ -20,3 +20,20 @@ YEARS = [y for y in range(1998, 2020)]
 YEAR_QUERY = "year"
 
 URL_FORMAT = "https://www.christies.com/results?{langq}={lang}&{monthq}={month}&{yearq}={year}&{artcatq}={artcat}"
+
+
+def create_urls():
+    urls = []
+    for y in YEARS:
+        for m in MONTHS:
+            for c in ART_CATEGORIES:
+                url = URL_FORMAT.format(langq=LANGUAGE_QUERY,
+                                        lang=LANGUAGE_CATEGORIES["english"],
+                                        monthq=MONTH_QUERY,
+                                        month=m,
+                                        yearq=YEAR_QUERY,
+                                        year=y,
+                                        artcatq=ART_CATEGORY_QUERY,
+                                        artcat=c)
+                urls.append(url)
+    return urls
