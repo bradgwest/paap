@@ -2,6 +2,7 @@
 Icon
 
 # Data
+data/
 .csv
 .xlsx
 .xls
