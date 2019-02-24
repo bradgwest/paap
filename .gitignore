@@ -1,5 +1,12 @@
 .idea/
-Icon
+Icon
+
+# Data
+.csv
+.xlsx
+.xls
+.json
+
 # Created by https://www.gitignore.io/api/r,vim,macos,python,intellij
 # Edit at https://www.gitignore.io/?templates=r,vim,macos,python,intellij
 
