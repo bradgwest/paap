@@ -3,14 +3,16 @@ Clean data scraped from Christies Website.
 """
 
 import argparse
+import json
 import logging
 import sys
 
 
 def clean_sale(sale):
     """
-    Clean a sales data,
-    :param str sale: A json object, representing a sale at christies
+    Clean a sales dataset, which contains information about all works sold in
+    the sale
+    :param dict sale: a sale at christies
     :returns: A list of tuples, each tuple represents a sale of piece of artwork
     :rtype: list
     """
@@ -33,7 +35,8 @@ def main():
     csv_output = open(args.output, "w+")
     with open(args.input) as json_lines:
         for line in json_lines:
-            cleaned_sale = clean_sale(line)
+            sale = json.loads(line)
+            cleaned_sale = clean_sale(sale)
             for work in cleaned_sale:
                 csv_output.write(work)
     csv_output.close()
