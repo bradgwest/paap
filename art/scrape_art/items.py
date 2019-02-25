@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
-# Define here the models for your scraped items
-#
-# See documentation in:
-# https://doc.scrapy.org/en/latest/topics/items.html
-
 import scrapy
 
 
-class ScrapeArtItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class ChristiesItem(scrapy.Item):
+    """
+    An item for Christies data
+    """
+    sale_url = scrapy.Field()
+    sale_status = scrapy.Field()
+    sale_number = scrapy.Field()
+    sale_location = scrapy.Field()
+    sale_total = scrapy.Field()
+    sale_details = scrapy.Field()
