@@ -14,8 +14,6 @@ from art.scrape_art.spiders import christies_settings
 class ChristiesCrawler(scrapy.Spider):
     name = "christies"
     start_urls = christies_settings.create_urls()
-    # TODO Delete me
-    start_urls = ["https://www.christies.com/results?sc_lang=en&month=7&year=2018&scids=11"]
 
     def parse(self, response):
         """
