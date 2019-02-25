@@ -7,6 +7,7 @@ import re
 
 import scrapy
 
+from art.scrape_art import items
 from art.scrape_art.spiders import christies_settings
 
 
@@ -31,21 +32,19 @@ class ChristiesCrawler(scrapy.Spider):
             location = sale.xpath('./div/div/span[contains(@class, "location")]/text()').get()
             total = sale.xpath('./div/div/div[contains(@class, "sale-total")]/text()').get()
 
-            sale_details = {
-                "sale_url": response.url,
-                "sale_status": status,
-                "sale_number": number,
-                "sale_location": location,
-                "sale_total": total,
-                "sale_details": None
-            }
+            sale_item = items.ChristiesItem()
+            sale_item["sale_url"] = response.url
+            sale_item["sale_status"] = status
+            sale_item["sale_number"] = number
+            sale_item["sale_location"] = location
+            sale_item["sale_total"] = total
 
             sale_page = sale.xpath('./div/div/a[text() = "View results"]/@href').get()
             if sale_page is not None:
                 next_page = response.urljoin(sale_page)
                 yield scrapy.Request(next_page,
                                      callback=self.parse_redirect_sale_page,
-                                     meta={"sale_details": sale_details})
+                                     meta={"item": sale_item})
 
     def parse_redirect_sale_page(self, response):
         """
@@ -54,9 +53,9 @@ class ChristiesCrawler(scrapy.Spider):
         :return:
         """
         all_results_url = response.url + "&ShowAll=true"
-        sale_details = response.meta["sale_details"]
+        sale_item = response.meta["item"]
         yield scrapy.Request(all_results_url, callback=self.parse_sale_page,
-                             meta={"sale_details": sale_details})
+                             meta={"item": sale_item})
 
     def parse_sale_page(self, response):
         """
@@ -70,10 +69,10 @@ class ChristiesCrawler(scrapy.Spider):
         except json.JSONDecodeError:
             details = None
 
-        sale_details = response.meta["sale_details"]
-        sale_details["sale_details"] = details
+        sale_item = response.meta["item"]
+        sale_item["sale_details"] = details
 
-        yield sale_details
+        yield sale_item
 
     @staticmethod
     def parse_js(js):
