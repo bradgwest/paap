@@ -17,7 +17,8 @@ class ChristiesCrawler(scrapy.Spider):
 
     def start_requests(self):
         months = christies_settings.create_url_list()
-        for m in months:
+        # Reverse so that we get hits early
+        for m in reversed(months):
             yield scrapy.Request(url=m["url"],
                                  callback=self.parse,
                                  meta={"page_meta": m})

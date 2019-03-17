@@ -14,6 +14,8 @@ GCS_BUCKET_PATH = 'gs://paap/christies/data/raw/'
 
 BOT_NAME = 'scrape_art'
 
+# LOG_FILE = './log/scrapy.log'
+
 SPIDER_MODULES = ['scrape_art.spiders']
 NEWSPIDER_MODULE = 'scrape_art.spiders'
 
