@@ -82,5 +82,3 @@ class GCSPipeline(object):
             # If upload fails, then
             return item
         return DropItem("Upload to Google successful, no further processing needed")
-
-
