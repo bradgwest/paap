@@ -22,7 +22,7 @@ docker build -t us.gcr.io/art-auction-prices/paap --build-arg GOOGLE_KEY=${GOOGL
 docker push us.gcr.io/art-auction-prices/paap
 ```
 
-* Create a virtual machine, passing the 
+* Create a virtual machine
 
 ```bash
 # List VMs
@@ -41,7 +41,7 @@ gcloud compute --project art-auction-prices instances stop paap-1
 gcloud compute instances delete paap-1
 ```
 
-* Verify that the container is running.
+* Verify that the crawl container is running
 
 ```bash
 gcloud compute ssh paap-1 --command "docker container ps -a"
