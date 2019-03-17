@@ -2,6 +2,7 @@
 Scraper for Christies auction results
 """
 
+import copy
 import json
 import re
 
@@ -13,7 +14,13 @@ from art.scrape_art.spiders import christies_settings
 
 class ChristiesCrawler(scrapy.Spider):
     name = "christies"
-    start_urls = christies_settings.create_urls()
+
+    def start_requests(self):
+        months = christies_settings.create_url_list()
+        for m in months:
+            yield scrapy.Request(url=m["url"],
+                                 callback=self.parse,
+                                 meta={"page_meta": m})
 
     def parse(self, response):
         """
@@ -22,20 +29,27 @@ class ChristiesCrawler(scrapy.Spider):
         :return:
         """
         sales = response.xpath('//{}/li'.format(christies_settings.TAGS["sales_or_events"]))
+        page_meta = response.meta["page_meta"]
 
         for sale in sales:
-            # TODO These are brittle
+            # TODO brittle, fix them
             status = sale.xpath('./div/h4[contains(@class, "sale-status")]/text()').get()
             number = sale.xpath('./div/div/span[contains(@class, "sale-number")]/text()').get()
-            location = sale.xpath('./div/div/span[contains(@class, "location")]/text()').get()
             total = sale.xpath('./div/div/div[contains(@class, "sale-total")]/text()').get()
 
             sale_item = items.ChristiesItem()
+            sale_item["input_url"] = page_meta["url"]
+            sale_item["year"] = page_meta["year"]
+            sale_item["month"] = page_meta["month"]
+            sale_item["category"] = page_meta["category"]
+            sale_item["location"] = page_meta["location"]
+            sale_item["location_int"] = page_meta["location_int"]
             sale_item["sale_url"] = response.url
             sale_item["sale_status"] = status
             sale_item["sale_number"] = number
-            sale_item["sale_location"] = location
-            sale_item["sale_total"] = total
+            sale_item["sale_total_raw"] = total
+            sale_item["sale_details_js"] = []
+            sale_item["sale_details_html"] = []
 
             sale_page = sale.xpath('./div/div/a[text() = "View results"]/@href').get()
             if sale_page is not None:
@@ -51,9 +65,8 @@ class ChristiesCrawler(scrapy.Spider):
         :return:
         """
         all_results_url = response.url + "&ShowAll=true"
-        sale_item = response.meta["item"]
         yield scrapy.Request(all_results_url, callback=self.parse_sale_page,
-                             meta={"item": sale_item})
+                             meta={"item": response.meta["item"]})
 
     def parse_sale_page(self, response):
         """
@@ -61,16 +74,55 @@ class ChristiesCrawler(scrapy.Spider):
         :param response:
         :return:
         """
-        js = response.xpath('//script[@type="text/javascript"][contains(text(), "var saleName")]/text()').get()
-        try:
-            details = self.parse_js(js)
-        except json.JSONDecodeError:
-            details = None
-
         sale_item = response.meta["item"]
-        sale_item["sale_details"] = details
+        if sale_item["location_int"] == christies_settings.LOCATIONS["online"]:
+            js = response.xpath('//script[@type="text/javascript"][contains(text(), "var saleName")]/text()').get()
+            sale_item["sale_details_js"] = ChristiesCrawler.parse_js(js)
+            yield sale_item
+        else:
+            print_lot_list_url = response.xpath('//*[@id="dvPrint"]/a/@href').get()
+            if print_lot_list_url is not None:
+                lot_list = response.urljoin(print_lot_list_url)
+                yield scrapy.Request(lot_list,
+                                     callback=self.parse_lot_list_page,
+                                     meta={"item": sale_item})
 
+    def parse_lot_list_page(self, response):
+        sale_item = response.meta["item"]
+        lots = response.xpath('//*[@id="lot-list"]/tr')
+        for lot in lots:
+            sale_item["sale_details_html"].append(ChristiesCrawler.parse_html_lot(lot))
         yield sale_item
+
+    @staticmethod
+    def parse_html_lot(element):
+        lot = {"image_url": element.xpath('.//*[@class="thumb"]/img/@src').get()}
+        lot_info = element.xpath('.//*[@class="lot-info"]')
+        if lot_info:
+            l = lot_info[0]
+            lot["number"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-number"]/text()')
+            lot["number"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-number"]/text()')
+            lot["description"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-description"]/text()')
+            lot["medium_dimensions"] = ChristiesCrawler.get_if_exists(l, './/*[@class="medium-dimensions"]/text()')
+        estimate = element.xpath('.//*[@class="estimate"]')
+        if estimate:
+            e = estimate[0]
+            try:
+                lot["estimate_primary"], lot["realized_primary"] = e.xpath('.//*[@class="lot-description"]/text()').getall()
+            except ValueError:
+                pass
+            try:
+                lot["estimate_seconday"], lot["realized_secondary"] = e.xpath('.//*[@class="estimate-secondary"]/text()').getall()
+            except ValueError:
+                pass
+        return copy.copy(lot)
+
+    @staticmethod
+    def get_if_exists(element, xpath):
+        target = element.xpath(xpath).extract()
+        if target:
+            return target[0]
+        return None
 
     @staticmethod
     def parse_js(js):
@@ -91,4 +143,7 @@ class ChristiesCrawler(scrapy.Spider):
             return None
 
         js_obj = js[start:(start + ending_bracket + 1)]
-        return json.loads(js_obj)
+        try:
+            return json.loads(js_obj)
+        except json.JSONDecodeError:
+            return None
