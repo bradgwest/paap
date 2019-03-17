@@ -1,8 +1,8 @@
-FROM python:3.7-stretch
+FROM python:3.7-stretch AS python-paap
 
 # setup env
 RUN mkdir -p /paap/art
-RUN mkdir -p /data/
+RUN mkdir -p /paap/log
 WORKDIR /paap
 
 # Add src files
@@ -12,4 +12,4 @@ ADD requirements.txt .
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["scrapy", "crawl", "christies", "-o", "/data/christies.json"]
+ENTRYPOINT ["scrapy", "crawl", "christies", "&>", "/paap/log/scrapy.log"]
