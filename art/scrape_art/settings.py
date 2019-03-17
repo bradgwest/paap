@@ -9,6 +9,9 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+GCS_PROJECT = 'art-auction-prices'
+GCS_BUCKET_PATH = 'gs://paap/christies/data/raw/'
+
 BOT_NAME = 'scrape_art'
 
 SPIDER_MODULES = ['scrape_art.spiders']
@@ -63,7 +66,8 @@ DEFAULT_REQUEST_HEADERS = {
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'scrape_art.pipelines.ChristiesPipeline': 300,
+    # 'scrape_art.pipelines.ChristiesPipeline': 300,
+    'scrape_art.pipelines.GCSPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
