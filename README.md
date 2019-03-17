@@ -17,8 +17,30 @@ docker build -t us.gcr.io/art-auction-prices/paap .
 docker push us.gcr.io/art-auction-prices/paap
 ```
 
-* Use the cloud console to create a virtual machine based on the recently created docker image
-* Run the scraper to scrape data from cloud storage.
+* Create a virtual machine
+
+```bash
+# List VMs
+gcloud compute instances list
+# Deploy VM
+gcloud compute instances create-with-container paap-1 \
+    --container-image=us.gcr.io/art-auction-prices/paap \
+    --container-restart-policy "never" \
+    --machine-type=n1-standard-1 \
+    --scopes=storage-rw,logging-write
+# SSH into VM
+gcloud compute --project art-auction-prices ssh paap-1
+# stop VM
+gcloud compute --project art-auction-prices instances stop paap-1
+# delete VM
+gcloud compute instances delete --zone us-central1-c paap-1
+```
+
+* Verify that the container is running.
+
+```bash
+gcloud compute ssh paap-1 --command "docker container ps -a"
+```
 
 ## Analysis
 

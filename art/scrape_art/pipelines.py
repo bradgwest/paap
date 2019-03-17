@@ -9,6 +9,7 @@ import logging
 import re
 import uuid
 
+import google.auth
 from google.cloud import storage
 from scrapy.exceptions import DropItem
 
@@ -60,7 +61,10 @@ class GCSPipeline(object):
         )
 
     def open_spider(self, spider):
-        self.client = storage.Client(self.project)
+        credentials, projectId = google.auth.default()
+        if not self.project:
+            self.project = projectId
+        self.client = storage.Client(self.project, credentials=credentials)
         self.bucket = self.client.get_bucket(self.bucket_name)
 
     def process_item(self, item, spider):
