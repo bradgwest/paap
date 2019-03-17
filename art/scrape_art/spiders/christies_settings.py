@@ -40,12 +40,6 @@ URL_FORMAT = "https://www.christies.com/results?{langq}={lang}&{monthq}={month}&
 
 
 def create_url_list():
-    # TODO Comment me out
-    YEARS = [2018]
-    MONTHS = [7]
-    ART_CATEGORIES = {"fine_art": 7, "photographs_and_prints": 11}
-    LOCATIONS = {"london": 36}
-    # ^^^ TODO DELETE
     urls = []
     for y in YEARS:
         for m in MONTHS:
