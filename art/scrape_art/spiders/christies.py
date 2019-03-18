@@ -102,7 +102,7 @@ class ChristiesCrawler(scrapy.Spider):
         if lot_info:
             l = lot_info[0]
             lot["number"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-number"]/text()')
-            lot["number"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-number"]/text()')
+            lot["maker"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-maker"]/text()')
             lot["description"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-description"]/text()')
             lot["medium_dimensions"] = ChristiesCrawler.get_if_exists(l, './/*[@class="medium-dimensions"]/text()')
         estimate = element.xpath('.//*[@class="estimate"]')
