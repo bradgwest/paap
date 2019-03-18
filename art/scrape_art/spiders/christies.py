@@ -13,6 +13,7 @@ from art.scrape_art.spiders import christies_settings
 
 
 class ChristiesCrawler(scrapy.Spider):
+
     name = "christies"
 
     def start_requests(self):
@@ -88,7 +89,8 @@ class ChristiesCrawler(scrapy.Spider):
                                      callback=self.parse_lot_list_page,
                                      meta={"item": sale_item})
 
-    def parse_lot_list_page(self, response):
+    @staticmethod
+    def parse_lot_list_page(response):
         sale_item = response.meta["item"]
         lots = response.xpath('//*[@id="lot-list"]/tr')
         for lot in lots:
@@ -104,7 +106,10 @@ class ChristiesCrawler(scrapy.Spider):
             lot["number"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-number"]/text()')
             lot["maker"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-maker"]/text()')
             lot["description"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-description"]/text()')
-            lot["medium_dimensions"] = ChristiesCrawler.get_if_exists(l, './/*[@class="medium-dimensions"]/text()')
+            medium_and_size = ChristiesCrawler.get_if_exists(l, './/*[@class="medium-dimensions"]/text()', first=False)
+            lot["medium"] = medium_and_size[0] if len(medium_and_size) > 0 else None
+            lot["dimension"] = medium_and_size[1] if len(medium_and_size) > 1 else None
+
         estimate = element.xpath('.//*[@class="estimate"]')
         if estimate:
             e = estimate[0]
@@ -119,10 +124,12 @@ class ChristiesCrawler(scrapy.Spider):
         return copy.copy(lot)
 
     @staticmethod
-    def get_if_exists(element, xpath):
+    def get_if_exists(element, xpath, first=True):
         target = element.xpath(xpath).extract()
-        if target:
+        if target and first:
             return target[0]
+        elif target:
+            return target
         return None
 
     @staticmethod
