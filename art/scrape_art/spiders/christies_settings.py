@@ -105,6 +105,7 @@ LOT_FIELD_NAMES = [
     "lot_realized_price_iso_currency",
     "lot_realized_price_usd",
     "lot_image_url",
+    "lot_attributes",
     "lot_tags_date",
     "lot_tags_design",
     "lot_tags_material",
@@ -116,10 +117,12 @@ LOT_FIELD_NAMES = [
     "lot_title_translated",
     "lot_description_translated",
     "lot_artist",
-    "lot_starting_bid",
-    "lot_current_bid",
+    "lot_starting_bid_usd",
+    "lot_current_bid_usd",
     "lot_iso_currency_starting_bid",
+    "lot_iso_currency_current_bid",
     "lot_current_bid_less_than_reserve",
     "lot_any_bids_placed",
-    "lot_number_available"
+    "lot_number_available",
+    "lot_is_live_auction"
 ]

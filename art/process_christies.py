@@ -100,9 +100,11 @@ class ChristiesSaleParser(object):
         allowed = ('html', 'js')
         if details_key not in allowed:
             raise ValueError("details_key must be in {}".format(allowed))
+
         details = sale.get("sale_details_{}".format(details_key))
         if not details:
             return []
+
         items = details if details_key == 'html' else details['items']
         for i in items:
             lot = {k: None for k in christies_settings.LOT_FIELD_NAMES}
@@ -111,14 +113,35 @@ class ChristiesSaleParser(object):
             if details_key == 'html':
                 self.add_html_details(lot, i)
             else:
-                attrs = self.get_sale_attribute_types(details)
+                attrs = self.get_sale_attribute_map(details)
                 self.add_sale_lot_fields_js(lot, details)
                 self.add_js_details(lot, i, attrs)
             self.lots.append(lot.copy())
 
     @staticmethod
-    def get_sale_attribute_types(details):
-        return {}
+    def get_sale_attribute_map(details):
+        """
+        Creates an attribute dictionary from the list of attributes
+
+        The input attribute list is two dimensional, it is a list of dicts.
+        Each dict represents an attribute type, like Category, Date, or
+        Item Type. That dict is identified by the attributeTypeId. The category
+        dict in turn has a list of attributeValues, the allowed values of that
+        category.
+
+        :param dict details:
+        :rtype dict:
+        """
+        attrs = {}
+        att_raw = details.get("attributeTypes")
+        for cat in att_raw:
+            att_id = cat['attributeTypeId']
+            attrs[att_id] = {}
+            attrs[att_id]['category'] = cat['canonicalAttributeTypeName']
+            attrs[att_id]['values'] = {}
+            for v in cat['attributeValues']:
+                attrs[att_id]['values'][v['attributeValueId']] = v['canonicalAttributeValueName']
+        return attrs
 
     @staticmethod
     def add_sale_fields_general(lot, sale):
@@ -160,7 +183,25 @@ class ChristiesSaleParser(object):
     @staticmethod
     def add_js_details(lot, itm, attrs):
         lot["item_id"] = itm.get("itemId")
-        # TODO Finish me
+        lot["lot_number"] = itm.get("lotNumber")
+        lot["lot_start_date"] = itm.get("startDate")
+        lot["lot_end_date"] = itm.get("endDate")
+        lot["lot_title"] = itm.get("canonicalTitle")
+        lot["lot_translated_title"] = itm.get("translatedTitle")
+        lot["lot_translated_description"] = itm.get("translatedDescription")
+        lot["lot_description"] = itm.get("canonicalDescription")
+        lot["lot_artist"] = itm.get("canonicalArtist")
+        lot["lot_translated_artist"] = itm.get("translatedArtist")
+        lot["lot_image_url"] = clean_img_url(itm.get("imageUrl"))
+        lot["lot_estimate_low_iso_currency"] = itm.get("presaleEstimateLow")
+        lot["lot_estimate_high_iso_currency"] = itm.get("presaleEstimateHigh")
+        lot["lot_iso_currency_starting_bid"] = itm.get("startingBid")
+        lot["lot_current_bid"] = itm.get("currentBid")
+        lot["lot_realized_price_iso_currency"] = itm.get("priceRealised")
+        lot["lot_current_bid_less_than_reserve"] = itm.get("currentBidLessThanReserve")
+        lot["lot_any_bids_placed"] = itm.get("lot_any_bids_placed")
+        lot["lot_number_available"] = itm.get("numberAvailable")
+        lot["lot_is_live_auction"] = itm.get("isLiveAuctionLot")
 
     def write_lots(self, output):
         if output.startswith("gs://"):
