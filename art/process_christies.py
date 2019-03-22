@@ -7,6 +7,7 @@ import csv
 import json
 import logging
 import re
+import sys
 import uuid
 
 import google.auth
@@ -247,7 +248,7 @@ class GCSChristiesSaleParser(ChristiesSaleParser):
         else:
             bucket_name, prefix = gc_utils.bucket_and_path_from_uri(input_bucket_path)
             self.bucket = self.client.get_bucket(bucket_name)
-            for blob in self.bucket.list_blobs(prefix=prefix, delimiter="/"):
+            for blob in self.bucket.list_blobs(prefix=prefix):
                 self.blobs_to_parse.append(blob)
 
     def process(self):
@@ -271,13 +272,22 @@ def parse_arguments(sys_args):
                         help="path of files to process, like gs://paap/christies/data/raw")
     parser.add_argument("input_files",
                         help="Alternative way of specifying files to process, one file per line")
-    parser.add_argument("output", help="csv to save to. Can be local or GCS")
-    return parser.parse_args(sys_args)
+    parser.add_argument("project",
+                        help="Google project. If not specified will use default")
+    parser.add_argument("output", help="csv to save to. Can be local or GCS",
+                        required=True)
+    args = parser.parse_args(sys_args)
+    if args.input_path != args.input_files:
+        raise ValueError("Specify exactly one of input_path or input_files")
+    return args
 
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
-    pass
+    args = parse_arguments(sys.argv[1:])
+    sale_parser = GCSChristiesSaleParser(args.input_path, args.input_files, args.project)
+    sale_parser.process()
+    sale_parser.write_lots(args.output)
 
 
 if __name__ == "__main__":
