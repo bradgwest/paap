@@ -1,4 +1,4 @@
-FROM python:3.7-stretch AS python-paap
+FROM python:3.7-stretch
 
 # GOOGLE_KEY must be passed in as ENV variable, base64 encoded
 # Set default app credentials for container
