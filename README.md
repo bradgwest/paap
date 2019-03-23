@@ -47,6 +47,21 @@ gcloud compute instances delete paap-1
 gcloud compute ssh paap-1 --command "docker container ps -a"
 ```
 
+### Images
+
+Follow the same process as above, but override the default container entrypoint with:
+
+```bash
+--container-command="scrapy" \
+--container-arg="crawl christiesImages"
+```
+
+Alternatively you can run it locally with:
+
+```bash
+docker run --entrypoint scrapy us.gcr.io/art-auction-prices/paap crawl christiesImages
+```
+
 ## Analysis
 
 The data analysis is outlined in an Rmarkdown document, `analysis.Rmd`.
