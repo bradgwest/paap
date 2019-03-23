@@ -59,6 +59,8 @@ def clean_iso_estimate(estimate):
 
 
 def clean_secondary_estimate(estimate):
+    if not estimate:
+        return None, None
     amount_re = "[0-9,]+"
     raw = re.findall(amount_re, estimate)
     low = raw[0].replace(",", "") if raw else None
@@ -73,6 +75,12 @@ def clean_realized(realized):
     return int(found[0].replace(",", ""))
 
 
+def strip_newlines(itm):
+    if not itm:
+        return None
+    return itm.replace("\n", " ")
+
+
 class ChristiesSaleParser(object):
 
     def __init__(self):
@@ -83,13 +91,13 @@ class ChristiesSaleParser(object):
 
     @staticmethod
     def add_lot_id(lot):
-        lot['id'] = str(uuid.uuid4)
+        lot['id'] = str(uuid.uuid4())
 
     def sale_to_lots(self, sale):
-        if sale["category"] == "online":
-            self.lots += self.add_lot_details(sale, 'js')
+        if sale["location"] == "online":
+            self.add_lot_details(sale, 'js')
             return
-        self.lots += self.add_lot_details(sale, 'html')
+        self.add_lot_details(sale, 'html')
 
     def add_lot_details(self, sale, details_key):
         """
@@ -169,35 +177,35 @@ class ChristiesSaleParser(object):
         lot["lot_image_url"] = clean_img_url(itm.get("image_url"))
         lot["lot_number"] = itm.get("lot_number")
         lot["lot_artist"] = itm.get("maker")
-        lot["lot_description"] = itm.get("description")
-        lot["medium"] = itm.get("medium")
-        lot["dimensions"] = itm.get("dimensions")
+        lot["lot_description"] = strip_newlines(itm.get("description"))
+        lot["lot_medium"] = strip_newlines(itm.get("medium"))
+        lot["lot_dimensions"] = strip_newlines(itm.get("dimensions"))
         lot["lot_realized_price_iso_currency"] = clean_realized(itm.get("realized_primary"))
         lot["lot_realized_price_usd"] = clean_realized(itm.get("realized_secondary"))
-        _, iso_est_low, iso_est_high = clean_iso_estimate(itm.get["estimate_primary"])
+        _, iso_est_low, iso_est_high = clean_iso_estimate(itm.get("estimate_primary"))
         lot["lot_estimate_low_iso_currency"] = iso_est_low
         lot["lot_estimate_high_iso_currency"] = iso_est_high
-        usd_est_low, usd_est_high = clean_secondary_estimate(itm.get["estimate_secondary"])
+        usd_est_low, usd_est_high = clean_secondary_estimate(itm.get("estimate_secondary"))
         lot["lot_estimate_low_usd"] = usd_est_low
         lot["lot_estimate_high_usd"] = usd_est_high
 
     @staticmethod
     def add_js_details(lot, itm, attrs):
-        lot["item_id"] = itm.get("itemId")
+        lot["lot_item_id"] = itm.get("itemId")
         lot["lot_number"] = itm.get("lotNumber")
         lot["lot_start_date"] = itm.get("startDate")
         lot["lot_end_date"] = itm.get("endDate")
-        lot["lot_title"] = itm.get("canonicalTitle")
-        lot["lot_translated_title"] = itm.get("translatedTitle")
-        lot["lot_translated_description"] = itm.get("translatedDescription")
-        lot["lot_description"] = itm.get("canonicalDescription")
+        lot["lot_title"] = strip_newlines(itm.get("canonicalTitle"))
+        lot["lot_translated_title"] = strip_newlines(itm.get("translatedTitle"))
+        lot["lot_translated_description"] = strip_newlines(itm.get("translatedDescription"))
+        lot["lot_description"] = strip_newlines(itm.get("canonicalDescription"))
         lot["lot_artist"] = itm.get("canonicalArtist")
         lot["lot_translated_artist"] = itm.get("translatedArtist")
         lot["lot_image_url"] = clean_img_url(itm.get("imageUrl"))
         lot["lot_estimate_low_iso_currency"] = itm.get("presaleEstimateLow")
         lot["lot_estimate_high_iso_currency"] = itm.get("presaleEstimateHigh")
         lot["lot_iso_currency_starting_bid"] = itm.get("startingBid")
-        lot["lot_current_bid"] = itm.get("currentBid")
+        lot["lot_iso_currency_current_bid"] = itm.get("currentBid")
         lot["lot_realized_price_iso_currency"] = itm.get("priceRealised")
         lot["lot_current_bid_less_than_reserve"] = itm.get("currentBidLessThanReserve")
         lot["lot_any_bids_placed"] = itm.get("lot_any_bids_placed")
@@ -215,7 +223,8 @@ class ChristiesSaleParser(object):
 
     def write_to_local(self, output):
         with open(output, 'w') as f:
-            lot_writer = csv.writer(f)
+            lot_writer = csv.DictWriter(f, christies_settings.LOT_FIELD_NAMES)
+            lot_writer.writeheader()
             for lot in self.lots:
                 lot_writer.writerow(lot)
 
@@ -240,9 +249,10 @@ class GCSChristiesSaleParser(ChristiesSaleParser):
                 files_to_parse = f.readlines()
             self.blobs_to_parse = []
             for p in files_to_parse:
+                p = p.strip()
                 if not (p.endswith(".json") and p.startswith("gs://")):
                     raise ValueError("Files to parse must start with gs:// and end with .json")
-                bucket_name, blob_name = gc_utils.bucket_and_path_from_uri(input_bucket_path)
+                bucket_name, blob_name = gc_utils.bucket_and_path_from_uri(p)
                 self.bucket = self.client.get_bucket(bucket_name)
                 self.blobs_to_parse.append(self.bucket.get_blob(blob_name))
         else:
@@ -268,16 +278,16 @@ def parse_arguments(sys_args):
     parser = argparse.ArgumentParser(
         description="Clean json data, scraped from Christies into a format that "
                     "can be used for predictive analytics")
-    parser.add_argument("input_path",
+    parser.add_argument("-p", "--input-path",
                         help="path of files to process, like gs://paap/christies/data/raw")
-    parser.add_argument("input_files",
+    parser.add_argument("-f", "--input-files",
                         help="Alternative way of specifying files to process, one file per line")
-    parser.add_argument("project",
+    parser.add_argument("--project",
                         help="Google project. If not specified will use default")
-    parser.add_argument("output", help="csv to save to. Can be local or GCS",
+    parser.add_argument("--output", help="csv to save to. Can be local or GCS",
                         required=True)
     args = parser.parse_args(sys_args)
-    if args.input_path != args.input_files:
+    if not (args.input_path != args.input_files):
         raise ValueError("Specify exactly one of input_path or input_files")
     return args
 
