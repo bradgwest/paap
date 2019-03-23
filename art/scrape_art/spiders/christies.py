@@ -46,7 +46,6 @@ class ChristiesCrawler(scrapy.Spider):
             sale_item["category"] = page_meta["category"]
             sale_item["location"] = page_meta["location"]
             sale_item["location_int"] = page_meta["location_int"]
-            sale_item["sale_url"] = response.url
             sale_item["sale_status"] = status
             sale_item["sale_number"] = number
             sale_item["sale_total_raw"] = total
@@ -77,6 +76,7 @@ class ChristiesCrawler(scrapy.Spider):
         :return:
         """
         sale_item = response.meta["item"]
+        sale_item["sale_url"] = response.url
         if sale_item["location_int"] == christies_settings.LOCATIONS["online"]:
             js = response.xpath('//script[@type="text/javascript"][contains(text(), "var saleName")]/text()').get()
             sale_item["sale_details_js"] = ChristiesCrawler.parse_js(js)
@@ -118,7 +118,7 @@ class ChristiesCrawler(scrapy.Spider):
             except ValueError:
                 pass
             try:
-                lot["estimate_seconday"], lot["realized_secondary"] = e.xpath('.//*[@class="estimate-secondary"]/text()').getall()
+                lot["estimate_secondary"], lot["realized_secondary"] = e.xpath('.//*[@class="estimate-secondary"]/text()').getall()
             except ValueError:
                 pass
         return copy.copy(lot)

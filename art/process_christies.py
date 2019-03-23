@@ -163,7 +163,7 @@ class ChristiesSaleParser(object):
         lot["sale_url"] = sale.get("sale_url")
         lot["sale_status"] = sale.get("sale_status")
         lot["sale_number"] = clean_sale_number(sale.get("sale_number"))
-        lot["sale_total_realized_iso_currency"], sale["sale_iso_currency_code"] = \
+        lot["sale_total_realized_iso_currency"], lot["sale_iso_currency_code"] = \
             clean_sale_total(sale.get("sale_total_raw"))
 
     @staticmethod
@@ -171,13 +171,16 @@ class ChristiesSaleParser(object):
         lot["sale_lot_count"] = details.get("totalItemsCount")
         lot["sale_title"] = details.get("canonicalTitle")
         lot["sale_christies_id"] = details.get("saleId")
+        if not lot.get("sale_iso_currency_code"):
+            lot["sale_iso_currency_code"] = details.get("isoCurrencyCode")
+        lot["sale_secondary_currency_code"] = details.get("secondaryCurrencyIsoCode")
 
     @staticmethod
     def add_html_details(lot, itm):
         lot["lot_image_url"] = clean_img_url(itm.get("image_url"))
         lot["lot_number"] = itm.get("lot_number")
-        lot["lot_artist"] = itm.get("maker")
-        lot["lot_description"] = strip_newlines(itm.get("description"))
+        lot["lot_title"] = itm.get("maker")
+        lot["lot_artist"] = strip_newlines(itm.get("description"))
         lot["lot_medium"] = strip_newlines(itm.get("medium"))
         lot["lot_dimensions"] = strip_newlines(itm.get("dimensions"))
         lot["lot_realized_price_iso_currency"] = clean_realized(itm.get("realized_primary"))
@@ -195,12 +198,12 @@ class ChristiesSaleParser(object):
         lot["lot_number"] = itm.get("lotNumber")
         lot["lot_start_date"] = itm.get("startDate")
         lot["lot_end_date"] = itm.get("endDate")
-        lot["lot_title"] = strip_newlines(itm.get("canonicalTitle"))
-        lot["lot_translated_title"] = strip_newlines(itm.get("translatedTitle"))
+        lot["lot_artist"] = strip_newlines(itm.get("canonicalTitle"))
+        lot["lot_translated_artist"] = strip_newlines(itm.get("translatedTitle"))
         lot["lot_translated_description"] = strip_newlines(itm.get("translatedDescription"))
         lot["lot_description"] = strip_newlines(itm.get("canonicalDescription"))
-        lot["lot_artist"] = itm.get("canonicalArtist")
-        lot["lot_translated_artist"] = itm.get("translatedArtist")
+        lot["lot_title"] = itm.get("canonicalArtist")
+        lot["lot_translated_title"] = itm.get("translatedArtist")
         lot["lot_image_url"] = clean_img_url(itm.get("imageUrl"))
         lot["lot_estimate_low_iso_currency"] = itm.get("presaleEstimateLow")
         lot["lot_estimate_high_iso_currency"] = itm.get("presaleEstimateHigh")
@@ -208,9 +211,11 @@ class ChristiesSaleParser(object):
         lot["lot_iso_currency_current_bid"] = itm.get("currentBid")
         lot["lot_realized_price_iso_currency"] = itm.get("priceRealised")
         lot["lot_current_bid_less_than_reserve"] = itm.get("currentBidLessThanReserve")
-        lot["lot_any_bids_placed"] = itm.get("lot_any_bids_placed")
+        lot["lot_any_bids_placed"] = itm.get("anyBidsPlaced")
         lot["lot_number_available"] = itm.get("numberAvailable")
         lot["lot_is_live_auction"] = itm.get("isLiveAuctionLot")
+        lot["lot_starting_bid_usd"] = itm.get("secondaryCurrencyStartingBid")
+        lot["lot_current_bid_usd"] = itm.get("secondaryCurrencyCurrentBid")
 
     def write_lots(self, output):
         if output.startswith("gs://"):
