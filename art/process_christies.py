@@ -17,9 +17,6 @@ from art import gc_utils
 from art.scrape_art.spiders import christies_settings
 
 
-# Lot = collections.namedtuple("Lot", christies_settings.LOT_FIELD_NAMES)
-
-
 def clean_sale_number(sale_number):
     if not sale_number:
         return None
@@ -30,6 +27,8 @@ def clean_sale_number(sale_number):
 
 
 def clean_sale_total(total_raw):
+    if not total_raw:
+        return None, None
     mtch = re.search("[0-9,]+", total_raw)
     total = int(mtch.group(0).replace(",", "")) if mtch else None
     mtch = re.search("(?<=\\+)[A-Z\\s]+(?=[0-9])", total_raw)
@@ -47,6 +46,8 @@ def clean_img_url(img_url):
 
 
 def clean_iso_estimate(estimate):
+    if not estimate:
+        return None, None, None
     amount_re = "[0-9,]+"
     low_raw, high_raw = estimate.split("-")
     code_match = re.search("^[A-Z]+", low_raw)
@@ -69,6 +70,8 @@ def clean_secondary_estimate(estimate):
 
 
 def clean_realized(realized):
+    if not realized:
+        return None
     found = re.findall("[0-9,]+", realized)
     if not found:
         return None
@@ -270,10 +273,15 @@ class GCSChristiesSaleParser(ChristiesSaleParser):
         """
         Transforms a blob into a list of lots
         """
+        cnt = 1
         for blob in self.blobs_to_parse:
+            logging.info("Processing {}/{} - {}".format(cnt, len(self.blobs_to_parse), blob.name))
+            if not blob.name.endswith(".json"):
+                continue
             json_string = blob.download_as_string()
             sale = json.loads(json_string)
             self.sale_to_lots(sale)
+            cnt += 1
 
     def write_to_gcs(self, output):
         pass

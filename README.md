@@ -52,8 +52,13 @@ gcloud compute ssh paap-1 --command "docker container ps -a"
 Follow the same process as above, but override the default container entrypoint with:
 
 ```bash
---container-command="scrapy" \
---container-arg="crawl christiesImages"
+gcloud compute instances create-with-container paap-1 \
+    --container-image=us.gcr.io/art-auction-prices/paap \
+    --container-restart-policy "never" \
+    --machine-type=n1-standard-1 \
+    --scopes=storage-rw,logging-write \
+    --container-command="scrapy" \
+    --container-arg="crawl" --container-arg="christiesImages"
 ```
 
 Alternatively you can run it locally with:
@@ -64,5 +69,5 @@ docker run --entrypoint scrapy us.gcr.io/art-auction-prices/paap crawl christies
 
 ## Analysis
 
-The data analysis is outlined in an Rmarkdown document, `analysis.Rmd`.
+The data analysis is outlined in an R file, `analysis.R`.
 

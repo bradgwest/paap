@@ -12,6 +12,9 @@
 GCS_PROJECT = 'art-auction-prices'
 GCS_BUCKET_PATH = 'gs://paap/christies/data/raw/'
 
+IMAGES_PATH_FILE = 'gs://paap/christies/data/christies_images.csv'
+IMAGE_MAX_WIDTH = 256
+
 BOT_NAME = 'scrape_art'
 
 # LOG_FILE = './log/scrapy.log'

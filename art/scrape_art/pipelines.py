@@ -21,6 +21,11 @@ class ChristiesPipeline(object):
         return item
 
 
+class GCSImagePipeline(object):
+    def process_item(self, item, spider):
+        return item
+
+
 class GCSPipeline(object):
     """
     Pipeline for writing results to files in Google Cloud Storage
