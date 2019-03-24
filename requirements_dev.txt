@@ -1,0 +1,3 @@
+forex-python==1.1
+cpi>=0.1.12,<0.2.0
+-r requirements.txt
