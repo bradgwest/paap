@@ -67,6 +67,12 @@ Alternatively you can run it locally with:
 docker run --entrypoint scrapy us.gcr.io/art-auction-prices/paap crawl christiesImages
 ```
 
+To get a list of all the images in a given bucket and write that list to a file, run:
+
+```
+gsutil ls gs://paap/christies/data/img/full/ >> ./data/img_in_gcs.txt
+```
+
 ## Analysis
 
 The data analysis is outlined in an R file, `analysis.R`.

@@ -57,7 +57,6 @@ art %>%
   ggsave("./img/histogram_log_sale_price_x2.png", device = "png", width = 16, 
          height = 9, units = "cm", dpi = 300, scale = .8)
 
-
 art %>% 
   filter(!is.na(lot_realized_price_usd_now)) %>% 
   ggplot(mapping = aes(x=sale_category, log(lot_realized_price_usd_now))) +
