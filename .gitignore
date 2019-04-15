@@ -16,7 +16,7 @@ PLAN.md
 # Edit at https://www.gitignore.io/?templates=r,vim,macos,python,intellij
 
 ### VisualStudioCode ###
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
