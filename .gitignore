@@ -11,3 +11,13 @@ data/
 
 ### Random Ignores ###
 notes/**
+
+### Library ###
+papers/
+
+### Python ###
+.python-version
+
+### Writing ###
+*.pdf
+
