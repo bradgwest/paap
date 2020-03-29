@@ -1,4 +1,5 @@
-forex-python==1.1
-cpi>=0.1.12,<0.2.0
-pylint>=2.3.1
 -r requirements.txt
+
+black==19.10b0
+flake8>=3.7.9,<4
+isort>=4.3.21,<5
