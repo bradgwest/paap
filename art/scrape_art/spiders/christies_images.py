@@ -2,11 +2,10 @@ import csv
 import logging
 
 import google.auth
-from google.cloud import storage
 import scrapy
-
-from art.scrape_art import settings
 from art import gc_utils
+from art.scrape_art import settings
+from google.cloud import storage
 
 
 def get_images(path):
@@ -31,24 +30,25 @@ def get_gcs_image_paths(path):
     bucket = client.bucket(bucket_path)
     blob = bucket.get_blob(blob_name=blob_path)
     csv_bytes = blob.download_as_string()
-    csv_string = csv_bytes.decode('utf-8')
+    csv_string = csv_bytes.decode("utf-8")
     return csv_string.split("\n")
 
 
 class ChristiesImageCrawler(scrapy.Spider):
 
     name = "christiesImages"
-    custom_settings = {'ITEM_PIPELINES': {'scrapy.pipelines.images.ImagesPipeline': 1},
-                       'IMAGES_STORE': 'gs://paap/christies/data/img/',
-                       'GCS_PROJECT_ID': 'art-auction-prices'}
+    custom_settings = {
+        "ITEM_PIPELINES": {"scrapy.pipelines.images.ImagesPipeline": 1},
+        "IMAGES_STORE": "gs://paap/christies/data/img/",
+        "GCS_PROJECT_ID": "art-auction-prices",
+    }
 
     def start_requests(self):
         images = get_images(settings.IMAGES_PATH_FILE)
         for img in images:
-            img_url = img + '?mode=max&w=' + str(settings.IMAGE_MAX_WIDTH)
+            img_url = img + "?mode=max&w=" + str(settings.IMAGE_MAX_WIDTH)
             logging.info("Getting {}".format(img_url))
-            yield scrapy.Request(url=img_url,
-                                 callback=self.parse)
+            yield scrapy.Request(url=img_url, callback=self.parse)
 
     def parse(self, response):
-        yield {'image_urls': [response.url]}
+        yield {"image_urls": [response.url]}

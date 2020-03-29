@@ -10,10 +10,9 @@ import re
 import uuid
 
 import google.auth
+from art import gc_utils
 from google.cloud import storage
 from scrapy.exceptions import DropItem
-
-from art import gc_utils
 
 
 class ChristiesPipeline(object):
@@ -49,10 +48,7 @@ class GCSPipeline(object):
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls(
-            project=crawler.settings.get('GCS_PROJECT'),
-            bucket_path=crawler.settings.get('GCS_BUCKET_PATH')
-        )
+        return cls(project=crawler.settings.get("GCS_PROJECT"), bucket_path=crawler.settings.get("GCS_BUCKET_PATH"))
 
     def open_spider(self, spider):
         credentials, project_id = google.auth.default()
@@ -70,16 +66,16 @@ class GCSPipeline(object):
             sale_number = sale_number_match.group(0)
         else:
             sale_number = str(uuid.uuid4())[:8]
-        path_id = "_".join([str(item["year"]), str(item["month"]),
-                            item["category"], item["location"],
-                            str(sale_number)])
+        path_id = "_".join(
+            [str(item["year"]), str(item["month"]), item["category"], item["location"], str(sale_number)]
+        )
 
         blob_path = self.path + path_id + ".json"
         blob = self.bucket.blob(blob_path, chunk_size=524288)
         js = json.dumps(dict(item))
         try:
-            blob.upload_from_string(js, content_type='text/json')
-        except:
+            blob.upload_from_string(js, content_type="text/json")
+        except Exception:
             # If upload fails, then
             return item
         return DropItem("Upload to Google successful, no further processing needed")

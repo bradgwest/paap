@@ -7,6 +7,7 @@ class ChristiesItem(scrapy.Item):
     """
     An item for Christies data
     """
+
     input_url = scrapy.Field()
     year = scrapy.Field()
     month = scrapy.Field()

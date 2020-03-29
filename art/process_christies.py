@@ -11,10 +11,9 @@ import sys
 import uuid
 
 import google.auth
-from google.cloud import storage
-
 from art import gc_utils
 from art.scrape_art.spiders import christies_settings
+from google.cloud import storage
 
 
 def clean_sale_number(sale_number):
@@ -85,7 +84,6 @@ def strip_newlines(itm):
 
 
 class ChristiesSaleParser(object):
-
     def __init__(self):
         self.lots = []  # Individual lots
 
@@ -94,13 +92,13 @@ class ChristiesSaleParser(object):
 
     @staticmethod
     def add_lot_id(lot):
-        lot['id'] = str(uuid.uuid4())
+        lot["id"] = str(uuid.uuid4())
 
     def sale_to_lots(self, sale):
         if sale["location"] == "online":
-            self.add_lot_details(sale, 'js')
+            self.add_lot_details(sale, "js")
             return
-        self.add_lot_details(sale, 'html')
+        self.add_lot_details(sale, "html")
 
     def add_lot_details(self, sale, details_key):
         """
@@ -109,7 +107,7 @@ class ChristiesSaleParser(object):
         :param str details_key: one of 'html' or 'js'
         :return:
         """
-        allowed = ('html', 'js')
+        allowed = ("html", "js")
         if details_key not in allowed:
             raise ValueError("details_key must be in {}".format(allowed))
 
@@ -117,12 +115,12 @@ class ChristiesSaleParser(object):
         if not details:
             return []
 
-        items = details if details_key == 'html' else details['items']
+        items = details if details_key == "html" else details["items"]
         for i in items:
             lot = {k: None for k in christies_settings.LOT_FIELD_NAMES}
             self.add_sale_fields_general(lot, sale)
             self.add_lot_id(lot)
-            if details_key == 'html':
+            if details_key == "html":
                 self.add_html_details(lot, i)
             else:
                 attrs = self.get_sale_attribute_map(details)
@@ -147,12 +145,12 @@ class ChristiesSaleParser(object):
         attrs = {}
         att_raw = details.get("attributeTypes")
         for cat in att_raw:
-            att_id = cat['attributeTypeId']
+            att_id = cat["attributeTypeId"]
             attrs[att_id] = {}
-            attrs[att_id]['category'] = cat['canonicalAttributeTypeName']
-            attrs[att_id]['values'] = {}
-            for v in cat['attributeValues']:
-                attrs[att_id]['values'][v['attributeValueId']] = v['canonicalAttributeValueName']
+            attrs[att_id]["category"] = cat["canonicalAttributeTypeName"]
+            attrs[att_id]["values"] = {}
+            for v in cat["attributeValues"]:
+                attrs[att_id]["values"][v["attributeValueId"]] = v["canonicalAttributeValueName"]
         return attrs
 
     @staticmethod
@@ -166,8 +164,9 @@ class ChristiesSaleParser(object):
         lot["sale_url"] = sale.get("sale_url")
         lot["sale_status"] = sale.get("sale_status")
         lot["sale_number"] = clean_sale_number(sale.get("sale_number"))
-        lot["sale_total_realized_iso_currency"], lot["sale_iso_currency_code"] = \
-            clean_sale_total(sale.get("sale_total_raw"))
+        lot["sale_total_realized_iso_currency"], lot["sale_iso_currency_code"] = clean_sale_total(
+            sale.get("sale_total_raw")
+        )
 
     @staticmethod
     def add_sale_lot_fields_js(lot, details):
@@ -230,7 +229,7 @@ class ChristiesSaleParser(object):
         raise NotImplementedError("Must call on a GCS based subclass")
 
     def write_to_local(self, output):
-        with open(output, 'w') as f:
+        with open(output, "w") as f:
             lot_writer = csv.DictWriter(f, christies_settings.LOT_FIELD_NAMES)
             lot_writer.writeheader()
             for lot in self.lots:
@@ -238,7 +237,6 @@ class ChristiesSaleParser(object):
 
 
 class GCSChristiesSaleParser(ChristiesSaleParser):
-
     def __init__(self, input_bucket_path=None, input_files=None, project=None):
         super().__init__()
         if input_bucket_path and input_files:
@@ -289,16 +287,12 @@ class GCSChristiesSaleParser(ChristiesSaleParser):
 
 def parse_arguments(sys_args):
     parser = argparse.ArgumentParser(
-        description="Clean json data, scraped from Christies into a format that "
-                    "can be used for predictive analytics")
-    parser.add_argument("-p", "--input-path",
-                        help="path of files to process, like gs://paap/christies/data/raw")
-    parser.add_argument("-f", "--input-files",
-                        help="Alternative way of specifying files to process, one file per line")
-    parser.add_argument("--project",
-                        help="Google project. If not specified will use default")
-    parser.add_argument("--output", help="csv to save to. Can be local or GCS",
-                        required=True)
+        description="Clean json data, scraped from Christies into a format that " "can be used for predictive analytics"
+    )
+    parser.add_argument("-p", "--input-path", help="path of files to process, like gs://paap/christies/data/raw")
+    parser.add_argument("-f", "--input-files", help="Alternative way of specifying files to process, one file per line")
+    parser.add_argument("--project", help="Google project. If not specified will use default")
+    parser.add_argument("--output", help="csv to save to. Can be local or GCS", required=True)
     args = parser.parse_args(sys_args)
     if not (args.input_path != args.input_files):
         raise ValueError("Specify exactly one of input_path or input_files")

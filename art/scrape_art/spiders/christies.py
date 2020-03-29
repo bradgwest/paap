@@ -7,7 +7,6 @@ import json
 import re
 
 import scrapy
-
 from art.scrape_art import items
 from art.scrape_art.spiders import christies_settings
 
@@ -20,9 +19,7 @@ class ChristiesCrawler(scrapy.Spider):
         months = christies_settings.create_url_list()
         # Reverse so that we get hits early
         for m in reversed(months):
-            yield scrapy.Request(url=m["url"],
-                                 callback=self.parse,
-                                 meta={"page_meta": m})
+            yield scrapy.Request(url=m["url"], callback=self.parse, meta={"page_meta": m})
 
     def parse(self, response):
         """
@@ -30,7 +27,7 @@ class ChristiesCrawler(scrapy.Spider):
         :param response:
         :return:
         """
-        sales = response.xpath('//{}/li'.format(christies_settings.TAGS["sales_or_events"]))
+        sales = response.xpath("//{}/li".format(christies_settings.TAGS["sales_or_events"]))
         page_meta = response.meta["page_meta"]
 
         for sale in sales:
@@ -55,9 +52,7 @@ class ChristiesCrawler(scrapy.Spider):
             sale_page = sale.xpath('./div/div/a[text() = "View results"]/@href').get()
             if sale_page is not None:
                 next_page = response.urljoin(sale_page)
-                yield scrapy.Request(next_page,
-                                     callback=self.parse_redirect_sale_page,
-                                     meta={"item": sale_item})
+                yield scrapy.Request(next_page, callback=self.parse_redirect_sale_page, meta={"item": sale_item})
 
     def parse_redirect_sale_page(self, response):
         """
@@ -66,8 +61,7 @@ class ChristiesCrawler(scrapy.Spider):
         :return:
         """
         all_results_url = response.url + "&ShowAll=true"
-        yield scrapy.Request(all_results_url, callback=self.parse_sale_page,
-                             meta={"item": response.meta["item"]})
+        yield scrapy.Request(all_results_url, callback=self.parse_sale_page, meta={"item": response.meta["item"]})
 
     def parse_sale_page(self, response):
         """
@@ -85,9 +79,7 @@ class ChristiesCrawler(scrapy.Spider):
             print_lot_list_url = response.xpath('//*[@id="dvPrint"]/a/@href').get()
             if print_lot_list_url is not None:
                 lot_list = response.urljoin(print_lot_list_url)
-                yield scrapy.Request(lot_list,
-                                     callback=self.parse_lot_list_page,
-                                     meta={"item": sale_item})
+                yield scrapy.Request(lot_list, callback=self.parse_lot_list_page, meta={"item": sale_item})
 
     @staticmethod
     def parse_lot_list_page(response):
@@ -102,11 +94,11 @@ class ChristiesCrawler(scrapy.Spider):
         lot = {"image_url": element.xpath('.//*[@class="thumb"]/img/@src').get()}
         lot_info = element.xpath('.//*[@class="lot-info"]')
         if lot_info:
-            l = lot_info[0]
-            lot["number"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-number"]/text()')
-            lot["maker"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-maker"]/text()')
-            lot["description"] = ChristiesCrawler.get_if_exists(l, './/*[@class="lot-description"]/text()')
-            medium_and_size = ChristiesCrawler.get_if_exists(l, './/*[@class="medium-dimensions"]/text()', first=False)
+            el = lot_info[0]
+            lot["number"] = ChristiesCrawler.get_if_exists(el, './/*[@class="lot-number"]/text()')
+            lot["maker"] = ChristiesCrawler.get_if_exists(el, './/*[@class="lot-maker"]/text()')
+            lot["description"] = ChristiesCrawler.get_if_exists(el, './/*[@class="lot-description"]/text()')
+            medium_and_size = ChristiesCrawler.get_if_exists(el, './/*[@class="medium-dimensions"]/text()', first=False)
             lot["medium"] = medium_and_size[0] if len(medium_and_size) > 0 else None
             lot["dimension"] = medium_and_size[1] if len(medium_and_size) > 1 else None
 
@@ -114,11 +106,15 @@ class ChristiesCrawler(scrapy.Spider):
         if estimate:
             e = estimate[0]
             try:
-                lot["estimate_primary"], lot["realized_primary"] = e.xpath('.//*[@class="lot-description"]/text()').getall()
+                lot["estimate_primary"], lot["realized_primary"] = e.xpath(
+                    './/*[@class="lot-description"]/text()'
+                ).getall()
             except ValueError:
                 pass
             try:
-                lot["estimate_secondary"], lot["realized_secondary"] = e.xpath('.//*[@class="estimate-secondary"]/text()').getall()
+                lot["estimate_secondary"], lot["realized_secondary"] = e.xpath(
+                    './/*[@class="estimate-secondary"]/text()'
+                ).getall()
             except ValueError:
                 pass
         return copy.copy(lot)
@@ -150,7 +146,7 @@ class ChristiesCrawler(scrapy.Spider):
         except AttributeError:
             return None
 
-        js_obj = js[start:(start + ending_bracket + 1)]
+        js_obj = js[start : (start + ending_bracket + 1)]
         try:
             return json.loads(js_obj)
         except json.JSONDecodeError:
