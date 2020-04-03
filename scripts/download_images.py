@@ -66,12 +66,12 @@ def main(input_path: str, output_dir: str) -> None:
         for i, line in enumerate(reader):
             image_id, image_url = line
             image_path = build_image_path(output_dir, image_id, image_url)
-            print("{} - {} -> {}".format(i, image_url, image_path), end="\r")
+            print("{} - {} -> {}".format(i + 1, image_url, image_path), end="\r")
 
             try:
                 download_image(image_url, image_path)
             except requests.HTTPError as e:
-                print("{} - Failed to download {}. {}".format(i, image_url, e))
+                print("{} - Failed to download {}. {}".format(i + 1, image_url, e))
                 failed.append(line)
 
     if failed:
@@ -79,7 +79,7 @@ def main(input_path: str, output_dir: str) -> None:
         for line in failed:
             print(line)
 
-    print("{} images downloaded to {}".format(i - len(failed), output_dir))
+    print("{} images downloaded to {}".format(i + 1 - len(failed), output_dir))
 
 
 if __name__ == "__main__":
