@@ -46,7 +46,10 @@ def retry(retry_on_exception: Callable, delay: int = 1, attempts: int = 4, multi
 
 
 def should_retry(exception: Exception) -> bool:
-    exception.status_code in RETRYABLE_STATUS_CODES
+    try:
+        return exception.status_code in RETRYABLE_STATUS_CODES
+    except AttributeError:
+        return False
 
 
 @retry(retry_on_exception=should_retry)
@@ -70,7 +73,7 @@ def main(input_path: str, output_dir: str) -> None:
 
             try:
                 download_image(image_url, image_path)
-            except requests.HTTPError as e:
+            except Exception as e:
                 print("{} - Failed to download {}. {}".format(i + 1, image_url, e))
                 failed.append(line)
 
