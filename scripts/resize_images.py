@@ -3,11 +3,13 @@ from pathlib import Path
 from typing import Generator
 
 import numpy as np
+from PIL import ImageFile
 from skimage import io
 from skimage.transform import rescale
 
 DESCRIPTION = """Resize images to a common minimum dimension, retaining aspect ratio"""
 DEFAULT_IMAGE_SIZE = 256
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # Required for truncated images
 
 
 def valid_directory(directory_str: str) -> Path:
@@ -27,7 +29,9 @@ def valid_path(path_str: str) -> Path:
 def resize_image(image: np.ndarray, image_size: int) -> np.ndarray:
     smallest_side = int(image.shape[1] <= image.shape[0])
     scaling_factor = image_size / image.shape[smallest_side]
-    resized_image = rescale(image, (scaling_factor, scaling_factor, 1))
+    # Some images have three channels, others have one
+    scale = (scaling_factor, scaling_factor) if len(image.shape) == 2 else (scaling_factor, scaling_factor, 1)
+    resized_image = rescale(image, scale)
     return (resized_image * 255).astype(np.uint8)  # Get it back to non-lossy format
 
 
@@ -41,7 +45,16 @@ def main(input_file: Path, output_dir: Path, image_size: int, delete: bool) -> N
     image_paths = load_image_paths(input_file)
     for i, p in enumerate(image_paths):
         print("{} - processing {}".format(i, p), end="\r")
-        image = io.imread(p)
+
+        try:
+            image = io.imread(p)
+        except FileNotFoundError:
+            print("WARNING: Couldn't find file: {}. Perhaps it was already processed".format(p))
+            continue
+        except ValueError as e:
+            print("ERROR: Failed to load image: {}. Exception: {}".format(p, e))
+            continue
+
         resized_image = resize_image(image, image_size)
 
         output_path = output_dir / p.name
@@ -58,7 +71,8 @@ if __name__ == "__main__":
         "images",
         type=valid_path,
         help="Images to process a newline separated file of image paths. A command like the following "
-        "should get you started: `ls -d -1 $PWD/images/{*,}`",
+             "should get you started: `find data/img/christies/raw/ -type f -name '*.jpg' > "
+             "data/img/christies/raw_images.txt`",
     )
     parser.add_argument("output_dir", type=valid_directory, help="Directory to save cropped images to")
     parser.add_argument(
