@@ -41,7 +41,9 @@ def retry(retry_on_exception: Callable, delay: int = 1, attempts: int = 4, multi
                     mdelay *= multiplier
                     continue
             return f(*args, **kwargs)
+
         return f_retry
+
     return decorator_retry
 
 
