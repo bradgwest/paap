@@ -1,12 +1,7 @@
-"""
-Get exchange rates for various currencies
-"""
-
 import argparse
 import csv
 import datetime
 import logging
-import sys
 
 import cpi
 from forex_python import converter
@@ -52,23 +47,29 @@ def calculate_inflation(target_date=datetime.date(2019, 1, 1)):
 
 
 def parse_args(sys_args):
-    parser = argparse.ArgumentParser(description="Convert historical currencies to a target")
+    parser = argparse.ArgumentParser(description="Convert historical currencies to a target currency")
     parser.add_argument("-c", "--target-currency", default="USD")
     parser.add_argument("-d", "--target-date", default="2019-01-01")
     parser.add_argument("-o", "--output", default="./currency_converter.csv")
     return parser.parse_args(sys_args)
 
 
-def main():
-    logging.getLogger().setLevel(logging.INFO)
-    args = parse_args(sys.argv[1:])
-    convert_to_dollars(args.target_currency)
-    calculate_inflation()
-    with open(args.output, "w") as f:
+def main(target_currency, target_date, output):
+    convert_to_dollars(target_currency)  # TODO. Ew, this is not pure either
+    calculate_inflation(target_date)  # TODO Ew. This is not pure at all
+
+    with open(output, "w") as f:
         csv_writer = csv.writer(f)
         for l in CURR_MAP:
             csv_writer.writerow(l)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Convert historical currencies to a target")
+    parser.add_argument("-c", "--target-currency", default="USD")
+    parser.add_argument("-d", "--target-date", default="2019-01-01",
+                        type=lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
+    parser.add_argument("-o", "--output", default="./currency_converter.csv")
+    args = parser.parse_args()
+
+    main(args.target_currency, args.target_date, args.output)
