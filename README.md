@@ -1,10 +1,42 @@
 # Predicting Art Auction Prices
 
-This project satisfies the requirements for Montana State University course STAT 575. The project seeks to predict art prices using a large dataset of historical and publicly available auction prices. The dataset includes a variety of predictor types from sale metadata to artwork characteristics.
+## NOTE: This README, like the project, is a work in progess and is used for the author's notes.
+
+This project attempts to satisfy the requirements for Montana State University
+STAT 575. This research attempts to answer whether an artwork's aesthetic
+qualities and subject matter contribute meaningfully its auction price. If so,
+this may hint that art consumers, at least those who participate in the art
+auctions examined in this study, have similar subjective interpretations of
+artistic beauty. If not, this may indicate that sale price is dominately
+affected by hedonic characteristics such as period and artist, or physical but
+non-subjective characteristics such size and medium.
+
+The initial research for this project was conducted in late 2018 and early 2019,
+but was put on hold for the remainder of 2019 before being restarted in late
+March of 2020. For this reason there are a number of changes in the style and
+engineering approach taken toward data acquisition and cleaning. These
+inconsistencies will likely be evident if you attempt to reproduce this research
+exactly.
 
 ## Setup
 
-The data were scraped from an auction house website. This project used Google Cloud Platform infrastructure, including Compute Engine, Storage, and BigQuery services. To replicate the data acquisition, you will need to perform the following:
+Code is written in python 3.8. Parts of this project also require the following:
+
+* Docker
+
+We highly recommend using a virtual environment. To install dependencies, from
+within your virtual environment run:
+
+```sh
+pip install -Ur requirements.txt
+```
+
+## Data Acquisition
+
+The data were scraped from Christies auction house website. This project uses
+Google Cloud Platform infrastructure when applicable, so full replication of
+this research will require familiarity with `gcloud` (the command line tools
+for Google Cloud Platform).
 
 * Create a python3 virtual environment and install `requirements.txt`.
 * Create a GCP service account with storage read/write permissions via the cloud console. Download the key.
@@ -49,7 +81,10 @@ gcloud compute ssh paap-1 --command "docker container ps -a"
 
 ### Images
 
-Follow the same process as above, but override the default container entrypoint with:
+#### On GCS
+
+Follow the same process as above, but override the default container entrypoint
+with:
 
 ```bash
 gcloud compute instances create-with-container paap-1 \
@@ -67,13 +102,100 @@ Alternatively you can run it locally with:
 docker run --entrypoint scrapy us.gcr.io/art-auction-prices/paap crawl christiesImages
 ```
 
-To get a list of all the images in a given bucket and write that list to a file, run:
+To get a list of all the images in a given bucket and write that list to a file,
+run:
 
 ```
 gsutil ls gs://paap/christies/data/img/full/ >> ./data/img_in_gcs.txt
 ```
 
+#### Locally
+
+To simplify the process for local development, there are a number of scripts
+for processing the images, which more or less represent a directed pipeline
+for image acquisition and resizing.
+
+Given a CSV of raw piece data, scrapped from Christies website, return a two
+column csv where each column is an artwork with lot_id and the corresponding
+image_url:
+
+```sh
+# python scripts/create_image_csv.py -h
+usage: create_image_csv.py [-h] input output
+
+Create a two column CSV (<lot_id>,<image_url>) of image metadata from an input CSV of raw art data.
+
+positional arguments:
+  input       Input csv with raw art data
+  output      Output path
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+From a two column csv of lot id and image url, download images to a local
+directory.
+
+```sh
+# python scripts/download_images.py -h
+usage: download_images.py [-h] input output_dir
+
+Given an input csv with image urls, download images and save them to a location
+
+positional arguments:
+  input       Input csv. Two columns (<lot_id>,<image_url>), no header.
+  output_dir  Directory to save images to.
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+In practice, after downloading the raw images they were uploaded to cloud
+storage as a backup.
+
+Resize images to a common minimum dimension (i.e. the smallest of the two image
+dimensions will have this pixel size):
+
+```sh
+# python scripts/resize_images.py -h
+usage: resize_images.py [-h] [--image-size IMAGE_SIZE] [--delete] images output_dir
+
+Resize images to a common minimum dimension, retaining aspect ratio
+
+positional arguments:
+  images                Images to process a newline separated file of image paths. A command like the following should get you started: `find data/img/christies/raw/ -type f -name '*.jpg' > data/img/christies/raw_images.txt`
+  output_dir            Directory to save cropped images to
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --image-size IMAGE_SIZE
+                        Images will be scaled to be this large in their minimum dimension, in pixels
+  --delete              Delete the input photo after processing
+```
+
+
+### Exchange Rates
+
+To standardize prices, we calculate exchange rates, relative to a given date in
+time:
+
+# TODO Add me back in
+```sh
+```
+
 ## Analysis
 
-The data analysis is outlined in an R file, `analysis.R`.
+All major analysis is performed in python 3.8 as a series of scripts.
+Visualization and final presentation of the data are contained in a Jupyter
+notebook alongside the project text.
 
+## Compiling the final Paper
+
+The following will compile the final paper as html or pdf, provided you have
+the following resources in some target folder.
+
+* TODO add me
+
+# TODO Add me
+```sh
+```
