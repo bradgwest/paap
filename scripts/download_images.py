@@ -79,7 +79,8 @@ def main(input_path: str, output_dir: str, max_height: int) -> None:
             image_id, base_url = line
             image_url = build_target_url(base_url, max_height)
             image_path = build_image_path(output_dir, image_id, image_url)
-            print("{} - {} -> {}".format(i + 1, image_url, image_path), end="\r")
+            print(i, end="\r")
+            # print("{} - {} -> {}".format(i + 1, image_url, image_path), end="\r")
 
             try:
                 download_image(image_url, image_path)
