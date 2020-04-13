@@ -1,311 +1,343 @@
-"""
-Clean data scraped from Christies Website.
-"""
-
 import argparse
 import csv
+import datetime
 import json
-import logging
 import re
-import sys
-import uuid
+from pathlib import Path
+from typing import Callable, Iterable, List, NamedTuple, Tuple
 
-import google.auth
-from art import gc_utils
-from art.scrape_art.spiders import christies_settings
-from google.cloud import storage
+DESCRIPTION = "Clean json data, scraped from Christies into a format that can be used for predictive analytics"
+
+# Regexes for parsing
+SALE_NUMBER_REGEX = re.compile(r"[0-9]+")
+SALE_TOTAL_RAW_REGEX = re.compile(r"^Sale total: \+ (?P<currency>[A-Z]+) (?P<total_raw>[0-9\.,]+)")
+LOT_NUMBER_REGEX = re.compile(r"^Lot (?P<number>[0-9\sA-Z]+)$")
+LOT_REALIZED_PRICE = re.compile(r"^[^0-9,]+(?P<price>[0-9,]+)$")
+NO_PUNCTUATION_REGEX = re.compile(r"\D")
+JS_MAKER_REGEX = re.compile(r"^(?P<maker>[A-Za-z\s\.]+)\s\([\s0-9b\-\.]+\)$")
+
+# Date Formats
+SALE_STATUS_DATE_FORMAT = "%d %b %Y"
+OUTPUT_DATE_FORMAT = "%Y-%m-%d"
+
+EXPECTED_SALE_KEYS = frozenset(
+    [
+        "category",
+        "input_url",
+        "location",
+        "location_int",
+        "month",
+        "sale_details_html",
+        "sale_details_js",
+        "sale_number",
+        "sale_status",
+        "sale_total_raw",
+        "sale_url",
+        "year",
+    ]
+)
+EXPECTED_HTML_KEYS = frozenset(
+    [
+        "description",
+        "estimate_primary",
+        "estimate_seconday",
+        "image_url",
+        "maker",
+        "medium_dimensions",
+        "number",
+        "realized_primary",
+        "realized_secondary",
+    ]
+)
+
+EXPECTED_MISSING_HTML_OUTPUT_KEYS = frozenset(
+    [
+        "lot_christies_unique_id",
+        "lot_realized_price",
+        "lot_title",
+        "lot_item_id",
+        "sale_analytics_name",
+        "sale_analytics_type",
+        "sale_christies_id",
+        "sale_id",
+        "sale_iso_currency_code",
+        "sale_title",
+        "sale_total_items",
+        "sale_type",
+    ]
+)
+EXPECTED_MISSING_JS_OUTPUT_KEYS = frozenset(["lot_dimensions", "lot_realized_currency", "lot_number", "lot_medium"])
+# Output keys
+OUTPUT_KEYS = [
+    "sale_christies_id",
+    "sale_id",
+    "sale_number",
+    "sale_url",
+    "sale_input_url",
+    "sale_is_html_type",
+    "sale_year",
+    "sale_month",
+    "sale_date",
+    "sale_location",
+    "sale_location_int",
+    "sale_category",
+    "sale_currency",
+    "sale_iso_currency_code",
+    "sale_title",
+    "sale_analytics_name",
+    "sale_analytics_type",
+    "sale_total",
+    "sale_total_items",
+    "sale_type",
+    "lot_christies_unique_id",
+    "lot_item_id",
+    "lot_number",
+    "lot_realized_currency",
+    "lot_realized_price",
+    "lot_title",
+    "lot_artist",
+    "lot_description",
+    "lot_dimensions",
+    "lot_medium",
+    "lot_image_url",
+]
 
 
-def clean_sale_number(sale_number):
-    if not sale_number:
-        return None
-    mtch = re.search("[0-9]+", sale_number)
-    if not mtch:
-        return None
-    return mtch.group(0)
+class ProcessFunction(NamedTuple):
+    output_keys: Tuple[str]
+    input_key: str
+    func: Callable
 
 
-def clean_sale_total(total_raw):
-    if not total_raw:
-        return None, None
-    mtch = re.search("[0-9,]+", total_raw)
-    total = int(mtch.group(0).replace(",", "")) if mtch else None
-    mtch = re.search("(?<=\\+)[A-Z\\s]+(?=[0-9])", total_raw)
-    currency = mtch.group(0).strip() if mtch else None
-    return total, currency
+def valid_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if not (path.exists() and path.is_file()):
+        raise ValueError("{} is not a valid path".format(path))
+    return path
 
 
-def clean_img_url(img_url):
-    if not img_url:
-        return None
-    loc = img_url.find("?")
-    if loc == -1:
-        return img_url
-    return img_url[:loc]
+def assert_identical_sets(actual: set, expected: Iterable) -> None:
+    assert (set(actual) - set(expected)) == set(), "Unexpected items: {}".format(set(actual) - set(expected))
+    assert set(expected) - set(actual) == set(), "Missing items: {}".format(set(expected) - set(actual))
 
 
-def clean_iso_estimate(estimate):
-    if not estimate:
-        return None, None, None
-    amount_re = "[0-9,]+"
-    low_raw, high_raw = estimate.split("-")
-    code_match = re.search("^[A-Z]+", low_raw)
-    code = code_match.group(0) if code_match else None
-    low_match = re.search(amount_re, low_raw)
-    low = low_match.group(0).replace(",", "") if low_match else None
-    high_match = re.search(amount_re, high_raw)
-    high = high_match.group(0).replace(",", "") if high_match else None
-    return code, int(low), int(high)
+def process_sale_total_raw(raw: str) -> str:
+    match = re.search(SALE_TOTAL_RAW_REGEX, raw)
+    assert match, "process_sale_number - Did not find match for sale total: {}".format(raw)
+    currency, total_raw = match.group("currency", "total_raw")
+    total = int(re.sub(NO_PUNCTUATION_REGEX, "", total_raw))
+    return currency, total
 
 
-def clean_secondary_estimate(estimate):
-    if not estimate:
-        return None, None
-    amount_re = "[0-9,]+"
-    raw = re.findall(amount_re, estimate)
-    low = raw[0].replace(",", "") if raw else None
-    high = raw[1].replace(",", "") if len(raw) > 1 else None
-    return int(low), int(high)
+def process_sale_number(raw: str) -> int:
+    match = re.search(SALE_NUMBER_REGEX, raw)  # This might fail if it's not there
+    assert match, "process_sale_number - Did not find sale_number: {}".format(raw)
+    return int(match.group(0))
 
 
-def clean_realized(realized):
-    if not realized:
-        return None
-    found = re.findall("[0-9,]+", realized)
-    if not found:
-        return None
-    return int(found[0].replace(",", ""))
+def process_sale_status(raw: str) -> str:
+    """Sale status is really just the date"""
+    if "-" in raw:
+        # multi-day
+        raw = raw.split("-")[-1].strip()
+
+    if not re.match(r"^[0-9]{2}", raw):
+        # Pad it with a leading zero
+        raw = "0" + raw
+    dt = datetime.datetime.strptime(raw, SALE_STATUS_DATE_FORMAT)
+    return dt.strftime(OUTPUT_DATE_FORMAT)
 
 
-def strip_newlines(itm):
-    if not itm:
-        return None
-    return itm.replace("\n", " ")
+def process_js_maker(raw: str) -> str:
+    match = re.search(JS_MAKER_REGEX, raw)
+    assert match, "process_js_maker - Did not find match for maker: {}".format(raw)
+    return match.group("maker")
 
 
-class ChristiesSaleParser(object):
-    def __init__(self):
-        self.lots = []  # Individual lots
+def process_js_title(raw: str) -> str:
+    assert raw, "process_js_title - title is Falsey: {}".format(raw)
+    return raw
 
-    def process(self):
-        raise NotImplementedError("process must be called on a subclass")
 
-    @staticmethod
-    def add_lot_id(lot):
-        lot["id"] = str(uuid.uuid4())
+def apply_process_functions(raw: dict, process_functions: List[ProcessFunction]) -> dict:
+    out = {}
+    for pf in process_functions:
+        vals = pf.func(raw[pf.input_key])
+        if not isinstance(vals, tuple):
+            vals = (vals,)
+        out.update(dict(zip(pf.output_keys, vals)))
+    return out
 
-    def sale_to_lots(self, sale):
-        if sale["location"] == "online":
-            self.add_lot_details(sale, "js")
-            return
-        self.add_lot_details(sale, "html")
 
-    def add_lot_details(self, sale, details_key):
-        """
-        Add details to a lot
-        :param dict sale:
-        :param str details_key: one of 'html' or 'js'
-        :return:
-        """
-        allowed = ("html", "js")
-        if details_key not in allowed:
-            raise ValueError("details_key must be in {}".format(allowed))
+def process_js_lot(raw_lot_details: dict) -> dict:
+    process_functions = [
+        ProcessFunction(("lot_item_id",), "itemId", int),
+        ProcessFunction(("lot_christies_unique_id",), "christiesUniqueId", str),
+        ProcessFunction(("lot_artist",), "canonicalTitle", process_js_maker),
+        ProcessFunction(("lot_title",), "translatedArtist", process_js_title),
+        ProcessFunction(("lot_description",), "translatedDescription", str),
+        ProcessFunction(("lot_realized_price",), "priceRealised", int),
+        ProcessFunction(("lot_image_url",), "imageUrl", process_image_url),
+    ]
+    return apply_process_functions(raw_lot_details, process_functions)
 
-        details = sale.get("sale_details_{}".format(details_key))
-        if not details:
-            return []
 
-        items = details if details_key == "html" else details["items"]
-        for i in items:
-            lot = {k: None for k in christies_settings.LOT_FIELD_NAMES}
-            self.add_sale_fields_general(lot, sale)
-            self.add_lot_id(lot)
-            if details_key == "html":
-                self.add_html_details(lot, i)
-            else:
-                attrs = self.get_sale_attribute_map(details)
-                self.add_sale_lot_fields_js(lot, details)
-                self.add_js_details(lot, i, attrs)
-            self.lots.append(lot.copy())
+def _process_sale_details_js_wo_lot(sale_details: dict) -> dict:
+    process_functions = [
+        ProcessFunction(("sale_id",), "saleId", int),
+        ProcessFunction(("sale_title",), "canonicalTitle", str),
+        ProcessFunction(("sale_analytics_name",), "analyticsSaleName", str),
+        ProcessFunction(("sale_analytics_type",), "analyticsSaleType", str),
+        ProcessFunction(("sale_christies_id",), "christiesSaleId", int),
+        ProcessFunction(("sale_type",), "saleType", int),
+        ProcessFunction(("sale_iso_currency_code",), "isoCurrencyCode", str),
+        ProcessFunction(("sale_total_items",), "totalItemsCount", int),
+    ]
+    return apply_process_functions(sale_details, process_functions)
 
-    @staticmethod
-    def get_sale_attribute_map(details):
-        """
-        Creates an attribute dictionary from the list of attributes
 
-        The input attribute list is two dimensional, it is a list of dicts.
-        Each dict represents an attribute type, like Category, Date, or
-        Item Type. That dict is identified by the attributeTypeId. The category
-        dict in turn has a list of attributeValues, the allowed values of that
-        category.
+def process_sale_details_js(sale: dict) -> dict:
+    sale_details = sale["sale_details_js"]
+    non_lot_details = _process_sale_details_js_wo_lot(sale_details)
+    lots = [process_js_lot(l) for l in sale_details["items"]]
+    for l in lots:
+        l.update(non_lot_details)
+    return lots
 
-        :param dict details:
-        :rtype dict:
-        """
-        attrs = {}
-        att_raw = details.get("attributeTypes")
-        for cat in att_raw:
-            att_id = cat["attributeTypeId"]
-            attrs[att_id] = {}
-            attrs[att_id]["category"] = cat["canonicalAttributeTypeName"]
-            attrs[att_id]["values"] = {}
-            for v in cat["attributeValues"]:
-                attrs[att_id]["values"][v["attributeValueId"]] = v["canonicalAttributeValueName"]
-        return attrs
 
-    @staticmethod
-    def add_sale_fields_general(lot, sale):
-        lot["input_url"] = sale.get("input_url")
-        lot["sale_year"] = sale.get("year")
-        lot["sale_month"] = sale.get("month")
-        lot["sale_category"] = sale.get("category")
-        lot["sale_location"] = sale.get("location")
-        lot["sale_location_id"] = sale.get("location_int")
-        lot["sale_url"] = sale.get("sale_url")
-        lot["sale_status"] = sale.get("sale_status")
-        lot["sale_number"] = clean_sale_number(sale.get("sale_number"))
-        lot["sale_total_realized_iso_currency"], lot["sale_iso_currency_code"] = clean_sale_total(
-            sale.get("sale_total_raw")
+def process_image_url(raw: str) -> str:
+    return "".join(raw.split("?")[:-1])
+
+
+def process_html_lot_number(raw: str) -> str:
+    match = re.search(LOT_NUMBER_REGEX, raw)
+    assert match, "process_html_lot_number - Did not find lot number: {}".format(raw)
+    return match.group("number")
+
+
+# TODO maybe we could do more with this if you find a pattern
+def process_html_medium_dimensions(raw: str) -> str:
+    if raw is None:
+        return "", ""
+    split = raw.split(",")
+    if len(split) == 1:
+        return split[0], ""
+    return split[0], ";".join(m.strip() for m in split[1:])
+
+
+def process_html_realized_price(raw: str) -> str:
+    match = re.search(LOT_REALIZED_PRICE, raw)
+    assert match, "process_html_realized_price - Did not find realized price: {}".format(raw)
+    price_with_punctuation = match.group("price")
+    price = re.sub(NO_PUNCTUATION_REGEX, "", price_with_punctuation)
+    return int(price)
+
+
+def process_html_lot(raw: dict) -> dict:
+    assert_identical_sets(raw.keys(), EXPECTED_HTML_KEYS)
+
+    processor_functions = {
+        ProcessFunction(("lot_image_url",), "image_url", process_image_url),
+        ProcessFunction(("lot_number",), "number", process_html_lot_number),
+        ProcessFunction(("lot_artist",), "maker", str),
+        ProcessFunction(("lot_description",), "description", str),
+        ProcessFunction(("lot_dimensions", "lot_medium"), "medium_dimensions", process_html_medium_dimensions),
+        ProcessFunction(
+            ("lot_realized_currency", "lot_realized_price"), "realized_primary", process_html_realized_price
+        ),
+    }
+    return apply_process_functions(raw, processor_functions)
+
+
+def process_sale_html_details(sale: dict) -> dict:
+    """We're intentionally dropping primary and secondary estimates here, in the interest of time"""
+    raw = sale["sale_details_html"]
+    return [process_html_lot(l) for l in raw]
+
+
+def process_sale_details(sale: dict) -> dict:
+    processor_functions = {
+        ProcessFunction(("sale_input_url",), "input_url", str),
+        ProcessFunction(("sale_year",), "year", str),
+        ProcessFunction(("sale_month",), "month", str),
+        ProcessFunction(("sale_category",), "category", str),
+        ProcessFunction(("sale_location",), "location", str),
+        ProcessFunction(("sale_location_int",), "location_int", str),
+        ProcessFunction(("sale_url",), "sale_url", str),
+        ProcessFunction(("sale_number",), "sale_number", process_sale_number),
+        ProcessFunction(("sale_date",), "sale_status", process_sale_status),
+        ProcessFunction(("sale_currency", "sale_total"), "sale_total_raw", process_sale_total_raw),
+        ProcessFunction(("sale_is_html_type",), "sale_details_html", bool),
+    }
+    out = apply_process_functions(sale, processor_functions)
+
+    return out
+
+
+def process_lot_details(sale: dict) -> dict:
+    assert not (sale["sale_details_html"] and sale["sale_details_js"]), "Sale has both js and html details"
+    assert not (
+        sale["sale_details_html"] and sale["location"] == "online"
+    ), "Sale is online but does not have js details"
+
+    if sale["sale_details_html"]:
+        return process_sale_html_details(sale)
+    return process_sale_details_js(sale)
+
+
+def process_raw_file(file_name: str) -> List[dict]:
+    with open(file_name) as f:
+        sale = json.load(f)
+
+    assert_identical_sets(sale.keys(), EXPECTED_SALE_KEYS)
+
+    sale_details = process_sale_details(sale)
+    lot_details = process_lot_details(sale)
+
+    for lot in lot_details:
+        lot.update(sale_details)
+
+        # Assert that we have only the keys we want
+        if lot["sale_is_html_type"]:
+            expected_missing = EXPECTED_MISSING_HTML_OUTPUT_KEYS
+        else:
+            expected_missing = EXPECTED_MISSING_JS_OUTPUT_KEYS
+        actual_missing = set(OUTPUT_KEYS) - set(lot.keys())
+        assert actual_missing == expected_missing, "Missing keys don't match expected: Have: {}; Want: {}".format(
+            sorted(actual_missing), sorted(expected_missing)
         )
 
-    @staticmethod
-    def add_sale_lot_fields_js(lot, details):
-        lot["sale_lot_count"] = details.get("totalItemsCount")
-        lot["sale_title"] = details.get("canonicalTitle")
-        lot["sale_christies_id"] = details.get("saleId")
-        if not lot.get("sale_iso_currency_code"):
-            lot["sale_iso_currency_code"] = details.get("isoCurrencyCode")
-        lot["sale_secondary_currency_code"] = details.get("secondaryCurrencyIsoCode")
+        # Add missing keys
+        lot.update({k: None for k in expected_missing})
 
-    @staticmethod
-    def add_html_details(lot, itm):
-        lot["lot_image_url"] = clean_img_url(itm.get("image_url"))
-        lot["lot_number"] = itm.get("lot_number")
-        lot["lot_title"] = itm.get("maker")
-        lot["lot_artist"] = strip_newlines(itm.get("description"))
-        lot["lot_medium"] = strip_newlines(itm.get("medium"))
-        lot["lot_dimensions"] = strip_newlines(itm.get("dimensions"))
-        lot["lot_realized_price_iso_currency"] = clean_realized(itm.get("realized_primary"))
-        lot["lot_realized_price_usd"] = clean_realized(itm.get("realized_secondary"))
-        _, iso_est_low, iso_est_high = clean_iso_estimate(itm.get("estimate_primary"))
-        lot["lot_estimate_low_iso_currency"] = iso_est_low
-        lot["lot_estimate_high_iso_currency"] = iso_est_high
-        usd_est_low, usd_est_high = clean_secondary_estimate(itm.get("estimate_secondary"))
-        lot["lot_estimate_low_usd"] = usd_est_low
-        lot["lot_estimate_high_usd"] = usd_est_high
+        assert set(lot.keys()) == set(OUTPUT_KEYS)
 
-    @staticmethod
-    def add_js_details(lot, itm, attrs):
-        lot["lot_item_id"] = itm.get("itemId")
-        lot["lot_number"] = itm.get("lotNumber")
-        lot["lot_start_date"] = itm.get("startDate")
-        lot["lot_end_date"] = itm.get("endDate")
-        lot["lot_artist"] = strip_newlines(itm.get("canonicalTitle"))
-        lot["lot_translated_artist"] = strip_newlines(itm.get("translatedTitle"))
-        lot["lot_translated_description"] = strip_newlines(itm.get("translatedDescription"))
-        lot["lot_description"] = strip_newlines(itm.get("canonicalDescription"))
-        lot["lot_title"] = itm.get("canonicalArtist")
-        lot["lot_translated_title"] = itm.get("translatedArtist")
-        lot["lot_image_url"] = clean_img_url(itm.get("imageUrl"))
-        lot["lot_estimate_low_iso_currency"] = itm.get("presaleEstimateLow")
-        lot["lot_estimate_high_iso_currency"] = itm.get("presaleEstimateHigh")
-        lot["lot_iso_currency_starting_bid"] = itm.get("startingBid")
-        lot["lot_iso_currency_current_bid"] = itm.get("currentBid")
-        lot["lot_realized_price_iso_currency"] = itm.get("priceRealised")
-        lot["lot_current_bid_less_than_reserve"] = itm.get("currentBidLessThanReserve")
-        lot["lot_any_bids_placed"] = itm.get("anyBidsPlaced")
-        lot["lot_number_available"] = itm.get("numberAvailable")
-        lot["lot_is_live_auction"] = itm.get("isLiveAuctionLot")
-        lot["lot_starting_bid_usd"] = itm.get("secondaryCurrencyStartingBid")
-        lot["lot_current_bid_usd"] = itm.get("secondaryCurrencyCurrentBid")
-
-    def write_lots(self, output):
-        if output.startswith("gs://"):
-            self.write_to_gcs(output)
-        else:
-            self.write_to_local(output)
-
-    def write_to_gcs(self, output):
-        raise NotImplementedError("Must call on a GCS based subclass")
-
-    def write_to_local(self, output):
-        with open(output, "w") as f:
-            lot_writer = csv.DictWriter(f, christies_settings.LOT_FIELD_NAMES)
-            lot_writer.writeheader()
-            for lot in self.lots:
-                lot_writer.writerow(lot)
+    return lot_details
 
 
-class GCSChristiesSaleParser(ChristiesSaleParser):
-    def __init__(self, input_bucket_path=None, input_files=None, project=None):
-        super().__init__()
-        if input_bucket_path and input_files:
-            raise ValueError("Specify only one of input_bucket_path or input_files")
+def main(input_files: str, output_path: str) -> None:
+    # Iterate over each file and process it
+    rows = []
+    for fn in input_files:
+        rows.extend(process_raw_file(fn))
 
-        self.project = project
-        credentials, project_id = google.auth.default()
-        if not self.project:
-            self.project = project_id
-        self.client = storage.Client(self.project, credentials=credentials)
-
-        self.blobs_to_parse = []
-
-        if input_files:
-            with open(input_files) as f:
-                files_to_parse = f.readlines()
-            self.blobs_to_parse = []
-            for p in files_to_parse:
-                p = p.strip()
-                if not (p.endswith(".json") and p.startswith("gs://")):
-                    raise ValueError("Files to parse must start with gs:// and end with .json")
-                bucket_name, blob_name = gc_utils.bucket_and_path_from_uri(p)
-                self.bucket = self.client.get_bucket(bucket_name)
-                self.blobs_to_parse.append(self.bucket.get_blob(blob_name))
-        else:
-            bucket_name, prefix = gc_utils.bucket_and_path_from_uri(input_bucket_path)
-            self.bucket = self.client.get_bucket(bucket_name)
-            for blob in self.bucket.list_blobs(prefix=prefix):
-                self.blobs_to_parse.append(blob)
-
-    def process(self):
-        """
-        Transforms a blob into a list of lots
-        """
-        cnt = 1
-        for blob in self.blobs_to_parse:
-            logging.info("Processing {}/{} - {}".format(cnt, len(self.blobs_to_parse), blob.name))
-            if not blob.name.endswith(".json"):
-                continue
-            json_string = blob.download_as_string()
-            sale = json.loads(json_string)
-            self.sale_to_lots(sale)
-            cnt += 1
-
-    def write_to_gcs(self, output):
-        pass
-
-
-def parse_arguments(sys_args):
-    parser = argparse.ArgumentParser(
-        description="Clean json data, scraped from Christies into a format that " "can be used for predictive analytics"
-    )
-    parser.add_argument("-p", "--input-path", help="path of files to process, like gs://paap/christies/data/raw")
-    parser.add_argument("-f", "--input-files", help="Alternative way of specifying files to process, one file per line")
-    parser.add_argument("--project", help="Google project. If not specified will use default")
-    parser.add_argument("--output", help="csv to save to. Can be local or GCS", required=True)
-    args = parser.parse_args(sys_args)
-    if not (args.input_path != args.input_files):
-        raise ValueError("Specify exactly one of input_path or input_files")
-    return args
-
-
-def main():
-    logging.getLogger().setLevel(logging.INFO)
-    args = parse_arguments(sys.argv[1:])
-    sale_parser = GCSChristiesSaleParser(args.input_path, args.input_files, args.project)
-    sale_parser.process()
-    sale_parser.write_lots(args.output)
+    with open(output_path, "w") as f:
+        writer = csv.DictWriter(f, OUTPUT_KEYS)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument(
+        "-i",
+        "--input-files",
+        nargs="+",
+        required=True,
+        type=valid_path,
+        help="Input newline delimited json files to process.",
+    )
+    parser.add_argument("-o", "--output-path", required=True, help="CSV to save to")
+    args = parser.parse_args()
+
+    main(args.input_files, args.output_path)

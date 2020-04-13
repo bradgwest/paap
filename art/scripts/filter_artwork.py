@@ -1,5 +1,4 @@
 import argparse
-import csv
 from pathlib import Path
 
 import pandas as pd
@@ -34,12 +33,7 @@ def valid_path(path_str: str) -> Path:
 
 
 def main(input_csv: Path, output_csv: Path, rules: list) -> None:
-    df = pd.read_csv(input_csv, header=0)
-    out = (
-        df.pipe(is_2d)
-          .pipe(is_known_genre)
-    )
-    out_df.to_csv(output_csv)
+    pass
 
 
 if __name__ == "__main__":
