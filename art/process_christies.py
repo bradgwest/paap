@@ -42,7 +42,7 @@ EXPECTED_HTML_KEYS = frozenset(
         "estimate_primary",
         "estimate_seconday",
         "image_url",
-        "maker",
+        "maker",  # May be missing on some
         "medium_dimensions",
         "number",
         "realized_primary",
@@ -107,6 +107,7 @@ class ProcessFunction(NamedTuple):
     output_keys: Tuple[str]
     input_key: str
     func: Callable
+    nullable: bool = False
 
 
 def valid_path(path_str: str) -> Path:
@@ -162,7 +163,11 @@ def process_js_title(raw: str) -> str:
 def apply_process_functions(raw: dict, process_functions: List[ProcessFunction]) -> dict:
     out = {}
     for pf in process_functions:
-        vals = pf.func(raw[pf.input_key])
+        if pf.nullable and pf.input_key not in raw:
+            vals = tuple(None for _ in pf.output_keys)
+        else:
+            vals = pf.func(raw[pf.input_key])
+
         if not isinstance(vals, tuple):
             vals = (vals,)
         out.update(dict(zip(pf.output_keys, vals)))
@@ -234,14 +239,17 @@ def process_html_realized_price(raw: str) -> str:
 
 
 def process_html_lot(raw: dict) -> dict:
-    assert_identical_sets(raw.keys(), EXPECTED_HTML_KEYS)
+    # actual_keys = set(raw.keys())
+    # # Add some keys that might be missing
+    # actual_keys.union({"maker", "estimate_seconday", "realized_secondary"})
+    # assert_identical_sets(actual_keys, EXPECTED_HTML_KEYS)
 
     processor_functions = {
         ProcessFunction(("lot_image_url",), "image_url", process_image_url),
         ProcessFunction(("lot_number",), "number", process_html_lot_number),
-        ProcessFunction(("lot_artist",), "maker", str),
+        ProcessFunction(("lot_artist",), "maker", str, True),
         ProcessFunction(("lot_description",), "description", str),
-        ProcessFunction(("lot_dimensions", "lot_medium"), "medium_dimensions", process_html_medium_dimensions),
+        ProcessFunction(("lot_dimensions", "lot_medium"), "medium_dimensions", process_html_medium_dimensions, True),
         ProcessFunction(
             ("lot_realized_currency", "lot_realized_price"), "realized_primary", process_html_realized_price
         ),
@@ -252,7 +260,18 @@ def process_html_lot(raw: dict) -> dict:
 def process_sale_html_details(sale: dict) -> dict:
     """We're intentionally dropping primary and secondary estimates here, in the interest of time"""
     raw = sale["sale_details_html"]
-    return [process_html_lot(l) for l in raw]
+    lots = []
+
+    for l in raw:
+        try:
+            lots.append(process_html_lot(l))
+        except KeyError as e:
+            if "realized_primary" in str(e):
+                print("ERROR: KeyError getting html lot")
+                continue
+            raise e
+
+    return lots
 
 
 def process_sale_details(sale: dict) -> dict:
@@ -319,6 +338,7 @@ def main(input_files: str, output_path: str) -> None:
     # Iterate over each file and process it
     rows = []
     for fn in input_files:
+        print("Processing {}".format(fn))
         rows.extend(process_raw_file(fn))
 
     with open(output_path, "w") as f:
