@@ -59,16 +59,8 @@ def csv_to_df(path: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def df_to_csv(df: pd.DataFrame, path: Path) -> None:
-    """Assume that if the engineers at pandas can't do input, they probably can't do output, and roll your own"""
-    with open(path) as f:
-        writer = csv.writer(f)
-        for _, row in df.iterrows:
-            writer.writerow(row)
-
-
-def main(input_csv: str, output_csv: str) -> None:
-    df = csv_to_df(input_csv)
+def main(input_csv: str, image_urls: str, output_csv: str) -> None:
+    df = pd.read_csv(input_csv, header=0, index_col=False)
     # Pandas is trashy shit. Drop duplicates that it seems to read.
     df = df[[c.name for c in COLUMNS]]  # select columns
 
@@ -85,8 +77,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("input_csv", type=valid_path,
                         help="Path to input csv with raw scrapped data, header on first row")
+    parser.add_argument("image_urls", type=valid_path,
+                        help="Path to a csv with image urls")
     parser.add_argument("output_csv", type=str,
                         help="Path to save output csv containing only cleaned data")
     args = parser.parse_args()
 
-    main(args.input_csv, args.output_csv)
+    main(args.input_csv, args.image_urls, args.output_csv)

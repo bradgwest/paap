@@ -54,7 +54,6 @@ EXPECTED_HTML_KEYS = frozenset(
 EXPECTED_MISSING_HTML_OUTPUT_KEYS = frozenset(
     [
         "lot_christies_unique_id",
-        "lot_realized_price",
         "lot_title",
         "lot_item_id",
         "sale_analytics_name",
@@ -67,7 +66,7 @@ EXPECTED_MISSING_HTML_OUTPUT_KEYS = frozenset(
         "sale_type",
     ]
 )
-EXPECTED_MISSING_JS_OUTPUT_KEYS = frozenset(["lot_dimensions", "lot_realized_currency", "lot_number", "lot_medium"])
+EXPECTED_MISSING_JS_OUTPUT_KEYS = frozenset(["lot_dimensions", "lot_number", "lot_medium"])
 # Output keys
 OUTPUT_KEYS = [
     "sale_christies_id",
@@ -93,7 +92,6 @@ OUTPUT_KEYS = [
     "lot_christies_unique_id",
     "lot_item_id",
     "lot_number",
-    "lot_realized_currency",
     "lot_realized_price",
     "lot_title",
     "lot_artist",
@@ -277,6 +275,7 @@ def process_html_realized_price(raw: str) -> str:
     match = re.search(LOT_REALIZED_PRICE, raw)
     assert match, "process_html_realized_price - Did not find realized price: {}".format(raw)
     price_with_punctuation = match.group("price")
+    return price_with_punctuation
     price = re.sub(NO_PUNCTUATION_REGEX, "", price_with_punctuation)
     return int(price)
 
@@ -293,9 +292,7 @@ def process_html_lot(raw: dict) -> dict:
         ProcessFunction(("lot_artist",), "maker", str, True),
         ProcessFunction(("lot_description",), "description", str),
         ProcessFunction(("lot_dimensions", "lot_medium"), "medium_dimensions", process_html_medium_dimensions, True),
-        ProcessFunction(
-            ("lot_realized_currency", "lot_realized_price"), "realized_primary", process_html_realized_price
-        ),
+        ProcessFunction(("lot_realized_price",), "realized_primary", process_html_realized_price),
     }
     return apply_process_functions(raw, processor_functions)
 
@@ -303,16 +300,16 @@ def process_html_lot(raw: dict) -> dict:
 def process_sale_html_details(sale: dict) -> dict:
     """We're intentionally dropping primary and secondary estimates here, in the interest of time"""
     raw = sale["sale_details_html"]
-    lots = []
 
+    lots = []
     for l in raw:
         try:
             lots.append(process_html_lot(l))
         except KeyError as e:
             if "realized_primary" in str(e):
-                print("ERROR - KeyError getting html lot")
+                print("ERROR - KeyError realized_primary: {}, {}".format(l.get("number"), sale.get("input_url")))
                 continue
-            raise e
+            raise
 
     return lots
 
@@ -331,9 +328,7 @@ def process_sale_details(sale: dict) -> dict:
         ProcessFunction(("sale_currency", "sale_total"), "sale_total_raw", process_sale_total_raw),
         ProcessFunction(("sale_is_html_type",), "sale_details_html", bool),
     }
-    out = apply_process_functions(sale, processor_functions)
-
-    return out
+    return apply_process_functions(sale, processor_functions)
 
 
 def process_lot_details(sale: dict) -> dict:
