@@ -115,6 +115,23 @@ To simplify the process for local development, there are a number of scripts
 for processing the images, which more or less represent a directed pipeline
 for image acquisition and resizing.
 
+Given the raw json files of data scraped from Christies' website, process them
+into a CSV where each row represents a lot.
+
+```sh
+# python art/process_christies.py -i data/raw/*.json -o data/process_christies_output.csv
+usage: process_christies.py [-h] -i INPUT_FILES [INPUT_FILES ...] -o OUTPUT_PATH
+
+Clean json data, scraped from Christies into a format that can be used for predictive analytics
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT_FILES [INPUT_FILES ...], --input-files INPUT_FILES [INPUT_FILES ...]
+                        Input newline delimited json files to process.
+  -o OUTPUT_PATH, --output-path OUTPUT_PATH
+                        CSV to save to
+```
+
 Given a CSV of raw piece data, scrapped from Christies website, return a two
 column csv where each column is an artwork with lot_id and the corresponding
 image_url:
