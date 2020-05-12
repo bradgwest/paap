@@ -2,6 +2,7 @@ import argparse
 import csv
 import datetime
 import json
+import os
 import re
 from pathlib import Path
 from typing import Callable, Iterable, List, NamedTuple, Tuple
@@ -14,7 +15,7 @@ SALE_TOTAL_RAW_REGEX = re.compile(r"^Sale total: \+ (?P<currency>[A-Z]+) (?P<tot
 LOT_NUMBER_REGEX = re.compile(r"^Lot (?P<number>[0-9\sA-Z]+)$")
 LOT_REALIZED_PRICE = re.compile(r"^[^0-9,]+(?P<price>[0-9,]+)$")
 NO_PUNCTUATION_REGEX = re.compile(r"\D")
-JS_MAKER_REGEX = re.compile(r"^(?P<maker>[A-Za-z\s\.]+)\s\([\s0-9b\-\.]+\)$")
+JS_MAKER_REGEX = re.compile(r"^(?P<maker>[\w\s\.]+)\s\([\s0-9bB\-\.]+\)$")
 
 # Date Formats
 SALE_STATUS_DATE_FORMAT = "%d %b %Y"
@@ -102,6 +103,22 @@ OUTPUT_KEYS = [
     "lot_image_url",
 ]
 
+SALE_BLACKLIST = frozenset(
+    [
+        "2017_7_asian_art_online_14966.json",
+        "2017_9_fine_art_online_16002.json",
+        "2018_2_asian_art_online_16680.json",
+        "2018_2_fine_art_online_16680.json",
+        "2018_5_asian_art_online_16099.json",
+        "2018_5_photographs_and_prints_online_16099.json",
+        "2018_7_fine_art_online_15880.json",
+    ]
+)
+
+
+class NotSoldException(ValueError):
+    pass
+
 
 class ProcessFunction(NamedTuple):
     output_keys: Tuple[str]
@@ -151,12 +168,20 @@ def process_sale_status(raw: str) -> str:
 
 def process_js_maker(raw: str) -> str:
     match = re.search(JS_MAKER_REGEX, raw)
-    assert match, "process_js_maker - Did not find match for maker: {}".format(raw)
+    try:
+        assert match, "process_js_maker - Did not find match for maker: {}".format(raw)
+    except AssertionError:
+        print("ERROR - didn't find js maker: {}".format(raw))
+        return None
     return match.group("maker")
 
 
 def process_js_title(raw: str) -> str:
-    assert raw, "process_js_title - title is Falsey: {}".format(raw)
+    try:
+        assert raw, "process_js_title - title is Falsey: {}".format(raw)
+    except AssertionError:
+        print("ERROR - title is falsey: {}".format(raw))
+        return None
     return raw
 
 
@@ -175,6 +200,9 @@ def apply_process_functions(raw: dict, process_functions: List[ProcessFunction])
 
 
 def process_js_lot(raw_lot_details: dict) -> dict:
+    if raw_lot_details.get("anyBidsPlaced") is False and not raw_lot_details.get("priceRealised"):
+        raise NotSoldException("Unsold")
+
     process_functions = [
         ProcessFunction(("lot_item_id",), "itemId", int),
         ProcessFunction(("lot_christies_unique_id",), "christiesUniqueId", str),
@@ -184,6 +212,7 @@ def process_js_lot(raw_lot_details: dict) -> dict:
         ProcessFunction(("lot_realized_price",), "priceRealised", int),
         ProcessFunction(("lot_image_url",), "imageUrl", process_image_url),
     ]
+
     return apply_process_functions(raw_lot_details, process_functions)
 
 
@@ -204,9 +233,23 @@ def _process_sale_details_js_wo_lot(sale_details: dict) -> dict:
 def process_sale_details_js(sale: dict) -> dict:
     sale_details = sale["sale_details_js"]
     non_lot_details = _process_sale_details_js_wo_lot(sale_details)
-    lots = [process_js_lot(l) for l in sale_details["items"]]
-    for l in lots:
-        l.update(non_lot_details)
+    lots = []
+    for l in sale_details["items"]:
+
+        try:
+            lot = process_js_lot(l)
+        except NotSoldException:
+            print("WARNING - Item not sold")
+            continue
+        except KeyError as e:
+            if "priceRealised" in str(e):
+                print("WARNING - priceRealised issue")
+                continue
+            else:
+                raise
+
+        lot.update(non_lot_details)
+        lots.append(lot)
     return lots
 
 
@@ -267,7 +310,7 @@ def process_sale_html_details(sale: dict) -> dict:
             lots.append(process_html_lot(l))
         except KeyError as e:
             if "realized_primary" in str(e):
-                print("ERROR: KeyError getting html lot")
+                print("ERROR - KeyError getting html lot")
                 continue
             raise e
 
@@ -338,6 +381,10 @@ def main(input_files: str, output_path: str) -> None:
     # Iterate over each file and process it
     rows = []
     for fn in input_files:
+        if os.path.basename(fn) in SALE_BLACKLIST:
+            print("WARNING - Will not process, file is in blacklist: {}".format(fn))
+            continue
+
         print("Processing {}".format(fn))
         rows.extend(process_raw_file(fn))
 
