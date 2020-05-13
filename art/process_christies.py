@@ -275,8 +275,7 @@ def process_html_realized_price(raw: str) -> str:
     match = re.search(LOT_REALIZED_PRICE, raw)
     assert match, "process_html_realized_price - Did not find realized price: {}".format(raw)
     price_with_punctuation = match.group("price")
-    return price_with_punctuation
-    price = re.sub(NO_PUNCTUATION_REGEX, "", price_with_punctuation)
+    price = re.sub(re.compile(r"[^0-9]"), "", price_with_punctuation)
     return int(price)
 
 
