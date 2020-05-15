@@ -62,7 +62,7 @@ def main(input_csv: str, image_urls: str, output_csv: str) -> None:
     df = clean_raw(df)
 
     # drop invalid image_urls
-    image_urls = image_urls[LOT_IMAGE_URL][~(image_urls[LOT_IMAGE_URL] == NO_IMAGE_URL)]
+    image_urls = image_urls[~(image_urls[LOT_IMAGE_URL] == NO_IMAGE_URL)]
     image_urls = drop_image_duplicates(image_urls, LOT_IMAGE_URL)
 
     # join on lot_image_url
@@ -71,9 +71,9 @@ def main(input_csv: str, image_urls: str, output_csv: str) -> None:
     col_order = ["id"] + list(df_all.columns)
 
     # add an id column
-    df["id"] = pd.Series([uuid4() for _ in range(df_all.shape[0])])
+    df_all["id"] = pd.Series([uuid4() for _ in range(df_all.shape[0])])
     df_all = df_all[col_order]
-    df_all.to_csv(output_csv, index="id")
+    df_all.to_csv(output_csv, index=False)
 
 
 if __name__ == "__main__":
