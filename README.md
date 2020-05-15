@@ -170,6 +170,24 @@ optional arguments:
 In practice, after downloading the raw images they were uploaded to cloud
 storage as a backup.
 
+Given the raw CSV data and a CSV of image URLs to uuids, clean the data and join
+to get UUID:
+
+```sh
+# python art/scripts/clean_data.py -h
+usage: clean_data.py [-h] input_csv image_urls output_csv
+
+Clean raw tabular data
+
+positional arguments:
+  input_csv   Path to input csv with raw scrapped data, header on first row
+  image_urls  Path to a csv with image urls
+  output_csv  Path to save output csv containing only cleaned data
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
 Resize images to a common minimum dimension (i.e. the smallest of the two image
 dimensions will have this pixel size):
 
