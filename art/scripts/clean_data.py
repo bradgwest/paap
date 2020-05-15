@@ -1,10 +1,8 @@
 import argparse
-import csv
-import datetime
 from collections import namedtuple
 from pathlib import Path
+from uuid import uuid4
 
-import numpy as np
 import pandas as pd
 
 column = namedtuple("Column", ["name", "dtype", "na_allowed"])
@@ -13,32 +11,26 @@ DESCRIPTION = "Clean raw tabular data"
 # Columns we wish to keep. Types will be coerced to dtype if not None
 COLUMNS = [
     # (Column Name, DataType Coerscion Function, Can Be NA)
-    column("id", None, False),
-    column("input_url", None, True),
-    column("sale_location", None, True),
-    column("sale_location_id", int, True),
-    column("sale_christies_id", None, True),  # TODO this should be changed back to an int
-    column("sale_iso_currency_code", 'category', False),
+    column("sale_number", int, False),
+    column("sale_url", None, False),
+    column("sale_input_url", None, False),
     column("sale_year", int, False),
     column("sale_month", int, False),
-    column("lot_start_date", None, True),
-    column("lot_end_date", None, True),
+    column("sale_date", None, False),
+    column("sale_location", None, False),
+    column("sale_location_int", int, False),
+    column("sale_category", None, False),
+    column("sale_currency", None, False),
+    column("lot_image_url", None, False),
     column("lot_artist", None, True),
-    column("lot_title", None, True),
-    column("lot_translated_description", None, True),
+    column("lot_realized_price", float, False),
     column("lot_description", None, True),
-    column("lot_medium", None, True),
-    column("lot_dimensions", None, True),
-    column("lot_attributes", None, True),
-    column("lot_image_url", None, True),
-    column("lot_estimate_low_iso_currency", None, True),
-    column("lot_estimate_high_iso_currency", None, True),
-    column("lot_realized_price_iso_currency", float, False),
+    column("lot_medium", None, True)
 ]
-
-
-def build_sale_date(df: pd.DataFrame) -> pd.Series:
-    return df[["sale_year", "sale_month"]].apply(lambda x: datetime.datetime(year=x[0], month=x[1], day=1), axis=1)
+NO_IMAGE_URL = "https://www.christies.com/img/lotimages//Alert/NoImage/non_NoImag.jpg"
+IMAGE_ID = "image_id"
+LOT_IMAGE_URL = "lot_image_url"
+IMAGE_COLS = [IMAGE_ID, LOT_IMAGE_URL]
 
 
 def valid_path(path_str: str) -> Path:
@@ -48,20 +40,7 @@ def valid_path(path_str: str) -> Path:
     return path
 
 
-def csv_to_df(path: Path) -> pd.DataFrame:
-    """Pandas 1.0.3 is trash (or it's my ipython). They read duplicates for no reason. Roll your own I/O"""
-    rows = []
-    with open(path) as f:
-        reader = csv.reader(f)
-        header = next(reader)
-        for line in reader:
-            rows.append({k: v if v != "" else np.NaN for k, v in zip(header, line)})
-    return pd.DataFrame(rows)
-
-
-def main(input_csv: str, image_urls: str, output_csv: str) -> None:
-    df = pd.read_csv(input_csv, header=0, index_col=False)
-    # Pandas is trashy shit. Drop duplicates that it seems to read.
+def clean_raw(df: pd.DataFrame) -> pd.DataFrame:
     df = df[[c.name for c in COLUMNS]]  # select columns
 
     for c in COLUMNS:
@@ -69,8 +48,32 @@ def main(input_csv: str, image_urls: str, output_csv: str) -> None:
         if not c.na_allowed:
             df = df[~df[c.name].isna()]
 
-    df = df.astype({c.name: c.dtype for c in COLUMNS if c.dtype is not None})
-    df.to_csv(output_csv, index=None)
+    return df.astype({c.name: c.dtype for c in COLUMNS if c.dtype is not None})
+
+
+def drop_image_duplicates(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    return df[col][~df.duplicated(col)]
+
+
+def main(input_csv: str, image_urls: str, output_csv: str) -> None:
+    df = pd.read_csv(input_csv, header=0, index_col=False)
+    image_urls = pd.read_csv(image_urls, header=None, names=IMAGE_COLS, index_col=False)
+
+    df = clean_raw(df)
+
+    # drop invalid image_urls
+    image_urls = image_urls[LOT_IMAGE_URL][~(image_urls[LOT_IMAGE_URL] == NO_IMAGE_URL)]
+    image_urls = drop_image_duplicates(image_urls, LOT_IMAGE_URL)
+
+    # join on lot_image_url
+    df_all = pd.merge(df, image_urls, on=LOT_IMAGE_URL, how="left")
+
+    col_order = ["id"] + list(df_all.columns)
+
+    # add an id column
+    df["id"] = pd.Series([uuid4() for _ in range(df_all.shape[0])])
+    df_all = df_all[col_order]
+    df_all.to_csv(output_csv, index="id")
 
 
 if __name__ == "__main__":
