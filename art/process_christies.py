@@ -5,7 +5,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Callable, Iterable, List, NamedTuple, Tuple
+from typing import Callable, Iterable, List, NamedTuple, Tuple, Any
 
 DESCRIPTION = "Clean json data, scraped from Christies into a format that can be used for predictive analytics"
 
@@ -341,6 +341,13 @@ def process_lot_details(sale: dict) -> dict:
     return process_sale_details_js(sale)
 
 
+def clean_newlines(val: Any) -> Any:
+    try:
+        return re.sub(re.compile("\n+", " ", val))
+    except TypeError:
+        return val
+
+
 def process_raw_file(file_name: str) -> List[dict]:
     with open(file_name) as f:
         sale = json.load(f)
@@ -366,9 +373,21 @@ def process_raw_file(file_name: str) -> List[dict]:
         # Add missing keys
         lot.update({k: None for k in expected_missing})
 
+        # Strip newlines, which are bad for csvs
+        for k in lot:
+            lot[k] = clean_newlines(lot[k])
+
         assert set(lot.keys()) == set(OUTPUT_KEYS)
 
     return lot_details
+
+
+def write_json(rows: List[dict], path: str) -> None:
+    print("Will write {} rows".format(len(rows)))
+    with open(path, "w") as f:
+        for r in rows:
+            f.write(json.dumps(r))
+            f.write("\n")
 
 
 def main(input_files: str, output_path: str) -> None:
@@ -382,10 +401,11 @@ def main(input_files: str, output_path: str) -> None:
         print("Processing {}".format(fn))
         rows.extend(process_raw_file(fn))
 
+    print("Will write {} rows".format(len(rows)))
+
+    # write_json(rows, output_path)
     with open(output_path, "w") as f:
-        writer = csv.DictWriter(f, OUTPUT_KEYS)
-        writer.writeheader()
-        writer.writerows(rows)
+        json.dump(rows, f)
 
 
 if __name__ == "__main__":
@@ -398,7 +418,7 @@ if __name__ == "__main__":
         type=valid_path,
         help="Input newline delimited json files to process.",
     )
-    parser.add_argument("-o", "--output-path", required=True, help="CSV to save to")
+    parser.add_argument("-o", "--output-path", required=True, help="JSON to save to")
     args = parser.parse_args()
 
     main(args.input_files, args.output_path)
