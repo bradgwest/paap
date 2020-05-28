@@ -188,6 +188,26 @@ optional arguments:
   -h, --help  show this help message and exit
 ```
 
+Given a CSV with data, the following runs an interactive script which opens the
+sale in a browser and asks whether the sale contains 2 dimensional works of art.
+This is a coarse filtering mechanism that is used to exclude sales that are
+comprised mostly of furniture, sculpture, ceramics, and books, which will
+damage the ability of the model.
+
+```sh
+# python art/scripts/is_2d.py --help
+usage: is_2d.py [-h] input_json output_json
+
+Iterate over sales in a dataframe, and determine if they are exclusively 2d artwork
+
+positional arguments:
+  input_json   Input JSON file with sale_number/sale_url column
+  output_json  Output JSON file to write to
+
+optional arguments:
+  -h, --help   show this help message and exit
+```
+
 Resize images to a common minimum dimension (i.e. the smallest of the two image
 dimensions will have this pixel size):
 
