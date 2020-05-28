@@ -37,7 +37,7 @@ COLUMNS = [
     column("lot_medium", None, True)
 ]
 NO_IMAGE_URL = "https://www.christies.com/img/lotimages//Alert/NoImage/non_NoImag.jpg"
-IMAGE_ID = "image_id"
+IMAGE_ID = "lot_image_id"
 LOT_IMAGE_URL = "lot_image_url"
 IMAGE_COLS = [IMAGE_ID, LOT_IMAGE_URL]
 
@@ -61,7 +61,7 @@ def clean_raw(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def drop_image_duplicates(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    return df[col][~df.duplicated(col)]
+    return df[~df.duplicated(col)]
 
 
 def write_json(df: pd.DataFrame, path: str) -> None:
@@ -93,6 +93,7 @@ def main(input_json: str, image_urls: str, output_json: str) -> None:
     image_urls = pd.read_csv(image_urls, header=None, names=IMAGE_COLS, index_col=False)
 
     df = clean_raw(df)
+    df = df[~(df[LOT_IMAGE_URL] == NO_IMAGE_URL)]
 
     # drop invalid image_urls
     image_urls = image_urls[~(image_urls[LOT_IMAGE_URL] == NO_IMAGE_URL)]

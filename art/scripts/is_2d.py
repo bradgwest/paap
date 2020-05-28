@@ -14,7 +14,7 @@ IS_2D = "sale_is_2d"
 
 def check_sale(sale_number: str, sale_url: str) -> bool:
     try:
-        webbrowser.open(sale_url, new=2)
+        webbrowser.open(sale_url, new=0)
     except webbrowser.Error:
         print("Failed to open {}".format(sale_url))
 
@@ -61,7 +61,7 @@ def main(input_json: str, output_json: str) -> None:
             if sale_category == "photographs_and_prints":
                 is_2d = True
             else:
-                check_sale(sale_number, sale_url)
+                is_2d = check_sale(sale_number, sale_url)
 
             rows.append({S_NUMBER: sale_number, S_URL: sale_url, IS_2D: is_2d})
     finally:
