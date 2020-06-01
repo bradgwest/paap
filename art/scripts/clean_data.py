@@ -83,7 +83,7 @@ def write_csv(df: pd.DataFrame, path: str) -> None:
 
 
 def sub_whitespace(v):
-    if isinstance(v, np.int64): 
+    if isinstance(v, np.int64):
         return v
     return re.sub(re.compile(r"\s+"), " ", str(v))
 

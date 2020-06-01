@@ -1,11 +1,10 @@
 import argparse
-import csv
 import datetime
 import json
 import os
 import re
 from pathlib import Path
-from typing import Callable, Iterable, List, NamedTuple, Tuple, Any
+from typing import Any, Callable, Iterable, List, NamedTuple, Tuple
 
 DESCRIPTION = "Clean json data, scraped from Christies into a format that can be used for predictive analytics"
 
