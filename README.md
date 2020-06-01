@@ -208,6 +208,24 @@ optional arguments:
   -h, --help   show this help message and exit
 ```
 
+We filtered images further based on keywords that indicated they might not be
+two dimensional:
+
+```sh
+# python art/scripts/filter_artwork.py -h
+usage: filter_artwork.py [-h] input_json is_2d_json output_json
+
+Filter out artwork that is unsuitable for analysis according to a set of rules
+
+positional arguments:
+  input_json   Path to input json, the output from clean_data.py
+  is_2d_json   Path to is_2d json, the output from is_2d.py
+  output_json  Path to save output json containing only filtered data
+
+optional arguments:
+  -h, --help   show this help message and exit
+```
+
 Resize images to a common minimum dimension (i.e. the smallest of the two image
 dimensions will have this pixel size):
 
