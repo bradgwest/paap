@@ -252,7 +252,21 @@ optional arguments:
 To standardize prices, we calculate exchange rates, relative to a given date in
 time:
 
-# TODO Add me back in
+```sh
+# python art/scripts/exchange_rates.py -h
+usage: exchange_rates.py [-h] [-o OUTPUT] [-d TARGET_DATE]
+
+Get the dollar equivalent of currencies at a given date, and the inflation relative to today. Output is a csv with 5 columns: year, month, currency, dollar_equivalent, inflation. currency is the currency which we wish to convert to
+dollars. dollar_equivalent is the price of that currency, in USD at that year and month. inflation is the multiple by which to multiply a dollar in that year/month to get it's equivalent worth at the target date.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+  -d TARGET_DATE, --target-date TARGET_DATE
+```
+
+Then we join those back into the cleaned dataset:
+
 ```sh
 ```
 
