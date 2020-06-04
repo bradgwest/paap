@@ -56,8 +56,10 @@ def convert_to_dollars(rates: converter.CurrencyRates, year: int, month: int, cu
 
 
 def calculate_inflation(year: int, month: int, target_date: datetime.datetime) -> float:
-    # might raise cpi.errors.CPIObjectDoesNotExist
-    return cpi.inflate(1, datetime.date(year, month, 1), to=target_date)
+    try:
+        return cpi.inflate(1, datetime.date(year, month, 1), to=target_date)
+    except cpi.errors.CPIObjectDoesNotExist:
+        return None
 
 
 def make_currency_map(years: Sequence[int], months: Sequence[int], currencies: Sequence[str]) -> List[ExchangeRateSnapshot]:
