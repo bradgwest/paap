@@ -50,9 +50,11 @@ def main(input_json: Path, output: str) -> None:
     except FileNotFoundError:
         count = 1
 
+    rows = sample[(count - 1):]
+
     f = open(output, "a")
     try:
-        for i, row in sample.iterrows():
+        for i, row in rows.iterrows():
             print("\n{} --- {}".format(count, i))
             print(message(row))
             path = build_image_path(row[Columns.LOT_IMAGE_ID])
