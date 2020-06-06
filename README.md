@@ -246,6 +246,21 @@ optional arguments:
   --delete              Delete the input photo after processing
 ```
 
+We provide a script for randomly sampling the data and determining the
+proportion of non-2d artwork.
+
+```sh
+# python -m art.scripts.sample_is_2d -h
+usage: sample_is_2d.py [-h] [--input INPUT] [--output OUTPUT]
+
+Randomly sample images from a dataset and determine if they are 2d or not
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --input INPUT    Path to input dataframe
+  --output OUTPUT  Where to write the output
+```
+
 
 ### Exchange Rates
 

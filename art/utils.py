@@ -12,7 +12,7 @@ def valid_path(path_str: str) -> Path:
 
 # All data is stored as JSON, oriented as records
 def read_data(path: Path) -> pd.DataFrame:
-    pd.read_json(path, orient="records")
+    return pd.read_json(path, orient="records")
 
 
 def write_data(df: pd.DataFrame, path: str) -> None:
