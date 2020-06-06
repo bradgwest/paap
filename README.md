@@ -195,8 +195,8 @@ comprised mostly of furniture, sculpture, ceramics, and books, which will
 damage the ability of the model.
 
 ```sh
-# python art/scripts/is_2d.py --help
-usage: is_2d.py [-h] input_json output_json
+# python art/scripts/sale_is_2d.py --help
+usage: sale_is_2d.py [-h] input_json output_json
 
 Iterate over sales in a dataframe, and determine if they are exclusively 2d artwork
 

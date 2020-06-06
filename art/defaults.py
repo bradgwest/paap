@@ -8,9 +8,13 @@ class Paths(object):
     IMG_DIR = Path(DATA_DIR, "img")
     CHRISTIES_IMG_DIR = Path(IMG_DIR, "christies")
     S256_IMG_DIR = Path(CHRISTIES_IMG_DIR, "s256")
+    PHOTOS_PRINTS_DIR = Path(CHRISTIES_IMG_DIR, "photos_and_prints")
+    PHOTOS_PRINTS_S256_DIR = Path(PHOTOS_PRINTS_DIR, "s256")
     SCRIPTS_DIR = Path(ART_DIR, "scripts")
     WITH_IMAGES_OUTPUT = Path(DATA_DIR, "with_images_output.json")
     SAMPLE_IS_2D = Path(DATA_DIR, "sample_is_2d_output.json")
+    PHOTOS_PRINTS_IS_2D = Path(DATA_DIR, "photos_and_prints_is_2d_output.json")
+    PHOTOS_PRINTS_OUTPUT = Path(DATA_DIR, "photos_and_prints_only_output.json")
 
 
 class Columns(object):
