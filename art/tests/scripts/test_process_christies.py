@@ -1,4 +1,4 @@
-from .. import process_christies
+from art.scripts import process_christies
 
 
 def test_process_sale_number():
