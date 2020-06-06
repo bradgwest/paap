@@ -268,6 +268,18 @@ optional arguments:
 Then we join those back into the cleaned dataset:
 
 ```sh
+# python art/scripts/calculate_modern_price.py -h
+usage: calculate_modern_price.py [-h] [--filtered_artwork FILTERED_ARTWORK] [--exchange_rates EXCHANGE_RATES] [--output OUTPUT]
+
+Calculate prices in Jan 1, 2020 USD
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --filtered_artwork FILTERED_ARTWORK
+                        Path to filtered artwork json, the output from filter_artwork
+  --exchange_rates EXCHANGE_RATES
+                        Path to the output of exchange rates
+  --output OUTPUT       Output path to write the dataset to
 ```
 
 ## Analysis
