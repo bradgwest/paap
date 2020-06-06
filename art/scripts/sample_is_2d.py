@@ -1,6 +1,5 @@
 import argparse
 import json
-import random
 import subprocess
 from pathlib import Path
 from typing import Mapping, Any
@@ -42,11 +41,16 @@ def ask() -> bool:
 def main(input_json: Path, output: str) -> None:
     df = read_data(input_json)
 
-    seed = random.randint(1, 1000000)
+    seed = 8648
     sample = df.sample(df.shape[0], random_state=seed)
 
-    count = 1
-    f = open(output, "w")
+    try:
+        with open(output) as f:
+            count = len(f.readlines()) + 1
+    except FileNotFoundError:
+        count = 1
+
+    f = open(output, "a")
     try:
         for i, row in sample.iterrows():
             print("\n{} --- {}".format(count, i))
