@@ -10,7 +10,6 @@ data/
 *.png
 
 ### Random Ignores ###
-notes/**
 .todo
 
 ### Library ###
