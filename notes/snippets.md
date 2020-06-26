@@ -20,6 +20,11 @@ Notes about the process that might be used in the paper.
 - discriminative model
 - generative model
 - art periods
+- local receptive field
+- feature map - map from theinput layer to the hidden layer
+- shared weights - the weights in the feature map which are hidden
+- shared bias - the single shared bias that the feature map has for each local receptive field
+- kernal
 
 ## Data Prep
 
@@ -65,6 +70,10 @@ Notes about the process that might be used in the paper.
     to aid in those efforts. If we're able to identify features of artwork that
     are more highly priced, then we can tune AI generative models to more highly
     weight those features which were highly priced.
+
+*   In the past (time period), neural networks have become the gold standard for
+    computer vision tasks, including clustering. We chose this method simply
+    because it's better than other methods.
 
 ## Model
 

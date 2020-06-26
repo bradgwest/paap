@@ -2,6 +2,14 @@
 
 ## Research Question
 
+CNN for predicting art auction prices. Based on DCEC, only rather
+than a clustering layer, we put in a continuous output layer which
+attempts to predict the log of the auction price (would log actually
+be a good thing to use here?). The result is that we actually learn
+common features of the data with the autoencoder/decoder, and don't
+throw that information away. To our knowledge this would be an original
+contribution to the field.
+
 Does an artwork's intrinsic artistic characteristics (the characteristics that
 are not specific to things like it's provenance, creator, age, but are intrisic
 to the work itself like shapes, scenes, and colors) contribute meaningfully to
