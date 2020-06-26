@@ -90,3 +90,17 @@ def test_process_js_maker_no_b():
     expected = "HENRI MATISSE"
     actual = process_christies.process_js_maker(raw)
     assert expected == actual
+
+
+def test_process_html_estimate():
+    raw = "$12,000 - $18,000"
+    expected = (12000, 18000)
+    actual = process_christies.process_html_estimate(raw)
+    assert expected == actual
+
+
+def test_process_html_estimate_hk():
+    raw = "HK$12,000 - HK$18,000"
+    expected = (12000, 18000)
+    actual = process_christies.process_html_estimate(raw)
+    assert expected == actual

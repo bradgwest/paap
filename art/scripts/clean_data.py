@@ -33,6 +33,8 @@ COLUMNS = [
     column("lot_image_url", None, False),
     column("lot_artist", None, True),
     column("lot_realized_price", float, False),
+    column("lot_estimate_low", float, False),
+    column("lot_estimate_high", float, False),
     column("lot_description", None, True),
     column("lot_medium", None, True)
 ]

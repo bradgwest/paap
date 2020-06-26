@@ -15,6 +15,7 @@ LOT_NUMBER_REGEX = re.compile(r"^Lot (?P<number>[0-9\sA-Z]+)$")
 LOT_REALIZED_PRICE = re.compile(r"^[^0-9,]+(?P<price>[0-9,]+)$")
 NO_PUNCTUATION_REGEX = re.compile(r"\D")
 JS_MAKER_REGEX = re.compile(r"^(?P<maker>[\w\s\.]+)\s\([\s0-9bB\-\.]+\)$")
+LOT_ESTIMATE_REGEX = re.compile(r"^(\$|€|£|HK\$|A\$|CHF|INR|CNY)(?P<lower>[0-9,]+) - (\$|€|£|HK\$|A\$|CHF|INR|CNY)(?P<higher>[0-9,]+)$")
 
 # Date Formats
 SALE_STATUS_DATE_FORMAT = "%d %b %Y"
@@ -92,6 +93,8 @@ OUTPUT_KEYS = [
     "lot_item_id",
     "lot_number",
     "lot_realized_price",
+    "lot_estimate_low",
+    "lot_estimate_high",
     "lot_title",
     "lot_artist",
     "lot_description",
@@ -208,6 +211,8 @@ def process_js_lot(raw_lot_details: dict) -> dict:
         ProcessFunction(("lot_description",), "translatedDescription", str),
         ProcessFunction(("lot_realized_price",), "priceRealised", int),
         ProcessFunction(("lot_image_url",), "imageUrl", process_image_url),
+        ProcessFunction(("lot_estimate_low",), "presaleEstimateLow", int),
+        ProcessFunction(("lot_estimate_high",), "presaleEstimateHigh", int),
     ]
 
     return apply_process_functions(raw_lot_details, process_functions)
@@ -278,6 +283,13 @@ def process_html_realized_price(raw: str) -> str:
     return int(price)
 
 
+def process_html_estimate(raw: str) -> str:
+    match = re.search(LOT_ESTIMATE_REGEX, raw)
+    assert match, "process_html_estimate - Did not find realized price: {}".format(raw)
+    lower, higher = (int(re.sub(re.compile(r"[^0-9]"), "", match.group(g))) for g in ["lower", "higher"])
+    return lower, higher
+
+
 def process_html_lot(raw: dict) -> dict:
     # actual_keys = set(raw.keys())
     # # Add some keys that might be missing
@@ -291,6 +303,7 @@ def process_html_lot(raw: dict) -> dict:
         ProcessFunction(("lot_description",), "description", str),
         ProcessFunction(("lot_dimensions", "lot_medium"), "medium_dimensions", process_html_medium_dimensions, True),
         ProcessFunction(("lot_realized_price",), "realized_primary", process_html_realized_price),
+        ProcessFunction(("lot_estimate_low", "lot_estimate_high"), "estimate_primary", process_html_estimate)
     }
     return apply_process_functions(raw, processor_functions)
 
@@ -307,6 +320,11 @@ def process_sale_html_details(sale: dict) -> dict:
             if "realized_primary" in str(e):
                 print("ERROR - KeyError realized_primary: {}, {}".format(l.get("number"), sale.get("input_url")))
                 continue
+
+            if "estimate_primary" in str(e):
+                print("ERROR - KeyError estimate_primary: {}, {}".format(l.get("number"), sale.get("input_url")))
+                continue
+
             raise
 
     return lots
@@ -397,7 +415,6 @@ def main(input_files: str, output_path: str) -> None:
             print("WARNING - Will not process, file is in blacklist: {}".format(fn))
             continue
 
-        print("Processing {}".format(fn))
         rows.extend(process_raw_file(fn))
 
     print("Will write {} rows".format(len(rows)))
