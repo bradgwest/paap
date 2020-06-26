@@ -1,3 +1,15 @@
+# TODO
+* Add exchange rates to the lower and higher estimates
+* Crop the 50k print/photo dataset to 128x128 by resizing to 128 in a minimum and cropping from there
+* Get DCEC-Paint working for clustering MINST
+* Get it working for clustering a subset of photos/prints
+* Rebuild network with fully connected prediction layer
+* Train, tune, validate, test on 50k print/photo dataset
+    - Hopefully no need to clean that dataset further
+* Depending on results:
+    * Train, tune, validate, test on large dataset
+* Get basic statistics about datasets
+
 # Deep Convolutional Autoencoder Prediction of Art Action Prices
 
 ## Abstract
