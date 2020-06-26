@@ -125,3 +125,7 @@ main object from the uncropped image.
 * Minimizing  the  Kullback-Leibler  (KL)  divergence  be-tween a data distribution and an embedded distribution hasbeen used for data visualization and dimensionality reduc-tion (van der Maaten & Hinton, 2008)
 
 * We take inspiration from parametric t-SNE. Instead of min-imizing  KL  divergence  to  produce  an  embedding  that  isfaithful to distances in the original data space,  we definea centroid-based probability distribution and minimize itsKL divergence to an auxiliary target distribution to simul-taneously improve clustering assignment and feature repre-sentation.
+
+## How is artwork apprasied
+
+https://www.christies.com/features/How-is-an-artwork-appraised-10033-1.aspx?lid=1
