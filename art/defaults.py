@@ -49,7 +49,7 @@ path_debug_props = [
     "WITH_IMAGES_OUTPUT",
     "IMG_DIR",
     "CHRISTIES_IMG_DIR",
-    "S256_IMG_DIR"
+    "S256_IMG_DIR",
 ]
 debug = ["{}: {}".format(k, getattr(Paths, k)) for k in path_debug_props]
 
