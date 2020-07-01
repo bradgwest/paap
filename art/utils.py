@@ -10,6 +10,13 @@ def valid_path(path_str: str) -> Path:
     return path
 
 
+def valid_directory(directory_str: str) -> Path:
+    directory = Path(directory_str)
+    if not (directory.exists() and directory.is_dir()):
+        raise ValueError("{} is not a valid directory".format(directory))
+    return directory
+
+
 # All data is stored as JSON, oriented as records
 def read_data(path: Path) -> pd.DataFrame:
     return pd.read_json(path, orient="records")
