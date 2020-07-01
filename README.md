@@ -297,6 +297,25 @@ optional arguments:
   --output OUTPUT       Output path to write the dataset to
 ```
 
+Center crop images to a minimum dimension:
+
+```sh
+# python -m art.scripts.crop_images -h
+usage: crop_images.py [-h] images output_dir
+
+Crop images so they are square
+
+positional arguments:
+  images      Images to process a newline separated file of image paths. A
+              command like the following should get you started: `find
+              data/img/christies/raw/ -type f -name '*.jpg' >
+              data/img/christies/raw_images.txt`
+  output_dir  Directory to save cropped images to
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
 ## Analysis
 
 All major analysis is performed in python 3.8 as a series of scripts.
