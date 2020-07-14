@@ -1,7 +1,12 @@
+import csv
+import os
 from time import time
+from typing import Tuple, Iterable
 
 import keras.backend as K
 import numpy as np
+import tensorflow as tf
+from tensorflow.python.client import device_lib
 from keras.engine.topology import InputSpec, Layer
 from keras.models import Model
 from keras.utils.vis_utils import plot_model
@@ -9,8 +14,34 @@ from sklearn.cluster import KMeans
 
 import metrics
 from ConvAE import CAE
+from datasets import load_mnist, load_usps, load_photos_and_prints
 
 
+DESCRIPTION = """
+DCEC-Paint implementation adapted from DCEC by Guo et al., 2017. See Castellano and Vessio, 2020 for more information.
+The network is a Deep Convolutional Auto Encoder for clustering artwork images with a loss function that is jointly
+optimized to minimize reporduction error and clustering loss.
+""".strip()
+
+
+class Defaults(object):
+    DATASET_PHOTOS_AND_PRINTS = "photos_and_prints"
+    DATASET_MNIST = "mnist"
+    NUM_CLUSTERS = 10
+    BATCH_SIZE = 256
+    MAXITER = 2e4
+    GAMMA = 0.1
+    UPDATE_INTERVAL = 140
+    TOL = 0.001
+    CAE_WEIGHTS = None
+    SAVE_DIR = "results/temp"
+    # 128x128x3 (raw input) -> 64x64x32 (conv1) -> 32x32x64 (conv2) -> 16x16x128 (conv3) -> 32768 (flatten) ->
+    # 32 (fully connected) -> (mirrored decoder)
+    CONVOLUTIONAL_FILTERS = [32, 64, 128, 32]  # Final is the fully connected clustering layer
+    ALPHA = 1.0
+
+
+# TODO This will become the Prediction layer
 class ClusteringLayer(Layer):
     """
     Clustering layer converts input sample (feature) to soft label, i.e. a vector that represents the probability of the
@@ -48,6 +79,7 @@ class ClusteringLayer(Layer):
         )
         if self.initial_weights is not None:
             self.set_weights(self.initial_weights)
+            # TODO Why delete?
             del self.initial_weights
         self.built = True
 
@@ -74,9 +106,23 @@ class ClusteringLayer(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
+# TODO need to rescale in here
 class DCEC(object):
-    def __init__(self, input_shape, filters=[32, 64, 128, 10], n_clusters=10, alpha=1.0):
+    def __init__(self,
+                 input_shape: Tuple[int, int, int],
+                 filters: Iterable[int] = Defaults.CONVOLUTIONAL_FILTERS,
+                 n_clusters: int = Defaults.NUM_CLUSTERS,
+                 alpha: int = Defaults.ALPHA):
+        """DCEC Model
 
+        :param input_shape: Shape of the input layer in the model
+        :param filters: Number of filters in the convolutional layers, plus the size of the clustering layer. Hence the
+            length should equal len(convolutional layers) + 1.
+        :param n_clusters: k, the number of clusters to target
+        # TODO Do we need this parameter?
+        :param alpha: parameter in Student's t distribution
+        """
+        # TODO Add activation as a parameter to this model
         super(DCEC, self).__init__()
 
         self.n_clusters = n_clusters
@@ -93,7 +139,8 @@ class DCEC(object):
         clustering_layer = ClusteringLayer(self.n_clusters, name="clustering")(hidden)
         self.model = Model(inputs=self.cae.input, outputs=[clustering_layer, self.cae.output])
 
-    def pretrain(self, x, batch_size=256, epochs=200, optimizer="adam", save_dir="results/temp"):
+    # TODO we should really be training for 200 epochs
+    def pretrain(self, x, batch_size=256, epochs=100, optimizer="adam", save_dir="results/temp"):
         print("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
         from keras.callbacks import CSVLogger
@@ -153,6 +200,7 @@ class DCEC(object):
             self.cae.load_weights(cae_weights)
             print("cae_weights is loaded successfully.")
 
+        # TODO Will I need some way to initialize the predictions?
         # Step 2: initialize cluster centers using k-means
         t1 = time()
         print("Initializing cluster centers with k-means.")
@@ -163,7 +211,6 @@ class DCEC(object):
 
         # Step 3: deep clustering
         # logging file
-        import csv, os
 
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -171,7 +218,6 @@ class DCEC(object):
         logwriter = csv.DictWriter(logfile, fieldnames=["iter", "acc", "nmi", "ari", "L", "Lc", "Lr"])
         logwriter.writeheader()
 
-        t2 = time()
         loss = [0, 0, 0]
         index = 0
         for ite in range(int(maxiter)):
@@ -237,26 +283,34 @@ if __name__ == "__main__":
     # setting the hyper parameters
     import argparse
 
-    parser = argparse.ArgumentParser(description="train")
-    parser.add_argument("dataset", default="mnist", choices=["mnist", "usps", "mnist-test"])
-    parser.add_argument("--n_clusters", default=10, type=int)
-    parser.add_argument("--batch_size", default=256, type=int)
-    parser.add_argument("--maxiter", default=2e4, type=int)
-    parser.add_argument("--gamma", default=0.1, type=float, help="coefficient of clustering loss")
-    parser.add_argument("--update_interval", default=140, type=int)
-    parser.add_argument("--tol", default=0.001, type=float)
-    parser.add_argument("--cae_weights", default=None, help="This argument must be given")
-    parser.add_argument("--save_dir", default="results/temp")
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument("dataset", default=Defaults.DATASET_PHOTOS_AND_PRINTS, help="Dataset to run on, defaults to {}".format(Defaults.DATASET_PHOTOS_AND_PRINTS))
+    parser.add_argument("--dataset-path", default="./data/photos_and_prints")
+    parser.add_argument("--n-clusters", default=Defaults.NUM_CLUSTERS, type=int, help="Final number of clusters, k, defaults to {}".format(Defaults.NUM_CLUSTERS))
+    parser.add_argument("--batch-size", default=Defaults.BATCH_SIZE, type=int, help="Training batch size, defaults to {}".format(Defaults.BATCH_SIZE))
+    parser.add_argument("--maxiter", default=Defaults.MAXITER, type=int, help="defaults to {}".format(Defaults.MAXITER))
+    parser.add_argument("--gamma", default=Defaults.GAMMA, type=float, help="coefficient of clustering loss, defaults to {}".format(Defaults.GAMMA))
+    parser.add_argument("--update-interval", default=Defaults.UPDATE_INTERVAL, type=int, help="defaults to {}".format(Defaults.UPDATE_INTERVAL))
+    parser.add_argument("--tol", default=Defaults.TOL, type=float, help="defaults to {}".format(Defaults.TOL))
+    parser.add_argument("--cae-weights", default=Defaults.CAE_WEIGHTS, help="This argument must be given, defaults to {}".format(Defaults.CAE_WEIGHTS))
+    parser.add_argument("--save-dir", default=Defaults.SAVE_DIR, help="defaults to {}".format(Defaults.SAVE_DIR))
+    parser.add_argument('--assert-gpu', action="store_true")
     args = parser.parse_args()
     print(args)
 
-    import os
+    # Make sure we actually have a GPU if we want one
+    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+    devices = device_lib.list_local_devices()
+    print(devices)
+    if args.assert_gpu:
+        device_types = {d.device_type for d in devices}
+        assert "GPU" in device_types, "No GPU found in devices"
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
+    # TODO Load the christies dataset - figure out what this is returning
     # load dataset
-    from datasets import load_mnist, load_usps
 
     if args.dataset == "mnist":
         x, y = load_mnist()
@@ -265,15 +319,22 @@ if __name__ == "__main__":
     elif args.dataset == "mnist-test":
         x, y = load_mnist()
         x, y = x[60000:], y[60000:]
+    elif args.dataset == "photos_and_prints":
+        x, y = load_photos_and_prints(args.dataset_path)
 
+    # TODO Update filters to match what DCEC-Paint has
     # prepare the DCEC model
-    dcec = DCEC(input_shape=x.shape[1:], filters=[32, 64, 128, 10], n_clusters=args.n_clusters)
+    dcec = DCEC(input_shape=x.shape[1:], filters=Defaults.CONVOLUTIONAL_FILTERS, n_clusters=args.n_clusters)
     plot_model(dcec.model, to_file=args.save_dir + "/dcec_model.png", show_shapes=True)
     dcec.model.summary()
 
+    # TODO Parameterize these things
     # begin clustering.
     optimizer = "adam"
     dcec.compile(loss=["kld", "mse"], loss_weights=[args.gamma, 1], optimizer=optimizer)
+
+    exit(0)
+
     dcec.fit(
         x,
         y=y,

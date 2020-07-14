@@ -1,4 +1,7 @@
+import os
+
 import numpy as np
+from skimage import io
 
 
 def load_mnist():
@@ -45,3 +48,18 @@ def load_usps(data_path="./data/usps"):
     y = np.concatenate((labels_train, labels_test))
     print("USPS samples", x.shape)
     return x, y
+
+
+def load_photos_and_prints(data_path="./data/photos_and_prints"):
+    # load images
+    image_paths = [os.path.join(data_path, f) for f in os.listdir(data_path) if f.endswith(".jpg")]
+    images_raw = []
+    for fp in image_paths:
+        images_raw.append(io.imread(fp))
+    images = np.array(images_raw)
+
+    # Scale pixel values
+    images = images / 255.0
+    print("Christies Photos and Prints:", images.shape)
+
+    return images, None

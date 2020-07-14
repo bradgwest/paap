@@ -1,0 +1,32 @@
+
+FROM gcr.io/deeplearning-platform-release/tf2-gpu.2-2:latest
+
+ENV SERVICE_EMAIL=paap-crawl@art-auction-prices.iam.gserviceaccount.com
+ENV GCLOUD_PROJECT=art-auction-prices
+
+RUN gcloud config set project $GCLOUD_PROJECT
+
+# Install graphviz for plotting models
+RUN apt-get update && apt-get -y install graphviz
+
+WORKDIR /build
+RUN mkdir results
+ADD nn/requirements.txt /build/requirements.txt
+ADD nn/dcec_paint/run_model.sh /build/run_model.sh
+
+# create venv and install reqs
+RUN python -m venv dcec
+RUN dcec/bin/pip install -r requirements.txt
+
+# Add code
+ADD nn/dcec_paint/*.py /build/
+
+# Add data
+# RUN mkdir -p /build/data/photos_and_prints
+# ADD data/img/christies/s128/photos_and_prints/*.jpg /build/data/photos_and_prints/
+
+# ADD paap-crawl-key.json /build/paap-key.json
+# RUN gcloud auth activate-service-account $SERVICE_EMAIL --key-file=/build/paap-key.json
+
+# CMD ["dcec/bin/python", "DCEC.py", "mnist"]
+CMD ["bash", "run_model.sh"]

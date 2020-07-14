@@ -3,6 +3,7 @@
 
 ### Data ###
 data/
+!data/img/christies/s128/photos_and_prints/*.jpg
 *.csv
 *.xlsx
 *.xls

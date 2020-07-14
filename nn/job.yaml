@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dcec-training-pod
+spec:
+  activeDeadlineSeconds: 10800
+  template:
+    metadata:
+      name: dcec-paint
+    spec:
+      containers:
+      - name: dcec
+        image: gcr.io/art-auction-prices/dcec-k8s-gpu:latest
+        resources:
+          # let it take the whole vm
+          limits:
+            memory: "8Gi"
+            cpu: 1
+            nvidia.com/gpu: 1
+      # Do not restart containers after they exit
+      restartPolicy: Never
+  # of retries before marking as failed.
+  backoffLimit: 2
+

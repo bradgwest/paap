@@ -1,13 +1,30 @@
 # TODO
-* Add exchange rates to the lower and higher estimates
-* Crop the 50k print/photo dataset to 128x128 by resizing to 128 in a minimum and cropping from there
-* Get DCEC-Paint working for clustering MINST
-* Get it working for clustering a subset of photos/prints
+* Get DCEC-Paint clustering for photos and prints, with their changes:
+    - ELU rather than ReLU
+    - larger latent embedding space
+    - Loss importance on clustering rather than decoder
+    - ON GCP
+        + Docker image
+        + Deploy script
+        + Logs to GCS or something like that if it's longer than 5 minutes to trained
+        + Needs to be efficient because you're going to do this a lot
+        + Config file?
+
 * Rebuild network with fully connected prediction layer
+    - What is your loss function?
+    - How do you set this? They did it with Kmeans, what should you do it with?
+        + Mean of the training set
+        + Median of the training set
+        + Something random from the training set?
+        + 0?
+
 * Train, tune, validate, test on 50k print/photo dataset
+    - clean that dataset??
     - Hopefully no need to clean that dataset further
+
 * Depending on results:
     * Train, tune, validate, test on large dataset
+
 * Get basic statistics about datasets
 
 # Deep Convolutional Autoencoder Prediction of Art Action Prices

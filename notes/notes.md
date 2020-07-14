@@ -129,3 +129,9 @@ main object from the uncropped image.
 ## How is artwork apprasied
 
 https://www.christies.com/features/How-is-an-artwork-appraised-10033-1.aspx?lid=1
+
+
+## Tricks
+
+* Data preprocessing - tf.keras.preprocessing.image_dataset_from_directory turns image files sorted into class-specific folders into a labeled dataset of image tensors.
+* use the functional api to include models with multiple inputs and outputs

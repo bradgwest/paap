@@ -1,3 +1,6 @@
 Keras==2.4.3
 scikit-learn==0.23
-tensorflow==2.2.0
+tensorflow-gpu==2.2.0
+pydot==1.4.1
+graphviz==0.14
+scikit-image==0.17.2
