@@ -1,4 +1,3 @@
-
 FROM gcr.io/deeplearning-platform-release/tf2-gpu.2-2:latest
 
 ENV SERVICE_EMAIL=paap-crawl@art-auction-prices.iam.gserviceaccount.com
@@ -20,10 +19,6 @@ RUN dcec/bin/pip install -r requirements.txt
 
 # Add code
 ADD nn/dcec_paint/*.py /build/
-
-# Add data
-# RUN mkdir -p /build/data/photos_and_prints
-# ADD data/img/christies/s128/photos_and_prints/*.jpg /build/data/photos_and_prints/
 
 # ADD paap-crawl-key.json /build/paap-key.json
 # RUN gcloud auth activate-service-account $SERVICE_EMAIL --key-file=/build/paap-key.json
