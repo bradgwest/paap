@@ -333,8 +333,6 @@ if __name__ == "__main__":
     optimizer = "adam"
     dcec.compile(loss=["kld", "mse"], loss_weights=[args.gamma, 1], optimizer=optimizer)
 
-    exit(0)
-
     dcec.fit(
         x,
         y=y,
