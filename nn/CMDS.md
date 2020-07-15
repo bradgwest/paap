@@ -102,7 +102,3 @@ https://cloud.google.com/ai-platform/deep-learning-vm/docs/introduction?hl=sk
 https://console.cloud.google.com/apis/credentials?project=art-auction-prices
 
 https://cloud.google.com/ai-platform/deep-learning-containers/docs/kubernetes-container
-
-TODO
-* Don't restart pod (Run it as a job)
-* 

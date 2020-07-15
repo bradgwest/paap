@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 from time import time
 from typing import Tuple, Iterable
@@ -15,6 +16,10 @@ from sklearn.cluster import KMeans
 import metrics
 from ConvAE import CAE
 from datasets import load_mnist, load_usps, load_photos_and_prints
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 DESCRIPTION = """
@@ -141,7 +146,7 @@ class DCEC(object):
 
     # TODO we should really be training for 200 epochs
     def pretrain(self, x, batch_size=256, epochs=100, optimizer="adam", save_dir="results/temp"):
-        print("...Pretraining...")
+        logger.info("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
         from keras.callbacks import CSVLogger
 
@@ -150,9 +155,9 @@ class DCEC(object):
         # begin training
         t0 = time()
         self.cae.fit(x, x, batch_size=batch_size, epochs=epochs, callbacks=[csv_logger])
-        print("Pretraining time: ", time() - t0)
+        logger.info("Pretraining time: {}".format(time() - t0))
         self.cae.save(save_dir + "/pretrain_cae_model.h5")
-        print("Pretrained weights are saved to %s/pretrain_cae_model.h5" % save_dir)
+        logger.info("Pretrained weights are saved to %s/pretrain_cae_model.h5" % save_dir)
         self.pretrained = True
 
     def load_weights(self, weights_path):
@@ -185,25 +190,25 @@ class DCEC(object):
         save_dir="./results/temp",
     ):
 
-        print("Update interval", update_interval)
+        logger.info("Update interval {}".format(update_interval))
         save_interval = x.shape[0] / batch_size * 5
-        print("Save interval", save_interval)
+        logger.info("Save interval {}".format(save_interval))
 
         # Step 1: pretrain if necessary
         t0 = time()
         if not self.pretrained and cae_weights is None:
-            print("...pretraining CAE using default hyper-parameters:")
-            print("   optimizer='adam';   epochs=200")
+            logger.info("...pretraining CAE using default hyper-parameters:")
+            logger.info("   optimizer='adam';   epochs=200")
             self.pretrain(x, batch_size, save_dir=save_dir)
             self.pretrained = True
         elif cae_weights is not None:
             self.cae.load_weights(cae_weights)
-            print("cae_weights is loaded successfully.")
+            logger.info("cae_weights is loaded successfully.")
 
         # TODO Will I need some way to initialize the predictions?
         # Step 2: initialize cluster centers using k-means
         t1 = time()
-        print("Initializing cluster centers with k-means.")
+        logger.info("Initializing cluster centers with k-means.")
         kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
         self.y_pred = kmeans.fit_predict(self.encoder.predict(x))
         y_pred_last = np.copy(self.y_pred)
@@ -234,14 +239,14 @@ class DCEC(object):
                     loss = np.round(loss, 5)
                     logdict = dict(iter=ite, acc=acc, nmi=nmi, ari=ari, L=loss[0], Lc=loss[1], Lr=loss[2])
                     logwriter.writerow(logdict)
-                    print("Iter", ite, ": Acc", acc, ", nmi", nmi, ", ari", ari, "; loss=", loss)
+                    logger.info("Iter {}: Acc {}, nmi {}, ari {}; loss={}".format(ite, acc, nmi, ari, loss))
 
                 # check stop criterion
                 delta_label = np.sum(self.y_pred != y_pred_last).astype(np.float32) / self.y_pred.shape[0]
                 y_pred_last = np.copy(self.y_pred)
                 if ite > 0 and delta_label < tol:
-                    print("delta_label ", delta_label, "< tol ", tol)
-                    print("Reached tolerance threshold. Stopping training.")
+                    logger.info("delta_label {} < tol {}".format(delta_label, tol))
+                    logger.info("Reached tolerance threshold. Stopping training.")
                     logfile.close()
                     break
 
@@ -264,19 +269,19 @@ class DCEC(object):
             # save intermediate model
             if ite % save_interval == 0:
                 # save DCEC model checkpoints
-                print("saving model to:", save_dir + "/dcec_model_" + str(ite) + ".h5")
+                logger.info("saving model to: {}".format(save_dir + "/dcec_model_" + str(ite) + ".h5"))
                 self.model.save_weights(save_dir + "/dcec_model_" + str(ite) + ".h5")
 
             ite += 1
 
         # save the trained model
         logfile.close()
-        print("saving model to:", save_dir + "/dcec_model_final.h5")
+        logger.info("saving model to: {}".format(save_dir + "/dcec_model_final.h5"))
         self.model.save_weights(save_dir + "/dcec_model_final.h5")
         t3 = time()
-        print("Pretrain time:  ", t1 - t0)
-        print("Clustering time:", t3 - t1)
-        print("Total time:     ", t3 - t0)
+        logger.info("Pretrain time:   {}".format(t1 - t0))
+        logger.info("Clustering time: {}".format(t3 - t1))
+        logger.info("Total time:      {}".format(t3 - t0))
 
 
 if __name__ == "__main__":
@@ -296,10 +301,10 @@ if __name__ == "__main__":
     parser.add_argument("--save-dir", default=Defaults.SAVE_DIR, help="defaults to {}".format(Defaults.SAVE_DIR))
     parser.add_argument('--assert-gpu', action="store_true")
     args = parser.parse_args()
-    print(args)
+    logger.info(args)
 
     # Make sure we actually have a GPU if we want one
-    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+    logger.info("Num GPUs Available: {}".format(len(tf.config.experimental.list_physical_devices('GPU'))))
     devices = device_lib.list_local_devices()
     print(devices)
     if args.assert_gpu:
@@ -343,6 +348,6 @@ if __name__ == "__main__":
         cae_weights=args.cae_weights,
     )
     y_pred = dcec.y_pred
-    print(
+    logger.info(
         "acc = %.4f, nmi = %.4f, ari = %.4f" % (metrics.acc(y, y_pred), metrics.nmi(y, y_pred), metrics.ari(y, y_pred))
     )

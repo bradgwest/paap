@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dcec-training-pod
+  name: dcec-pod
 spec:
   activeDeadlineSeconds: 10800
   template:
@@ -10,11 +10,11 @@ spec:
     spec:
       containers:
       - name: dcec
-        image: gcr.io/art-auction-prices/dcec-k8s-gpu:latest
+        image: gcr.io/art-auction-prices/dcec-paint-k8s-gpu:latest
         resources:
           # let it take the whole vm
           limits:
-            memory: "8Gi"
+            memory: "9.5Gi"
             cpu: 1
             nvidia.com/gpu: 1
       # Do not restart containers after they exit
