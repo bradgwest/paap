@@ -48,8 +48,17 @@ class Defaults(object):
     ALPHA = 1.0
 
 
-def save_model_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results/"):
+def save_results_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results/"):
     cmd = ["gsutil", "-m", "cp", "-r", src, dst]
+    p = subprocess.run(cmd)
+    try:
+        p.check_returncode()
+    except subprocess.CalledProcessError:
+        logger.exception("Failed to write to gcs")
+
+
+def save_model_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/"):
+    cmd = ["gsutil", "cp", src, dst]
     p = subprocess.run(cmd)
     try:
         p.check_returncode()
@@ -170,7 +179,7 @@ class DCEC(object):
         logger.info("Pretraining time: {}".format(time() - t0))
         self.cae.save(save_dir + "/pretrain_cae_model.h5")
         logger.info("Pretrained weights are saved to %s/pretrain_cae_model.h5" % save_dir)
-        save_model_to_gcs(save_dir)
+        save_results_to_gcs(save_dir)
         self.pretrained = True
 
     def load_weights(self, weights_path):
@@ -195,7 +204,7 @@ class DCEC(object):
         self,
         x,
         y=None,
-        batch_size=256,
+        batch_size=100,  # This was 256
         maxiter=2e4,
         tol=1e-3,
         update_interval=140,
@@ -283,7 +292,9 @@ class DCEC(object):
             if ite % save_interval == 0:
                 # save DCEC model checkpoints
                 logger.info("saving model to: {}".format(save_dir + "/dcec_model_" + str(ite) + ".h5"))
-                self.model.save_weights(save_dir + "/dcec_model_" + str(ite) + ".h5")
+                path = save_dir + "/dcec_model_" + str(ite) + ".h5"
+                self.model.save_weights(path)
+                save_model_to_gcs(path)
 
             ite += 1
 
