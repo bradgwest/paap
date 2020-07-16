@@ -9,6 +9,8 @@ data/
 *.json
 *.png
 
+results/
+
 ### Random Ignores ###
 .todo
 

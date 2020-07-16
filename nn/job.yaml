@@ -14,11 +14,11 @@ spec:
         resources:
           # let it take the whole vm
           limits:
-            memory: "9.5Gi"
-            cpu: 1
+            memory: "40Gi"
+            cpu: 6
             nvidia.com/gpu: 1
       # Do not restart containers after they exit
       restartPolicy: Never
   # of retries before marking as failed.
-  backoffLimit: 2
+  # backoffLimit: 1
 

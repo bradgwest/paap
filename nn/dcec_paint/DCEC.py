@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import subprocess
 from time import time
 from typing import Tuple, Iterable
 
@@ -19,6 +20,7 @@ from datasets import load_mnist, load_usps, load_photos_and_prints
 
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 logger.setLevel(logging.INFO)
 
 
@@ -44,6 +46,15 @@ class Defaults(object):
     # 32 (fully connected) -> (mirrored decoder)
     CONVOLUTIONAL_FILTERS = [32, 64, 128, 32]  # Final is the fully connected clustering layer
     ALPHA = 1.0
+
+
+def save_model_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results/"):
+    cmd = ["gsutil", "-m", "cp", "-r", src, dst]
+    p = subprocess.run(cmd)
+    try:
+        p.check_returncode()
+    except subprocess.CalledProcessError:
+        logger.exception("Failed to write to gcs")
 
 
 # TODO This will become the Prediction layer
@@ -145,19 +156,21 @@ class DCEC(object):
         self.model = Model(inputs=self.cae.input, outputs=[clustering_layer, self.cae.output])
 
     # TODO we should really be training for 200 epochs
-    def pretrain(self, x, batch_size=256, epochs=100, optimizer="adam", save_dir="results/temp"):
+    def pretrain(self, x, batch_size=256, epochs=200, optimizer="adam", save_dir="results/temp"):
         logger.info("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
         from keras.callbacks import CSVLogger
 
         csv_logger = CSVLogger(args.save_dir + "/pretrain_log.csv")
 
+        # TODO SAVE TO GCS (intermediate)
         # begin training
         t0 = time()
         self.cae.fit(x, x, batch_size=batch_size, epochs=epochs, callbacks=[csv_logger])
         logger.info("Pretraining time: {}".format(time() - t0))
         self.cae.save(save_dir + "/pretrain_cae_model.h5")
         logger.info("Pretrained weights are saved to %s/pretrain_cae_model.h5" % save_dir)
+        save_model_to_gcs(save_dir)
         self.pretrained = True
 
     def load_weights(self, weights_path):

@@ -50,9 +50,9 @@ docker push $IMAGE_URI
 # Create a cluster
 gcloud container clusters create paap-training-cluster \
     --num-nodes=1 \
-    --zone=us-west1-b \
+    --zone=us-central1-f \
     --accelerator="type=nvidia-tesla-t4,count=1" \
-    --machine-type="n1-highmem-2" \
+    --machine-type="n1-highmem-8" \
     --scopes="gke-default,storage-rw" \
     --preemptible
 
@@ -79,9 +79,9 @@ kubectl describe pod dcec-training-pod
 gcloud container node-pools create dcec-pool \
     --cluster=paap-training-cluster \
     --num-nodes=1 \
-    --zone=us-west1-b \
+    --zone=us-central1-f \
     --accelerator="type=nvidia-tesla-t4,count=1" \
-    --machine-type="n1-highmem-2" \
+    --machine-type="n1-highmem-8" \
     --scopes="gke-default,storage-rw" \
     --preemptible
 ```
