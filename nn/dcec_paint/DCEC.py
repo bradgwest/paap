@@ -213,7 +213,7 @@ class DCEC(object):
     ):
 
         logger.info("Update interval {}".format(update_interval))
-        save_interval = x.shape[0] / batch_size * 5
+        save_interval = int(x.shape[0] / batch_size * 5)
         logger.info("Save interval {}".format(save_interval))
 
         # Step 1: pretrain if necessary
@@ -385,7 +385,8 @@ if __name__ == "__main__":
         save_dir=args.save_dir,
         cae_weights=args.cae_weights,
     )
-    y_pred = dcec.y_pred
-    logger.info(
-        "acc = %.4f, nmi = %.4f, ari = %.4f" % (metrics.acc(y, y_pred), metrics.nmi(y, y_pred), metrics.ari(y, y_pred))
-    )
+    if y is not None:
+        y_pred = dcec.y_pred
+        logger.info(
+            "acc = %.4f, nmi = %.4f, ari = %.4f" % (metrics.acc(y, y_pred), metrics.nmi(y, y_pred), metrics.ari(y, y_pred))
+        )
