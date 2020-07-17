@@ -102,3 +102,19 @@ https://cloud.google.com/ai-platform/deep-learning-vm/docs/introduction?hl=sk
 https://console.cloud.google.com/apis/credentials?project=art-auction-prices
 
 https://cloud.google.com/ai-platform/deep-learning-containers/docs/kubernetes-container
+
+
+```sh
+# set up new zone
+gcloud config set compute/zone us-east1-c
+
+gcloud container clusters create paap-training-cluster \
+    --num-nodes=1 \
+    --zone=us-east1-c \
+    --accelerator="type=nvidia-tesla-t4,count=1" \
+    --machine-type="n1-highmem-16" \
+    --scopes="gke-default,storage-rw" \
+    --preemptible
+
+gcloud container clusters get-credentials paap-training-cluster
+```

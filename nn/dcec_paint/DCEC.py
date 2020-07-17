@@ -20,8 +20,8 @@ from datasets import load_mnist, load_usps, load_photos_and_prints
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-logger.setLevel(logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 DESCRIPTION = """
@@ -57,7 +57,7 @@ def save_results_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results
         logger.exception("Failed to write to gcs")
 
 
-def save_model_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/"):
+def save_model_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/temp/"):
     cmd = ["gsutil", "cp", src, dst]
     p = subprocess.run(cmd)
     try:
@@ -204,10 +204,10 @@ class DCEC(object):
         self,
         x,
         y=None,
-        batch_size=100,  # This was 256
+        batch_size=128,  # This was 256, Castellano used 128
         maxiter=2e4,
         tol=1e-3,
-        update_interval=140,
+        update_interval=140,  # Was 140
         cae_weights=None,
         save_dir="./results/temp",
     ):
@@ -249,12 +249,14 @@ class DCEC(object):
         index = 0
         for ite in range(int(maxiter)):
             if ite % update_interval == 0:
+                logger.info("Updating. Iter {}".format(ite))
                 q, _ = self.model.predict(x, verbose=0)
                 p = self.target_distribution(q)  # update the auxiliary target distribution p
 
                 # evaluate the clustering performance
                 self.y_pred = q.argmax(1)
                 if y is not None:
+                    logger.info("{} calculating acc".format(ite))
                     acc = np.round(metrics.acc(y, self.y_pred), 5)
                     nmi = np.round(metrics.nmi(y, self.y_pred), 5)
                     ari = np.round(metrics.ari(y, self.y_pred), 5)
@@ -334,6 +336,18 @@ if __name__ == "__main__":
     if args.assert_gpu:
         device_types = {d.device_type for d in devices}
         assert "GPU" in device_types, "No GPU found in devices"
+
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+                logger.info("{} Physical GPUs, Logical GPUs {}".format(len(gpus), len(logical_gpus)))
+        except RuntimeError as e:
+            # Memory growth must be set before GPUs have been initialized
+            print(e)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)

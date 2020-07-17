@@ -52,7 +52,7 @@ def load_usps(data_path="./data/usps"):
 
 def load_photos_and_prints(data_path="./data/photos_and_prints_split/train"):
     # load images
-    image_paths = [os.path.join(data_path, f) for f in os.listdir(data_path) if f.endswith(".jpg")][:20000]
+    image_paths = [os.path.join(data_path, f) for f in os.listdir(data_path) if f.endswith(".jpg")][:7500]
     images_raw = []
     for fp in image_paths:
         images_raw.append(io.imread(fp))
