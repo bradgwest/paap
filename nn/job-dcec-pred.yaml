@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dcec-pred
+spec:
+  activeDeadlineSeconds: 10800
+  template:
+    metadata:
+      name: dcec-pred
+    spec:
+      containers:
+      - name: dcec
+        image: gcr.io/art-auction-prices/dcec-pred-k8s-gpu:latest
+        resources:
+          # let it take the whole vm
+          limits:
+            memory: "90Gi"
+            cpu: 13
+            nvidia.com/gpu: 1
+        env:
+          - name: DCEC_DATASET_PATH
+            value: "gs://paap/nn/data/photos_and_prints_split.tar.gz"
+          - name: DCEC_DATA_DIR
+            value: "/build/data"
+          - name: DCEC_BATCH_SIZE
+            value: "512"
+          - name: DCEC_MAX_ITER
+            value: "20000"
+          - name: DCEC_GAMMA
+            value: "0.1"
+          - name: DCEC_UPDATE_INTERVAL
+            value: "140"
+          - name: DCEC_TOLERANCE
+            value: "0.001"
+          - name: DCEC_CAE_WEIGHTS
+          - name: DCEC_SAVE_DIR
+          - name: DCEC_ALPHA
+            value: "1.0"
+          - name: DCEC_ASSERT_GPU
+            value: "True"
+          - name: DCEC_EPOCHS
+            value: "200"
+      # Do not restart pods if they fail
+      restartPolicy: Never
+  # of retries before marking as failed. 
+  backoffLimit: 1
+

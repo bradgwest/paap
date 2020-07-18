@@ -1,29 +1,21 @@
 # TODO
-* Get DCEC-Paint clustering for photos and prints, with their changes:
-    - ELU rather than ReLU
-    - larger latent embedding space
-    - Loss importance on clustering rather than decoder
-    - ON GCP
-        + Docker image
-        + Deploy script
-        + Logs to GCS or something like that if it's longer than 5 minutes to trained
-        + Needs to be efficient because you're going to do this a lot
-        + Config file?
-
 * Rebuild network with fully connected prediction layer
-    - What is your loss function?
+    - Use google cloud storage library to update things
+    - Read configurations from environment variables set in the job.yaml
+    - What is your loss function? - What is their loss function?
+    - Get rid of run model.py
     - How do you set this? They did it with Kmeans, what should you do it with?
         + Mean of the training set
         + Median of the training set
         + Something random from the training set?
         + 0?
 
+* Select a meaningful 10-15k photos? With artist? Is that possible?
+* What about selecting traditional visual characteristics of the photo, how does that perform?
+
 * Train, tune, validate, test on 50k print/photo dataset
     - clean that dataset??
     - Hopefully no need to clean that dataset further
-
-* Depending on results:
-    * Train, tune, validate, test on large dataset
 
 * Get basic statistics about datasets
 
