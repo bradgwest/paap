@@ -16,9 +16,9 @@ from keras.layers import Conv2D, Conv2DTranspose, Dense, Flatten, Reshape
 from keras.models import Sequential
 from keras.callbacks import CSVLogger
 from sklearn.cluster import KMeans
-import skimage
+from skimage import io
 
-from storage import is_gcs_blob, GCStorage
+from storage import is_gcs_blob, GCStorage, path_from_uri, tar, untar
 
 
 DESCRIPTION = """DCEC-Pred implementation adapted from DCEC by Guo et al., 2017 and DCEC-Paint by Castellano and
@@ -31,6 +31,7 @@ FILTERS = [32, 64, 128, 32]
 OPTIMIZER = "adam"
 ALPHA = 1.0
 GCS_PREFIX = "nn/dcec_pred"
+N_IMAGES = 10000
 
 
 # Setup logging
@@ -77,6 +78,7 @@ def load_images(x_dir: str, y_path: Optional[str] = None, n: Optional[int] = Non
         basename of the image path, second is that image's price. If None, no prediction will be returned.
     :param n: number of images to return, a subset of the images in the directory. If None, all images returned
     """
+    logger.info("Loading up to {} images from {}. Prices: {}".format(n, x_dir, y_path))
     ext = ".jpg"
     # load images
     image_paths = [os.path.join(x_dir, f) for f in os.listdir(x_dir) if f.endswith(ext)]
@@ -89,20 +91,20 @@ def load_images(x_dir: str, y_path: Optional[str] = None, n: Optional[int] = Non
         with open(y_path) as f:
             for line in f:
                 img_id, price = line.strip().split(",")
-                prices[img_id] = price
+                prices[img_id] = float(price)
 
-    data = [ImageData(skimage.io.imread(fp), prices[os.path.basename(fp).strip(ext)] if y_path is not None else None) for fp in image_paths]
+    data = [ImageData(io.imread(fp), prices[os.path.basename(fp).strip(ext)] if y_path is not None else None) for fp in image_paths]
 
-    images = np.array(img.image for img in data)
+    images = np.array([img.image for img in data])
     # Scale pixel values
     images = images / 255.0
 
-    if prices is not None:
-        y = np.array(img.price for img in data)
+    if y_path is not None:
+        y = np.array([img.price for img in data])
     else:
         y = None
 
-    logger.debug("Loaded images: {}; Prices: {}".format(images.shape, len(y) if y is not None else None))
+    logger.info("Loaded images: {}; Prices: {}".format(images.shape, len(y) if y is not None else None))
 
     return images, y
 
@@ -426,18 +428,27 @@ if __name__ == "__main__":
     if not os.path.exists(args.data_dir):
         os.makedirs(args.data_dir)
 
-    # if not is_gcs_blob(args.dataset_path):
-    #     raise ValueError("dataset path must be a GCS path")
-
-    # Get data from GCS
     gcs_client = GCStorage(bucket="paap")
+
     tarball_path = os.path.join(args.data_dir, os.path.basename(args.dataset_path))
-    # TODO Uncomment me
-    # gcs_client.download(args.dataset_path, tarball_path)
-    gcs_client.untar(tarball_path, args.data_dir)
+    if is_gcs_blob(args.dataset_path):
+        # Get data from GCS
+        _, path = path_from_uri(args.dataset_path)
+        gcs_client.download(path, tarball_path)
+    elif args.dataset_path.endswith(".tar.gz") and args.dataset_path != tarball_path:
+        raise ValueError("Expected local data to be at: {}".format(tarball_path))
+
+    if args.dataset_path.endswith(".tar.gz"):
+        untar(tarball_path, args.data_dir)
 
     # load data
-    x, y = load_images(os.path.join(args.data_dir, os.path.basename(args.dataset_path).split(".")[0]))
+    data = os.path.join(args.data_dir, os.path.basename(args.dataset_path).split(".")[0])
+    x, y = load_images(
+        x_dir=os.path.join(data, "train"),
+        y_path=os.path.join(data, "y.txt"),
+        n=N_IMAGES)
+
+    exit(0)
 
     # prepare the DCEC model
     dcec = DCEC(input_shape=x.shape[1:], filters=FILTERS)

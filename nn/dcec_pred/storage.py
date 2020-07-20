@@ -1,13 +1,42 @@
 import glob
 import os
 import tarfile
-from typing import Optional
+from typing import Optional, Tuple
 
 from google.cloud import storage
 
 
 def is_gcs_blob(path: str) -> bool:
     return path.startswith("gs://")
+
+
+def path_from_uri(gcs_path: str) -> Tuple[str, str]:
+    return gcs_path[len("gs://"):].split("/")
+
+
+def tar(src: str, dest: str) -> None:
+    if not os.path.isdir(src):
+        raise ValueError("Expected src to be a directory: `{}`".format(src))
+
+    if not dest.endswith(".tar.gz"):
+        raise ValueError("Expected dest to be a gzipped tarball: `{}`".format(dest))
+
+    with tarfile.open(dest, "x:gz") as tar:
+        tar.add(src)
+
+
+def untar(src: str, dest: str = Optional[str]):
+    if not os.path.isfile(src):
+        raise ValueError("Expected src to be a file: `{}`".format(src))
+
+    if not src.endswith(".tar.gz"):
+        raise ValueError("Expected src to be a gzipped tarball: `{}`".format(src))
+
+    if dest is None:
+        dest = tarfile.open("sample.tar.gz", "r:gz")
+
+    with tarfile.open(src, "r:gz") as tar:
+        tar.extractall(dest)
 
 
 # TODO add logging
@@ -30,28 +59,7 @@ class GCStorage(object):
     def bucket_from_blob(cls, path: str) -> str:
         return path[len("gs://"):].split("/")[0]
 
-    def tar(self, src: str, dest: str) -> None:
-        if not os.path.isdir(src):
-            raise ValueError("Expected src to be a directory: `{}`".format(src))
 
-        if not dest.endswith(".tar.gz"):
-            raise ValueError("Expected dest to be a gzipped tarball: `{}`".format(dest))
-
-        with tarfile.open(dest, "x:gz") as tar:
-            tar.add(src)
-
-    def untar(self, src: str, dest: str = Optional[str]):
-        if not os.path.isfile(src):
-            raise ValueError("Expected src to be a file: `{}`".format(src))
-
-        if not src.endswith(".tar.gz"):
-            raise ValueError("Expected src to be a gzipped tarball: `{}`".format(src))
-
-        if dest is None:
-            dest = tarfile.open("sample.tar.gz", "r:gz")
-
-        with tarfile.open(src, "r:gz") as tar:
-            tar.extractall(dest)
 
     def _upload_file(self, src: str, dest: str) -> None:
         """Uploads a file to the bucket."""
