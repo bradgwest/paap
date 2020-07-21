@@ -59,8 +59,6 @@ class GCStorage(object):
     def bucket_from_blob(cls, path: str) -> str:
         return path[len("gs://"):].split("/")[0]
 
-
-
     def _upload_file(self, src: str, dest: str) -> None:
         """Uploads a file to the bucket."""
         if not os.path.isfile(src):

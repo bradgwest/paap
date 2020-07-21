@@ -154,10 +154,6 @@ def CAE(input_shape: Tuple[int, int, int] = (128, 128, 3),
     return model
 
 
-class PredictionLayer(Layer):
-    pass
-
-
 # TODO This will become the Prediction layer
 class ClusteringLayer(Layer):
     """
@@ -226,8 +222,7 @@ class ClusteringLayer(Layer):
 class DCEC(object):
     def __init__(self,
                  input_shape: Tuple[int, int, int],
-                 filters: Iterable[int] = FILTERS,
-                 alpha: int = ALPHA):
+                 filters: Iterable[int] = FILTERS):
         """DCEC Model
 
         :param input_shape: Shape of the input layer in the model
@@ -235,13 +230,11 @@ class DCEC(object):
             length should equal len(convolutional layers) + 1.
         :param n_clusters: k, the number of clusters to target
         # TODO Do we need this parameter?
-        :param alpha: parameter in Student's t distribution
         """
         # TODO Add activation as a parameter to this model
         super(DCEC, self).__init__()
 
         self.input_shape = input_shape
-        self.alpha = alpha
         self.pretrained = False
         self.y_pred = []
 
@@ -250,10 +243,11 @@ class DCEC(object):
         self.encoder = Model(inputs=self.cae.input, outputs=hidden)
 
         # Define DCEC model
-        clustering_layer = ClusteringLayer(self.n_clusters, name="clustering")(hidden)
-        self.model = Model(inputs=self.cae.input, outputs=[clustering_layer, self.cae.output])
+        # clustering_layer = ClusteringLayer(self.n_clusters, name="clustering")(hidden)
+        prediction_layer = Dense(1, kernel_initializer='normal', activation='linear', name="prediction")(hidden)
+        self.model = Model(inputs=self.cae.input, outputs=[prediction_layer, self.cae.output])
 
-    # TODO we should really be training for 200 epochs
+    # TODO we should really be training for at least 200 epochs
     def pretrain(self, x, batch_size=256, epochs=200, optimizer="adam", save_dir="results/temp"):
         logger.info("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
@@ -279,19 +273,21 @@ class DCEC(object):
         q, _ = self.model.predict(x, verbose=0)
         return q.argmax(1)
 
-    @staticmethod
-    def target_distribution(q):
-        weight = q ** 2 / q.sum(0)
-        return (weight.T / weight.sum(1)).T
+    # @staticmethod
+    # def target_distribution(q):
+    #     weight = q ** 2 / q.sum(0)
+    #     return (weight.T / weight.sum(1)).T
 
-    def compile(self, loss=["kld", "mse"], loss_weights=[1, 1], optimizer="adam"):
+    # TODO you need to update these losses and loss weights
+    # TODO is "mse" the optimal loss function for the prediction layer?
+    def compile(self, loss=["mse", "mse"], loss_weights=[1, 1], optimizer="adam"):
         self.model.compile(loss=loss, loss_weights=loss_weights, optimizer=optimizer)
 
     def fit(
         self,
         x,
         y=None,
-        batch_size=128,  # This was 256, Castellano used 128
+        batch_size=512,  # This was 256, Castellano used 128
         maxiter=2e4,
         tol=1e-3,
         update_interval=140,  # Was 140
@@ -317,13 +313,23 @@ class DCEC(object):
         # TODO Will I need some way to initialize the predictions?
         # Step 2: initialize cluster centers using k-means
         t1 = time()
-        logger.info("Initializing cluster centers with k-means.")
-        kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
-        self.y_pred = kmeans.fit_predict(self.encoder.predict(x))
-        y_pred_last = np.copy(self.y_pred)
-        self.model.get_layer(name="clustering").set_weights([kmeans.cluster_centers_])
 
-        # Step 3: deep clustering
+        # TODO old clustering
+        # logger.info("Initializing cluster centers with k-means.")
+        # kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
+        # self.y_pred = kmeans.fit_predict(self.encoder.predict(x))
+        # y_pred_last = np.copy(self.y_pred)
+        # self.model.get_layer(name="clustering").set_weights([kmeans.cluster_centers_])
+
+        # TODO Set prediction weights
+        # Set weights to median of y. Could also use:
+        # Mean of training set. Random from training set, 0? Need to compare models
+        weights, _ = self.model.get_layer(name="prediction").get_weights()
+        median = np.median(y)
+        self.model.get_layer(name="prediction").set_weights(np.array([median for _ in weights]))
+        y_pred_last = np.copy(self.y_pred)
+
+        # Step 3: deep prediction
         # logging file
 
         if not os.path.exists(save_dir):
@@ -332,16 +338,17 @@ class DCEC(object):
         logwriter = csv.DictWriter(logfile, fieldnames=["iter", "acc", "nmi", "ari", "L", "Lc", "Lr"])
         logwriter.writeheader()
 
+        # TODO Can we just call model.fit here?
         loss = [0, 0, 0]
         index = 0
         for ite in range(int(maxiter)):
             if ite % update_interval == 0:
                 logger.info("Updating. Iter {}".format(ite))
                 q, _ = self.model.predict(x, verbose=0)
-                p = self.target_distribution(q)  # update the auxiliary target distribution p
+                # p = self.target_distribution(q)  # update the auxiliary target distribution p
 
                 # evaluate the clustering performance
-                self.y_pred = q.argmax(1)
+                # self.y_pred = q.argmax(1)
                 if y is not None:
                     logger.info("{} calculating acc".format(ite))
                     # acc = np.round(acc(y, self.y_pred), 5)
@@ -351,6 +358,9 @@ class DCEC(object):
                     # logdict = dict(iter=ite, acc=acc, nmi=nmi, ari=ari, L=loss[0], Lc=loss[1], Lr=loss[2])
                     # logwriter.writerow(logdict)
                     # logger.info("Iter {}: Acc {}, nmi {}, ari {}; loss={}".format(ite, acc, nmi, ari, loss))
+                    logdict = dict(L=loss[0], Lc=loss[1], Lr=loss[2])
+                    logwriter.writerow(logdict)
+                    logger.info("loss={}".format(loss))
 
                 # check stop criterion
                 delta_label = np.sum(self.y_pred != y_pred_last).astype(np.float32) / self.y_pred.shape[0]
@@ -364,14 +374,20 @@ class DCEC(object):
             # train on batch
             if (index + 1) * batch_size > x.shape[0]:
                 loss = self.model.train_on_batch(
-                    x=x[index * batch_size : :], y=[p[index * batch_size : :], x[index * batch_size : :]]
+                    x=x[index * batch_size : :],
+                    y=[
+                        y[index * batch_size :],
+                        # p[index * batch_size : :],
+                        x[index * batch_size : :]
+                    ]
                 )
                 index = 0
             else:
                 loss = self.model.train_on_batch(
                     x=x[index * batch_size : (index + 1) * batch_size],
                     y=[
-                        p[index * batch_size : (index + 1) * batch_size],
+                        y[index * batch_size : (index + 1) * batch_size],
+                        # p[index * batch_size : (index + 1) * batch_size],
                         x[index * batch_size : (index + 1) * batch_size],
                     ],
                 )
@@ -413,7 +429,7 @@ if __name__ == "__main__":
     parser.add_argument("--cae-weights", default=os.getenv("DCEC_CAE_WEIGHTS", "false").lower() == "true", type=bool, help="Whether to use the default CAE weights")
     parser.add_argument("--save-dir", default=os.getenv("DCEC_SAVE_DIR", "./results/temp"), help="Where to save results/model to")
     parser.add_argument("--data-dir", default=os.getenv("DCEC_DATA_DIR", "./data"), help="Where the data reside")
-    parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "true").lower() == "true", action="store_true")
+    parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "false").lower() == "true", action="store_true")
     parser.add_argument("--epochs", default=os.getenv("DCEC_EPOCHS", 200), type=int, help="Number of epochs to train CAE")
     args = parser.parse_args()
 
@@ -448,15 +464,13 @@ if __name__ == "__main__":
         y_path=os.path.join(data, "y.txt"),
         n=N_IMAGES)
 
-    exit(0)
-
     # prepare the DCEC model
     dcec = DCEC(input_shape=x.shape[1:], filters=FILTERS)
     plot_model(dcec.model, to_file=args.save_dir + "/dcec_model.png", show_shapes=True)
     dcec.model.summary()
 
     # TODO Update these
-    dcec.compile(loss=["kld", "mse"], loss_weights=[args.gamma, 1], optimizer=OPTIMIZER)
+    dcec.compile(loss=["mse", "mse"], loss_weights=[args.gamma, 1], optimizer=OPTIMIZER)
 
     dcec.fit(
         x,
