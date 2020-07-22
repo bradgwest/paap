@@ -27,6 +27,7 @@ DESCRIPTION = """DCEC-Pred implementation adapted from DCEC by Guo et al., 2017 
 """.strip()
 
 # Model constants
+# It seems like you might need to set your embedded layer to a much higher number
 FILTERS = [32, 64, 128, 32]
 OPTIMIZER = "adam"
 ALPHA = 1.0

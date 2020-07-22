@@ -1,8 +1,8 @@
 # Predicting Art Auction Prices
 
-## NOTE: This README, like the project, is a work in progess and is used for the author's notes.
+**This project is a work in progess**
 
-This project attempts to satisfy the requirements for Montana State University
+<!-- This project attempts to satisfy the requirements for Montana State University
 STAT 575. This research attempts to answer whether an artwork's aesthetic
 qualities and subject matter contribute meaningfully its auction price. If so,
 this may hint that art consumers, at least those who participate in the art
@@ -16,11 +16,11 @@ but was put on hold for the remainder of 2019 before being restarted in late
 March of 2020. For this reason there are a number of changes in the style and
 engineering approach taken toward data acquisition and cleaning. These
 inconsistencies will likely be evident if you attempt to reproduce this research
-exactly.
+exactly. -->
 
 ## Setup
 
-Code is written in python 3.8. Parts of this project also require the following:
+Code is written in python 3.7. Parts of this project also require the following:
 
 * Docker
 
@@ -316,19 +316,36 @@ optional arguments:
   -h, --help  show this help message and exit
 ```
 
-## Analysis
+## Running the model on GKE
 
-All major analysis is performed in python 3.8 as a series of scripts.
-Visualization and final presentation of the data are contained in a Jupyter
-notebook alongside the project text.
+From the [nn](nn) directory:
 
-## Compiling the final Paper
-
-The following will compile the final paper as html or pdf, provided you have
-the following resources in some target folder.
-
-* TODO add me
-
-# TODO Add me
 ```sh
+# Create a cluster
+gcloud container clusters create paap-training-cluster \
+    --num-nodes=1 \
+    --zone=us-central1-f \
+    --accelerator="type=nvidia-tesla-t4,count=1" \
+    --machine-type="n1-highmem-8" \
+    --scopes="gke-default,storage-rw" \
+    --preemptible
+
+# installing GPU nodes
+# https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#ubuntu
+# device drivers
+# use `gcloud container get-server-config` to get the default image type
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+
+# Resize the cluster
+gcloud container clusters resize paap-training-cluster --num-nodes=0
+```
+
+Deploy a job to the cluster
+
+Deploy an image to the cluster
+
+```sh
+kubectl apply -f ./job.yaml
+kubectl get pods
+kubectl describe pod dcec-pod
 ```
