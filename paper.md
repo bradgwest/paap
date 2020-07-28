@@ -46,11 +46,11 @@ elif prediction:
 <!-- contributions to the field -->
 
 The widespread digitization of fine art over the past two decades has coincided
-with large advances in computational image analysis. As digitized museum and gallery
-collections move onto the internet, millions of pieces of art have been made
-available for view at the click of the button [cite google thing]. A proliferation of researchers
+with large advances in computational image analysis. As museum and gallery
+collections move onto the internet, millions of artworks have been made
+available for view at the click of a mouse [cite google thing]. A proliferation of researchers
 have sought to analyze these digital collections, contributing methods that
-excel in a wide variety of analysis tasks from classification problems (genre,
+excel in a wide variety of computer vision tasks from classification problems (genre,
 style, artist, historical period) [Ceternic, 2018], to visual relationships
 between paintings [Garcia, 2019].
 
@@ -97,23 +97,21 @@ attached to the CAE. Autoencoders perform non-linear dimension reduction of the
 image in two steps: an encoder which develops a mapping from the input image
 to a highly reduced latent (embedded) pixel space, and a decoder which maps
 from the latent space to a reconstructed image of equivalent dimensions as the
-input. By attaching a clustering layer to the CAE, and simultaneously optimixing
+input. By attaching a clustering layer to the CAE, and simultaneously optimizing
 for both clustering and image reconstruction loss, DCEC ensures that clustering
 of the images occurs within the constraints of a latent space i.e. clusters
 are formed in the presence of semantic attributes deemed meaningful by their
 inclusion in the latent space.
 
-
-(1) an encoder (v = F(x)) which takes the image as input
-and outputs a feature vector (embedded space) with highly reduced
-dimensionality; and (2) a decoder (x' = G(v)) which takes the feature vector as
-input and outputs an image of equal dimensionality to the input image, x. The
-neural net is tasked with minimizing the image reconstruction loss
-(for a single image: x' - x = G(F(x)) - x). The result is that the CAE encodes
-the relevant image characteristics in the much reduced feature space. The
-researchers listed above take this one step further by attaching a clustering
-layer to the embedded space, allowing them to jointly optimize for both reconstruction and clustering loss, which ensures that the clustering adheres to the model's pre-trained knowledge of the relevant feature spac
-
+We evaluate clustering performance against two separate datasets of
+digitized artwork, both scraped from Christies auction house's [cite] public
+record of auction sales. The first dataset we cluster is a set of [TODO: n (b/w)]
+images, and the second is a set of [TODO: n (east/asian)]. The only known prior
+work with this algorithm used two datasets, one of a set of paintings by 50
+well known artists and the collected works of Pablo Picasso. The images used in
+this work include more obscure artists, as well as a higher proportion of
+intra-genre work, which exercises the algorithm's performance in face of lower
+magnitude differences in the feature space.
 
 <!-- 
 IDEAS
@@ -137,36 +135,44 @@ MOTIVATION
 * unsupervised clustering vs supervised learning -> broadens the potential datasets that we can use
  -->
 
-Over the past 20 years a number of researchers developed methodology for
-analyzing digitized images of artwork.
-
-An alternative to extracting domain-specific features is to let the algorithm
-learn a latent feature space by trying to reproduce the input image from a
-reduced dimensionality projection of the image. In recent years, a handlful of
-authors combine this technique with a clustering algorithm, building a model
-which simultaneously optimizes for reconstruction and clustering loss. Inspired
-by this approach, we attempt to fit a similar model for predicting artwork
-auction price, substituting the clustering component for a prediction layer.
-
-More specifically, these models use a convolutional autoencoder to find a set
-of weights that minimize the image reconstruction loss for a reduced
-dimensionality projection. Combining this output with a prediction function
-ensures that the features used for prediction are also relevant to the
-reconstruction of the image itself.
-
-### Contributions
-
-Our contributions to the field are:
-
--   A convolutional autoencoder deep learning algorithm which preserves the local
-    structure of an image during network tuning so that a regression model
-    y = f(x) is learned with a non-corrupted feature space.
--   We apply this model to auctioned artwork, attempting to learn the relevant
-    features for artwork price.
-
 ## Related Work
 <!-- DCN efforts, specifically deep clustering, like DEC, DCEC, DCEC-Paint -->
 <!-- TODO Efforts to quantify art prices, especially using extracted, not learned features -->
+
+As institutions have digitized their art collections over the preceding decades,
+many researchers have applied computational image analysis methods to art domain.
+Although applications are quite broad, a large number of efforts have focused
+on classification (of artist, genre, period, movement, medium, etc), object recognition,
+visual similarity (between artwork), the cross depiction problem (distinguishing
+the same type of object in different representations).
+
+Initial attempts to analyze art emphasized feature engineering and extraction
+[cite some people] in which domain specific characteristics of artwork are
+identified and a given artwork's relative presence or absence of those
+features is used as input to a model. For example, (see Garcia)
+<!-- TODO: What are some places this was done and what are the features that were extracted -->
+
+While feature engineering has been shown to be effective, it's limited in its
+requirement for a comprehensive set of pre-identified features for modeling the
+image characteristics. This shortcoming is especially apparent in tasks which
+attempt to consider the image as a whole, a task which seems especially complex
+given the myriad possible "features" that could be found in an m x n x p
+dimensioned image. Over the past decade, the computer
+vision community has focused on designing algorithms which, rather than rely on
+extracted features, learn a relevant feature set through a training process.
+Applying deep learning concepts to art analysis has proved immensely fruitful
+in a host of subfields. Cetinic et al., demonstrated the effectiveness of fine
+tuned CNNs in classifying artwork by artist, genre, style, time period, and
+even national artistic context. blah blah blah
+
+The majority of art analysis research employs supervised learning, in part due
+to the availability of numerous and large labeled datasets. In recent years,
+however, a few authors have focused on unsupervised learning, in particular
+clustering. In this work we replicate the algorithm proposed by Castellano and
+Vessio. Those authors built off the work of Guo et al., adapting a Deep Embedded
+Clustering algorithm to the art domain.
+
+<!-- Cross depiction problem -->
 
 * Cetinic et al, 2018 - performed 5 different classification tasks on 3 large art datasets
 
@@ -189,9 +195,20 @@ Our contributions to the field are:
 <!-- What are convolutional NNs, and how to they build on traditional NN? -->
 
 >   A conventional autoencoder is generally composed of two layers, corresponding
-    to an encoder (f_w(x) and decoder g_u(x), respectively. It aims to find a code
+    to an encoder (f\_w(x) and decoder g\_u(x), respectively. It aims to find a code
     for each input sample by minimizing the mean squared errors (MSE) between its
     input and output over all samples.
+
+(1) an encoder (v = F(x)) which takes the image as input
+and outputs a feature vector (embedded space) with highly reduced
+dimensionality; and (2) a decoder (x' = G(v)) which takes the feature vector as
+input and outputs an image of equal dimensionality to the input image, x. The
+neural net is tasked with minimizing the image reconstruction loss
+(for a single image: x' - x = G(F(x)) - x). The result is that the CAE encodes
+the relevant image characteristics in the much reduced feature space. The
+researchers listed above take this one step further by attaching a clustering
+layer to the embedded space, allowing them to jointly optimize for both reconstruction and clustering loss, which ensures that the clustering adheres to the model's pre-trained knowledge of the relevant feature spac
+
 
 ### DCEP-Paint
 <!-- Specifics of this algorithm   -->
@@ -224,7 +241,3 @@ Our contributions to the field are:
 <!-- Why did we see it? -->
 
 ## Conclusion
-
-Hi all,
-
-Thanks for the responses. Given Mark's feedback/advice in taking an iterative approach I think it makes sense to 
