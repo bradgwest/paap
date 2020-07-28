@@ -23,3 +23,5 @@ __pycache__/
 
 ### Writing ###
 *.pdf
+*.tex
+paper.html
