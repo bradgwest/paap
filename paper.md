@@ -1,5 +1,4 @@
 <!--
-# TODO
 * Get pandoc working, generating to latex
 * Get BibTex working with pandoc, generating to latex
 * Add entries to BibTex
@@ -34,6 +33,9 @@ elif prediction:
     - clean that dataset??
     - Hopefully no need to clean that dataset further
 * Get basic statistics about datasets
+
+NEED:
+* Cross depiction problem - Castellano and Vessio
 -->
 
 # Deep Convolutional Autoencoder Prediction of Art Action Prices
@@ -168,16 +170,25 @@ even national artistic context. blah blah blah
 The majority of art analysis research employs supervised learning, in part due
 to the availability of numerous and large labeled datasets. In recent years,
 however, a few authors have focused on unsupervised learning, in particular
-clustering. In this work we replicate the algorithm proposed by Castellano and
-Vessio. Those authors built off the work of Guo et al., adapting a Deep Embedded
-Clustering algorithm to the art domain.
+clustering. Outside of the art domain, Xie et al., 2016 proposed a Deep Embedded
+Clustering (DEC) algorithm which selects clusters in two steps: first learning a reduced
+dimensionality set of features using stacked autoencoders (SAE) and second
+using stochastic gradient descent with a soft assignment loss function to perform
+clustering. Guo et. al expanded on this work by using Convolutional Autoencoder
+rather than a stacked auto encoder, and by jointly optimizing for both clustering
+loss and image reconstruction loss so as to avoid corrupting the semantically
+meaningful feature space during the clustering component (Deep Convolutional
+Embedded Clustering (DCEC)). Finally, Castellano and Vessio, inspired by Guo et
+al., tweaked DCEC for the larger and more complex images found in art datasets.
 
-<!-- Cross depiction problem -->
+In this work we replicate the algorithm proposed by Castellano and
+Vessio, by applying it to different art datasets.
+
 
 * Cetinic et al, 2018 - performed 5 different classification tasks on 3 large art datasets
 
 
-## Deep Convolutional Neural Networks
+## Convolutional Neural Networks
 <!-- Motivation for what NNs offer in general -->
 <!-- What do NN offer to image problems -->
 <!-- What do they offer to this specific problem -->
@@ -188,8 +199,30 @@ Clustering algorithm to the art domain.
     - The given arrangement of these pixels is what gives these images their texture/shape/complexity, etc
  -->
 
+Convolutional neural nets have become a power tool in computer vision over the
+previous decade. Their ability to extract meaningful patterns [cite here] from
+images has led to their widespread usage in vision problems such as object
+detection and facial recognition [cite here]. Autoencoders are a type of unsupervised neural
+net which learns a mapping from a high dimensional data space to a lower dimensional
+feature space. Like CNNs, Autoencoders have proved wildly useful in the computer vision
+domain due the high dimensionality and complexity of images [cite here]. This
+section provides a brief and incomprehensive overview of the mathematical
+concepts underlying CNNs and Autoencoders. For a gentle introduction to neural
+networks and deep learning, see [Michael Nielson]. For a comprehensive look at
+neural networks including autoencoders, see [cite textbook].
+
 ### Neural Network Basics
 <!-- How and why do NNs work -->
+
+While to the human eye an image may appear a mosaic of shapes and colors,
+computationally images are matrices of numeric values pertaining to pixel
+intensity. In the case of black and white images, there is a single channel,
+meaning an image can be represented by a single matrix of size m x n. Color images are
+3 dimensional, accounting for the increase from one to p > 1 channels (3, in the case
+of RGB images). Consider a neural network tasked with learning relevant features
+from an input dataset of x, m x n x p images.
+
+
 
 ### Convolutional Autoencoders
 <!-- What are convolutional NNs, and how to they build on traditional NN? -->
