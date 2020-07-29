@@ -25,3 +25,5 @@ __pycache__/
 *.pdf
 *.tex
 paper.html
+texput.log
+tex/**
