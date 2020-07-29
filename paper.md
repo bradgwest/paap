@@ -87,7 +87,7 @@ have been used to pre-train object recognition models for art-related tasks.
 The large availability of annotated datasets has led to many authors focusing on
 supervised learning tasks. Comparatively little art research focuses on unsupervised
 learning, including clustering. Clustering artwork has a number of applications to
-aid the art expert, including identifying distinct periods within an artists career,
+aid the art expert in knowledge discovery, including identifying distinct periods within an artists career,
 shared techniques between groups of artists, and distinct periods within unattributed
 groups of work (e.g. ancient east Asian art).
 
@@ -214,6 +214,27 @@ neural networks including autoencoders, see [cite textbook].
 ### Neural Network Basics
 <!-- How and why do NNs work -->
 
+
+Artificial neural networks are non-linear functions, F_nn: R^I -> R^K, where I and
+K are the dimensionality of the input and output spaces, respectively [cite englebrecht].
+Modeled after their biological equivalents, they achieve this non-linear functionality
+through composition of layers of artificial neurons where an individual neuron is an nonlinear function,
+y = f(xx + b), typically y = [0, 1] or y = [-1, 1] , called an activation function, which accepts n > 0 input signals (x) and outputs a single value
+as a function of the inputs and the learned weights (w) and biases (b) for each
+interneuron connection [diagram here, steal from figure 1.3 in englebrecht]. When
+layered together, the output of the neuron in the ith layer is the input to the
+neuron(s) in layer i + 1, forming a structure similar to the one depicted in the
+figure below [diagram here, steal from figure 1.4 in englebrecht] (footnote: the
+actual structure of a particular type and instance of network is highly variable
+within some general constraints. The activation function, number of inputs, number
+of layers, interconnectedness of the layers, and even direction of the networks
+all vary depending on the desire of the practitioner).
+
+
+Typically, to achieve learning, f is differentiable with respect to w and b.
+
+
+<!-- TODO this should have a particular image associated with it, something famous -->
 While to the human eye an image may appear a mosaic of shapes and colors,
 computationally images are matrices of numeric values pertaining to pixel
 intensity. In the case of black and white images, there is a single channel,
@@ -221,6 +242,11 @@ meaning an image can be represented by a single matrix of size m x n. Color imag
 3 dimensional, accounting for the increase from one to p > 1 channels (3, in the case
 of RGB images). Consider a neural network tasked with learning relevant features
 from an input dataset of x, m x n x p images.
+
+Intuitively, neural networks seem like an appropriate tool for identifying
+relationships between pixels.
+
+<!-- Could start with a discussion of perceptrons -->
 
 
 
