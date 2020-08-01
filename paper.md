@@ -360,28 +360,74 @@ a full discussion of convolutional neural nets, see
 [levun](http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf).
 We summarize briefly here.
 
+Consider an input image of size 4 x 4 x 1, that is, 16 total pixels, depicted below.
 
+TODO image
 
+In a fully connected network, each pixel value would be input to each neuron in the
+first hidden layer. Convolutional neural networks, differ by defining a local receptive
+field of size k, where (kxk) is the number of adjacent inputs that will connect to
+the jth neuron in layer i.
+
+TODO figure
+
+For each neuron in the hidden layer, this local receptive field is moved adjacently
+by a stride length, (l). For example, a stride length of 2 will correspond to a total
+of 9 local receptive fields, meaning a total of 9 neurons in the first hidden layer.
+By limiting the number of input signals passed to a single neuron, each neuron
+receives information only from adjacent pixels, rather than information from
+every input in the network, including pixels/neurons that are spatially distant.
+Intuitively, this seems like an appropriate way to extract spatial meaning.
+
+Furthermore, by design, each neuron in the ith hidden layer has the same weights
+and biases. So, for our example, the 2*2 array of weights and biases input to the
+jth neuron in the ith layer are identical to every other array of weights and biases
+in the ith layer. By making this restriction, the network ensures that all the neurons
+in the ith layer are detecting the same spatial structure. This map from an input
+layer to a hidden layer is called a feature map, and the set of weights and biases
+that define a feature map is called a filter or a kernal (cite something here).
+By increasing the number of feature maps at each layer, the network is able to
+detect multiple features.
+
+Finally, convolutional NNs pool the activations of the convolution layers in the
+aptly named, pooling layers. By pooling adjacent activations, typically by taking
+the maximum activation from a lxl sized area, the featue maps undergo
+dimension reduction. Intuitively, this can be thought of as a function which outputs
+whether a certain feature is found anywhere within a subsection of a layer.
+
+The combined effect of these three components to convolutional neural nets is to
+build a set of feature detectors which simultaneously reduce dimensionality of
+the input image, resulting in a vector containing information on the spatial
+structure of the input image.
 
 #### Autoencoders
 
-<!-- What are convolutional NNs, and how to they build on traditional NN? -->
+Autoencoders are a type of artificial neural network which performs dimension
+reduction in an unsupervised manner. It consists of two components, an encoder (f(x))
+and a decoder (g(x')) which together perform dimension reduction (encoder), and
+dimension expansion (decoder) in such a way as to minimize the error of x - x' = x - g(f(x)).
 
->   A conventional autoencoder is generally composed of two layers, corresponding
-    to an encoder (f\_w(x) and decoder g\_u(x), respectively. It aims to find a code
-    for each input sample by minimizing the mean squared errors (MSE) between its
-    input and output over all samples.
-
-(1) an encoder (v = F(x)) which takes the image as input
-and outputs a feature vector (embedded space) with highly reduced
-dimensionality; and (2) a decoder (x' = G(v)) which takes the feature vector as
+In the case of an input image, the encoder (v = F(x)) takes a matrix of pixel values
+and outputs a feature vector, known as the embedded space, with highly reduced
+dimensionality. The decoder (x' = G(v)) takes the feature vector as
 input and outputs an image of equal dimensionality to the input image, x. The
-neural net is tasked with minimizing the image reconstruction loss
-(for a single image: x' - x = G(F(x)) - x). The result is that the CAE encodes
-the relevant image characteristics in the much reduced feature space. The
-researchers listed above take this one step further by attaching a clustering
-layer to the embedded space, allowing them to jointly optimize for both reconstruction and clustering loss, which ensures that the clustering adheres to the model's pre-trained knowledge of the relevant feature spac
+neural net is tasked with minimizing the image reconstruction loss, which, for
+a single image is x' - x = G(F(x)) - x). The result is that the autoencoder encodes
+the image in the much reduced feature space, similar to the purpose of Principle
+Component Analysis.
 
+<!-- The
+researchers listed above take this one step further by attaching a clustering
+layer to the embedded space, allowing them to jointly optimize for both reconstruction and clustering loss, which ensures that the clustering adheres to the model's pre-trained knowledge of the relevant feature spac -->
+
+The specifics of dimension reduction component of the encoder varies based on
+specific architectures. Convolutional Autoencoders, which we implement in this work,
+are autoencoders that employ convolutional neural nets to define the encoding and
+decoding components. The combined effect is a network which reduces the dimensionality
+of the input image (autoencoder) while learning the spatially relevant components
+of the input data (convolutional NN). Put another way, from an input image x, the network
+learns a highly dimensionally reduced representation of x that retains spatially
+relevant information, a highly desirable input source for clustering data.
 
 ### DCEP-Paint
 <!-- Specifics of this algorithm   -->
