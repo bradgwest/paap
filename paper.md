@@ -211,28 +211,121 @@ concepts underlying CNNs and Autoencoders. For a gentle introduction to neural
 networks and deep learning, see [Michael Nielson]. For a comprehensive look at
 neural networks including autoencoders, see [cite textbook].
 
-### Neural Network Basics
+### Artificial Neural Network Basics
 <!-- How and why do NNs work -->
 
+#### Architecture
 
 Artificial neural networks are non-linear functions, F_nn: R^I -> R^K, where I and
 K are the dimensionality of the input and output spaces, respectively [cite englebrecht].
 Modeled after their biological equivalents, they achieve this non-linear functionality
-through composition of layers of artificial neurons where an individual neuron is an nonlinear function,
-y = f(xx + b), typically y = [0, 1] or y = [-1, 1] , called an activation function, which accepts n > 0 input signals (x) and outputs a single value
+through composition of layers of artificial neurons where an individual neuron is a nonlinear function,
+y = f(x + b), typically y = [0, 1] or y = [-1, 1] , called an activation function, which accepts n > 0 input signals (x) and outputs a single value
 as a function of the inputs and the learned weights (w) and biases (b) for each
-interneuron connection [diagram here, steal from figure 1.3 in englebrecht]. When
+interneuron connection [diagram here, steal from figure 1.3 in englebrecht]. Thus,
+for each edge (connection) between the jth neuron in layer i and the kth neuron in
+layer i +1, the network learns a particular weight (w_(i+1)_jk) which represents
+the relative importance of that component of the input signal. When
 layered together, the output of the neuron in the ith layer is the input to the
 neuron(s) in layer i + 1, forming a structure similar to the one depicted in the
-figure below [diagram here, steal from figure 1.4 in englebrecht] (footnote: the
+figure x [diagram here, steal from figure 1.4 in englebrecht], typically a directed
+acyclic graph (DAG) (footnote: the
 actual structure of a particular type and instance of network is highly variable
-within some general constraints. The activation function, number of inputs, number
-of layers, interconnectedness of the layers, and even direction of the networks
+within these general constraints. The activation function, number of inputs, number
+of layers, interconnectedness of the layers, and even direction of connections networks
 all vary depending on the desire of the practitioner).
 
+<!-- Activation functions -->
+In general, an activation function is a monotonically increasing function, F_AN: R -> [0, 1] or F_AN: R -> [-1, 1]
+such that:
 
-Typically, to achieve learning, f is differentiable with respect to w and b.
+F_AN(-inf) = 0 or F_AN(-inf) = 1 and  f_AN(inf) = 1
 
+There are many activation forms but we focus on a single, and most common, form,
+the sigmoid:
+
+equation 2.11 in englebrecht
+
+This function has highly beneficial properties for learning. It is continuously
+differentiable along the real numbers, which, combined with the fact that it is
+monotonically increasing means that a gradient can be calculated at any place,
+facilitaing "learning" as discussed in the section below. The fact that its derivative
+asymptotically aproaches zero for large magnitude input values is detrimental to
+quick learning, however, this can be compensated for by tuning specific parameters
+in the network.
+
+
+<!-- Neural networks can be shown to approximate any function (cite this as well) -->
+
+#### Artificial Learning
+
+Neural networks can be shown to approximate any continuous function [TODO cite this, pg. 28 in englebrecht]
+to some
+desireable level of accuracy. NNs achieve this impressive result by "learning"
+the appropriate weights and biases, progressively updating these values until
+an approximation is sufficiently close. There are many different learning algorithms,
+components for updating the weights and biases. In the interest of brevity, we
+focus on the most widely used learning rule, Gradient Descent. For an introduction
+to additional rules such as the Widrow-Hoff, Generalized Delta, and Error-Correction
+learning rules, see Englebrecht.
+
+As mentioned abouve, there are a number of different types of neural networks.
+Below, we will examine in depth the convolutional autoencoder. However, to discuss
+Gradient Descent, consider a fully connected 3 layer feed forward neural net,
+depicted in figure {blank}. Each neuron in the ith layer is connected to each
+neuron in the i + 1 layer and inputs are passed only forward (that is, right to left)
+through the network.
+
+#### Stochastic Gradient Descent
+
+Gradient Descent attempts to minimize the value of an error function [footnote:
+Also called an optimization or Cost function], Epsilon(y - y'),
+by progressively updating the network weights and biases in such a way as to follow
+the first derivative gradient of Epsilon with respect to the weights (partial epsilon wrt w). For example,
+consider a common form for epsilon, the sum of squared errors:
+
+(Also see section 2 in Nielson)
+
+2.17 in englebrecht
+
+where y is the expected output for an input vector (x), and y' is the actual output.
+Considering a single example input, x, the weights are updated according to the following
+equation:
+
+w_i(x) = w_i(x - 1) + deltaw_i(x)
+
+where
+
+deltaw_i(x) = eta (- partial Epsilon wrt w_i)
+
+and
+
+see englebrecht equation 2.20
+
+Thus, at each learning step (an epoch), gradient descent updates the weights in the direction
+that results in the largest reduction in Epsilon.
+
+##### Backpropagation
+
+From these equations, however, it remains unclear how each weight in the network
+is updated. There are a number of detailed proofs for backpropagation, see, for example,
+englebrecht, but, the algorithm has two phases:
+
+1.  Inputs are passed through the network and output values calculated, providing
+    the values needed to calculate epsilon and the derived gradients
+2.  The error signal from the output layer is propagated backwards through the
+    network such that each weight and bias is updated according to its effect on
+    the overall error of the cost function.
+
+(TODO you need to explain back propagation in more detail here)
+
+
+### Convolutional Autoencoders
+
+Before delving into the specifics of convolutional autoencoders, consider the
+image below.
+
+TODO figure
 
 <!-- TODO this should have a particular image associated with it, something famous -->
 While to the human eye an image may appear a mosaic of shapes and colors,
@@ -244,13 +337,34 @@ of RGB images). Consider a neural network tasked with learning relevant features
 from an input dataset of x, m x n x p images.
 
 Intuitively, neural networks seem like an appropriate tool for identifying
-relationships between pixels.
+relationships between pixels. An architecture of many interconnected neurons
+seems as though it should have the ability to progressively weight more meaningful
+patterns in the data (over the course of many epochs) by progressively weighting
+certain neuron relationships.
 
-<!-- Could start with a discussion of perceptrons -->
+Convolutional neural nets build on this intuition by attempting to progressively
+tease out these patterns through sequential layers in the network.
+
+#### Convolutional Neural Networks
+
+<!-- Cite http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf -->
+
+Convolutional neural networks are a type of deep neural network {footnote: deep
+means more than a single hidden layer} with an architecture that is well suited
+to image analysis. In particular, convolutional neural nets are better able to
+extract the spatial structure of an image than traditional networks because they
+limit the connectectedness of the network by ensuring connected neurons correspond
+to spatially adjacent input pixels, by sharing weights among edges within the same
+layer, and by pooling subsequent layers to provide dimension reduction. For
+a full discussion of convolutional neural nets, see
+[levun](http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf).
+We summarize briefly here.
 
 
 
-### Convolutional Autoencoders
+
+#### Autoencoders
+
 <!-- What are convolutional NNs, and how to they build on traditional NN? -->
 
 >   A conventional autoencoder is generally composed of two layers, corresponding
