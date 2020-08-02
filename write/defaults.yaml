@@ -43,11 +43,11 @@ standalone: true
 # data-dir:
 
 # ERROR, WARNING, or INFO
-verbosity: INFO
+verbosity: WARNING
 log-file: log.json
 
 # citeproc, natbib, or biblatex
-cite-method: biblatex
+# cite-method: biblatex
 # part, chapter, section, or default:
 top-level-division: section
 # abbreviations:

@@ -19,5 +19,7 @@ paper:
 		--to=pdf \
 		--defaults=${WRITE}/defaults.yaml \
 		--standalone \
+		--bibliography=${WRITE}/papers.bib \
+		--filter pandoc-citeproc \
 		--output ${WRITE}/paper.pdf && \
 	firefox ${WRITE}/paper.pdf

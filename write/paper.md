@@ -12,12 +12,11 @@ hyperrefoptions:
     - pdfwindowui
     - pdfpagemode=FullScreen
 papersize: letter
-bibliography: papers.bib
+csl: /home/dubs/.csl/nature.csl
 link-citations: true
 ---
 
 <!--
-* Get pandoc working, generating to latex
 * Get BibTex working with pandoc, generating to latex
 * Add entries to BibTex
 * Write Draft Introduction
@@ -86,11 +85,15 @@ Blah blah [@smith04; @doe99].
 The widespread digitization of fine art over the past two decades has coincided
 with large advances in computational image analysis. As museum and gallery
 collections move onto the internet, millions of artworks have been made
-available for view at the click of a mouse [cite google thing]. A proliferation of researchers
-have sought to analyze these digital collections, contributing methods that
-excel in a wide variety of computer vision tasks from classification problems (genre,
-style, artist, historical period) [Ceternic, 2018], to visual relationships
-between paintings [Garcia, 2019].
+available for view at the click of a mouse[^google-arts-and-culture]. A proliferation of researchers
+have sought to analyze these digital collections, contributing methods for a
+wide variety of computer vision tasks from classification problems (of, for
+example, genre, style, artist, or historical period)[@Cetinic_et_al_2018;
+@Lee_and_Cha_2016] to visual relationships
+between paintings [@Garcia_et_al_2019; @Castellano_et_al_2020].
+
+[^google-arts-and-culture]: For example, Google Arts & Culture's digitization of
+hundreds of museum collections: https://artsandculture.google.com/partner.
 
 The complete visual and emotional effect of a painting is a combination
 of many factors, for example the color, texture, spatial complexity, and contrast. An art expert
@@ -622,3 +625,6 @@ the equation above.
 <!-- Why did we see it? -->
 
 # Conclusion
+
+
+# References
