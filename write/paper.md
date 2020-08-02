@@ -13,6 +13,7 @@ hyperrefoptions:
     - pdfpagemode=FullScreen
 papersize: letter
 bibliography: papers.bib
+link-citations: true
 ---
 
 <!--
@@ -78,7 +79,7 @@ Blah blah [@smith04; @doe99].
 
 <!-- ## Abstract -->
 
-## Introduction
+# Introduction
 <!-- This is where your state the motivation -->
 <!-- contributions to the field -->
 
@@ -175,7 +176,7 @@ MOTIVATION
 * unsupervised clustering vs supervised learning -> broadens the potential datasets that we can use
  -->
 
-## Related Work
+# Related Work
 <!-- DCN efforts, specifically deep clustering, like DEC, DCEC, DCEC-Paint -->
 <!-- TODO Efforts to quantify art prices, especially using extracted, not learned features -->
 
@@ -226,7 +227,7 @@ Vessio, by applying it to different art datasets.
 * Cetinic et al, 2018 - performed 5 different classification tasks on 3 large art datasets
 
 
-## Convolutional Neural Networks
+# Convolutional Neural Networks
 <!-- Motivation for what NNs offer in general -->
 <!-- What do NN offer to image problems -->
 <!-- What do they offer to this specific problem -->
@@ -249,10 +250,10 @@ concepts underlying CNNs and Autoencoders. For a gentle introduction to neural
 networks and deep learning, see [Michael Nielson]. For a comprehensive look at
 neural networks including autoencoders, see [cite textbook].
 
-### Artificial Neural Network Basics
+## Artificial Neural Network Basics
 <!-- How and why do NNs work -->
 
-#### Architecture
+### Architecture
 
 Artificial neural networks are non-linear functions, F_nn: R^I -> R^K, where I and
 K are the dimensionality of the input and output spaces, respectively [cite englebrecht].
@@ -295,7 +296,7 @@ in the network.
 
 <!-- Neural networks can be shown to approximate any function (cite this as well) -->
 
-#### Artificial Learning
+### Artificial Learning
 
 Neural networks can be shown to approximate any continuous function [TODO cite this, pg. 28 in englebrecht] - (Hornik,  Kurt.    Approximation  capabilities  of  multilayerfeedforward networks.Neural networks, 4(2):251–257,1991.)
 to some
@@ -314,7 +315,7 @@ depicted in figure {blank}. Each neuron in the ith layer is connected to each
 neuron in the i + 1 layer and inputs are passed only forward (that is, right to left)
 through the network.
 
-#### Stochastic Gradient Descent
+### Stochastic Gradient Descent
 
 Gradient Descent attempts to minimize the value of an error function [footnote:
 Also called an optimization or Cost function], Epsilon(y - y'),
@@ -343,7 +344,7 @@ see englebrecht equation 2.20
 Thus, at each learning step (an epoch), gradient descent updates the weights in the direction
 that results in the largest reduction in Epsilon.
 
-##### Backpropagation
+#### Backpropagation
 
 From these equations, however, it remains unclear how each weight in the network
 is updated. There are a number of detailed proofs for backpropagation, see, for example,
@@ -358,7 +359,7 @@ englebrecht, but, the algorithm has two phases:
 (TODO you need to explain back propagation in more detail here)
 
 
-### Convolutional Autoencoders
+## Convolutional Autoencoders
 
 Before delving into the specifics of convolutional autoencoders, consider the
 image below.
@@ -383,7 +384,7 @@ certain neuron relationships.
 Convolutional neural nets build on this intuition by attempting to progressively
 tease out these patterns through sequential layers in the network.
 
-#### Convolutional Neural Networks
+### Convolutional Neural Networks
 
 <!-- Cite http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf -->
 
@@ -438,7 +439,7 @@ build a set of feature detectors which simultaneously reduce dimensionality of
 the input image, resulting in a vector containing information on the spatial
 structure of the input image.
 
-#### Autoencoders
+### Autoencoders
 
 Autoencoders are a type of artificial neural network which performs dimension
 reduction in an unsupervised manner. It consists of two components, an encoder (f(x))
@@ -471,7 +472,7 @@ of the input data (convolutional NN). Put another way, from an input image x, th
 learns a highly dimensionally reduced representation of x that retains spatially
 relevant information, a highly desirable input source for clustering data.
 
-### DCEC-Paint
+## DCEC-Paint
 
 In this work, we evaluate the clustering performance of a Deep Convolutional Embedding
 Clustering (DCEC-Paint) algorithm on a set of digitized fine art. This network is
@@ -497,7 +498,7 @@ TODO This needs to include an equation with the overall clustering loss
 
 Below we describe the two components of the algorithm in detail.
 
-#### Autoencoder
+### Autoencoder
 
 As shown in figure {}, the encoder expects 128 x 128 RGB image with pixel values
 scaled between 0 and 1. The encoder consists of three convolutional layers which
@@ -518,7 +519,7 @@ the value used by Castellano and Vessio, and experiment with different values.
 From the embedded space, the decoder upsamples images with an architecture that
 mirrors the encoder.
 
-#### Clustering
+### Clustering
 
 The architecture of the clustering layer is derived from Xie et al., 2016, who
 proposed the method as part of NN (Deep Embedded Clustering - DEC) which, given
@@ -538,7 +539,7 @@ initial values using K-means. DEC then iteratively performs two steps:
 2.  Calculates the clustering loss via KL divergence and updates the target distribution
     for future assignments.
 
-##### Calculation of Soft Assignment
+#### Calculation of Soft Assignment
 
 The probability that a sample from the feature space, z_i, belongs to cluster j,
 is taken to be given by Student's t-distribution, given by:
@@ -547,7 +548,7 @@ Equation (1) from Xie et al.
 
 In this experiment, as in (cite all others), we keep alpha = 1
 
-##### Minimizing Clustering Loss
+#### Minimizing Clustering Loss
 
 To improve the cluster centroids, DEC attempts to match the soft assigment to
 an auxillery target distribution, p_i, and measure the fit of the match via KL
@@ -572,7 +573,7 @@ which have a high confidence in belonging to certain cluster will contribute
 largely to the gradient of L wrt that cluster centroid, resulting in a movement
 in the weights toward that cluster wrt to that example.
 
-#### Optimization
+### Optimization
 
 Taken together, the algorithm attempts to minimize the following objective function:
 
@@ -593,7 +594,7 @@ the equation above.
     in between two epochs, then the algorithm terminates.
 
 <!-- #### Prediction, Optimization, Parameter Initialization, etc. -->
-### Methods
+# Methods
 <!-- Methods go here -->
 
 <!-- ## Experiments -->
@@ -605,19 +606,19 @@ the equation above.
 <!-- Data Preprocessing -->
 <!-- Exploratory Statistics -->
 
-### Implementation
+# Implementation
 <!-- How long was the model trained, on what architecture, how many iterations, etc -->
 
-### Prediction Evaluation
+# Prediction Evaluation
 <!-- How did we evaluate the model's performance -->
 <!-- Comparison to the estimate for the painting. Those are the experts -->
 <!-- Comparison to alternative methods? What would those be? Is there precedence? -->
 <!-- Color Pallete, smoothness, brightness, and portrait scores -->
 
-### Experiment Results
+# Experiment Results
 <!-- What did we see? -->
 
-## Discussion
+# Discussion
 <!-- Why did we see it? -->
 
-## Conclusion
+# Conclusion

@@ -1,7 +1,7 @@
-from: markdown+emoji
-to: pdf
-output-file: paper.pdf
-input-file: paper.md
+# from: markdown
+# to: pdf
+# output-file: paper.pdf
+# input-file: paper.md
 
 # template: letter
 standalone: true
@@ -16,9 +16,9 @@ standalone: true
 
 # metadata values specified here are parsed as literal
 # string text, not markdown:
-metadata:
-  author:
-  - Brad West
+# metadata:
+#   author:
+#   - Brad West
 # metadata-files:
 # - boilerplate.yaml
 # or you may use metadata-file: with a single value
@@ -71,7 +71,7 @@ number-sections: true
 # a list of offsets at each heading level
 # number-offset: [0,0,0,0,0,0]
 # # toc: may also be used instead of table-of-contents:
-# shift-heading-level-by: 1
+shift-heading-level-by: 0
 # # section-divs: true
 # identifier-prefix: foo
 # title-prefix: ""
@@ -113,7 +113,6 @@ preserve-tabs: false
 # epub-chapter-level: 1
 # epub-cover-image: cover.jpg
 
-link-citations: true
 reference-links: true
 # block, section, or document
 reference-location: block
