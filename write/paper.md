@@ -41,6 +41,11 @@ NEED:
 * Cross depiction problem - Castellano and Vessio
 -->
 
+<!--
+Rendering
+* Need TOC
+-->
+
 # Deep Convolutional Autoencoder Prediction of Art Action Prices
 
 ## Abstract
