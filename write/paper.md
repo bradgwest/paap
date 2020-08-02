@@ -1,3 +1,20 @@
+---
+title: "Deep Convolutional Embedded Clustering of Digitized Fine Art"
+author:
+    - Brad West
+keywords: ["computer vision", "autoencoder", "clustering", "fine art"]
+abstract: |
+    This is an abstract which has yet to be written.
+documentclass:
+    - article
+hyperrefoptions:
+    - linktoc=all
+    - pdfwindowui
+    - pdfpagemode=FullScreen
+papersize: letter
+bibliography: papers.bib
+---
+
 <!--
 * Get pandoc working, generating to latex
 * Get BibTex working with pandoc, generating to latex
@@ -43,13 +60,23 @@ NEED:
 
 <!--
 Rendering
-* Need TOC
+* Use Heading identifiers - see pandoc manual
+
+Images
+![la lune](lalune.jpg "Voyage to the moon")
+
+footnotes
+Here is a footnote reference,[^1] and another.[^longnote]
+[^1]: Here is the footnote.
+[^longnote]: Here's one with multiple blocks.
+
+citations
+Blah blah [@smith04; @doe99].
 -->
 
-# Deep Convolutional Autoencoder Prediction of Art Action Prices
+<!-- # Deep Convolutional Autoencoder Prediction of Art Action Prices -->
 
-## Abstract
-<!-- TODO Write this after you finish the paper -->
+<!-- ## Abstract -->
 
 ## Introduction
 <!-- This is where your state the motivation -->
@@ -564,7 +591,6 @@ the equation above.
         from all examples in the dataset
 4.  If the percentage of points that changed cluster assigment is less than some tolerance
     in between two epochs, then the algorithm terminates.
-
 
 <!-- #### Prediction, Optimization, Parameter Initialization, etc. -->
 ### Methods
