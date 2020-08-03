@@ -4,7 +4,7 @@ author:
     - Brad West
 keywords: ["computer vision", "autoencoder", "clustering", "fine art"]
 abstract: |
-    This is an abstract which has yet to be written.
+    An abstract which has yet to be written.
 documentclass:
     - article
 hyperrefoptions:
@@ -12,7 +12,7 @@ hyperrefoptions:
     - pdfwindowui
     - pdfpagemode=FullScreen
 papersize: letter
-csl: /home/dubs/.csl/nature.csl
+csl: /home/dubs/.csl/ieee.csl
 link-citations: true
 ---
 
@@ -78,85 +78,6 @@ Blah blah [@smith04; @doe99].
 
 <!-- ## Abstract -->
 
-# Introduction
-<!-- This is where your state the motivation -->
-<!-- contributions to the field -->
-
-The widespread digitization of fine art over the past two decades has coincided
-with large advances in computational image analysis. As museum and gallery
-collections move onto the internet, millions of artworks have been made
-available for view at the click of a mouse[^google-arts-and-culture]. A proliferation of researchers
-have sought to analyze these digital collections, contributing methods for a
-wide variety of computer vision tasks from classification problems (of, for
-example, genre, style, artist, or historical period)[@Cetinic_et_al_2018;
-@Lee_and_Cha_2016] to visual relationships
-between paintings [@Garcia_et_al_2019; @Castellano_et_al_2020].
-
-[^google-arts-and-culture]: For example, Google Arts & Culture's digitization of
-hundreds of museum collections: https://artsandculture.google.com/partner.
-
-The complete visual and emotional effect of a painting is a combination
-of many factors, for example the color, texture, spatial complexity, and contrast. An art expert
-recognizes those qualities and is able to place a work in its historical
-and artistic context. That task, however,
-is difficult to articulate and exceedingly difficult to generalize to the set
-of all artwork. Early attempts at computational art analysis, nevertheless,
-attempted to build a similar model by first engineering and extracting domain specific features
-from the pixel space (corners, edges, SIFT), and using those feature vectors
-as input to a model. These techniques formed the backbone of early attempts at
-object recognition within and outside the art domain, and saw some success in
-evaluating art. In recent years, however, the field has undergone large advancements in
-computer vision techniques, in particular
-Convolution Neural Nets (CNNs) which have demonstrated outstanding results in
-extracting semantic meaning from digitized work. These results are impressive
-both in relation to earlier, feature engineering based attempts, and
-in comparison to the perceived complexity of recognizing the distinct visual
-appearance of an artwork.
-
-Rather than using engineered features that attempt to
-proxy semantic attributed, CNNs attempt to learn relevant features from a large
-set of training images. CNNs applied to fine art related tasks have benefited
-from both large annotated sources of art data, as well as enormous datasets of
-non-art related images. In the former case, annotated art datasets allow researchers
-to train classification models without hand labeling artist and genre metadata.
-This has led to a number of successful models that can identify period and even
-artist [cite here]. In the latter case, large non-art related image datasets
-have been used to pre-train object recognition models for art-related tasks.
-
-The large availability of annotated datasets has led to many authors focusing on
-supervised learning tasks. Comparatively little art research focuses on unsupervised
-learning, including clustering. Clustering artwork has a number of applications to
-aid the art expert in knowledge discovery, including identifying distinct periods within an artists career,
-shared techniques between groups of artists, and distinct periods within unattributed
-groups of work (e.g. ancient east Asian art).
-
-In this work, we replicate a CNN clustering algorithm, Deep Embedded
-Convolutional Clustering (DCEC) first proposed by [Guo et al., 2017] and adapted
-by Castellano and Vessio, 2020 to an art specific dataset. DCEC is composed of
-two components, a convolutional autoencoder (CAE) and a clustering layer
-attached to the CAE. Autoencoders perform non-linear dimension reduction of the
-image in two steps: an encoder which develops a mapping from the input image
-to a highly reduced latent (embedded) pixel space, and a decoder which maps
-from the latent space to a reconstructed image of equivalent dimensions as the
-input. By attaching a clustering layer to the CAE, and simultaneously optimizing
-for both clustering and image reconstruction loss, DCEC ensures that clustering
-of the images occurs within the constraints of a latent space i.e. clusters
-are formed in the presence of semantic attributes deemed meaningful by their
-inclusion in the latent space.
-
-We evaluate clustering performance against two separate datasets of
-digitized artwork, both scraped from Christies auction house's [cite] public
-record of auction sales. The first dataset we cluster is a set of [TODO: n (b/w)]
-images, and the second is a set of [TODO: n (east/asian)]. The only known prior
-work with this algorithm used two datasets, one of a set of paintings by 50
-well known artists and the collected works of Pablo Picasso. The images used in
-this work include more obscure artists, as well as a higher proportion of
-intra-genre work, which exercises the algorithm's performance in face of lower
-magnitude differences in the feature space.
-
-TODO Incorporate this sentiment somewhere else - From Xie et al.
-<!-- One   branch   of   popular   methods   for   clustering   isk-means  (MacQueen  et  al.,  1967)  and  Gaussian  MixtureModels (GMM) (Bishop, 2006).   These methods are fastand applicable to a wide range of problems. However, theirdistance metrics are limited to the original data space andthey  tend  to  be  ineffective  when  input  dimensionality  ishigh (Steinbach et al., 2004). -->
-
 <!-- 
 IDEAS
 * clustering artwork is hard - Castellano and Vessio, 2020
@@ -179,24 +100,127 @@ MOTIVATION
 * unsupervised clustering vs supervised learning -> broadens the potential datasets that we can use
  -->
 
+# Introduction
+<!-- This is where your state the motivation -->
+<!-- contributions to the field -->
+
+The widespread digitization of fine art over the past two decades has coincided
+with large advances in computational image analysis. As museum and gallery
+collections move onto the internet, millions of artworks have been made
+available for view at the click of a mouse[^google-arts-and-culture]. A
+proliferation of researchers
+have sought to analyze these digital collections, contributing methods for a
+wide variety of computer vision tasks from classification problems (of, for
+example, genre, style, artist, or historical period)[@Cetinic_et_al_2018;
+@Lee_and_Cha_2016] to visual relationships
+between paintings [@Garcia_et_al_2019; @Castellano_et_al_2020].
+
+[^google-arts-and-culture]: For example, Google Arts & Culture's digitization of
+hundreds of museum collections: https://artsandculture.google.com/partner.
+
+The complete visual and emotional effect of a painting is a combination
+of many factors, for example the color, texture, spatial complexity, and
+contrast. An art expert
+recognizes those qualities and is able to place a work in its historical
+and artistic context. That task, however,
+is difficult to articulate and exceedingly difficult to generalize to the set
+of all artwork. Early attempts at computational art analysis, nevertheless,
+attempted to build a similar model by first engineering and extracting domain specific features
+from the pixel space (corners, edges, SIFT), and using those feature vectors
+as input to a model[@Oliva_and_Torralba_2001]. These techniques formed the
+backbone of early attempts at
+object recognition within and outside the art domain, and saw some success in
+evaluating art[@Shamir_et_al_2010]. In recent years, however, the field has
+undergone large advancements in
+computer vision techniques, in particular
+Convolution Neural Nets (CNNs) which have demonstrated outstanding results in
+extracting semantic meaning from digitized work[@Tan_et_al_2016]. These results are impressive
+both in relation to earlier, feature engineering based attempts, and
+in comparison to the perceived complexity of recognizing the distinct visual
+appearance of an artwork.
+
+Rather than using engineered features that attempt to
+proxy semantic attributed, CNNs attempt to learn relevant features from a large
+set of training images. CNNs applied to fine art related tasks have benefited
+from both large annotated sources of art data[^wikiart], as well as enormous datasets of
+non-art related images[^imagenet]. In the former case, annotated art datasets allow researchers
+to train classification models without hand labeling artist and genre metadata.
+This has led to a number of successful models that can identify period and even
+artist [@David_et_al_2016]. In the latter case, large non-art related image datasets
+have been used to pre-train object recognition models for art-related tasks.
+
+[^wikiart]: e.g. WikiArt (https://www.wikiart.org), which contains over 130 thousand
+digitized works.
+
+[^imagenet]: e.g. ImageNet (http://image-net.org), which contains more than 14 million
+hand annotated images.
+
+The large availability of annotated datasets has led many authors to focus on
+supervised learning tasks. Comparatively little art research focuses on unsupervised
+learning, including clustering. Clustering artwork has a number of applications to
+aid the art expert in knowledge discovery, including identifying stylistic
+discontinuities within an artists career,
+shared techniques between groups of artists, and distinct periods within unattributed
+groups of work (e.g. ancient east Asian art). Yet clustering images has been
+historically difficult due to the difficulty in defining relevant features, and
+issues defining distance metrics that are effective in the high dimensionality
+data space of complex images. An alternative to these two problems, is to learn
+an efficient representation of the input image through a deep NN.
+
+In this work, we replicate a CNN clustering algorithm, Deep Embedded
+Convolutional Embedded Clustering (DCEC) first proposed by Guo et al., 2017[@Guo_et_al_2017]
+and adapted by Castellano and Vessio, 2020[@Castellano_and_Vessio_2020] to an
+art specific dataset. DCEC is composed of
+two components, a convolutional autoencoder (CAE) and a clustering layer
+attached to the CAE. Autoencoders perform non-linear dimension reduction of the
+image in two steps: an encoder which learns a mapping from the input image (data space)
+to a highly reduced latent (embedded) pixel space, and a decoder which maps
+from the latent space to a reconstructed image in the data space. By attaching
+a clustering layer to the CAE and simultaneously optimizing
+for both clustering and image reconstruction loss, DCEC ensures that clustering
+of the images occurs within the constraints of the latent space. In other words,
+clusters are formed in the presence of spatial attributes deemed meaningful by their
+inclusion in the latent space.
+
+We evaluate clustering performance against two separate datasets of
+digitized artwork, both scraped from Christie's' public
+record of auction house sales[^christies].
+<!-- The first dataset we cluster is a set of [TODO: n (b/w)] images, and the second
+is a set of [TODO: n (east/asian)]. -->
+The only known prior
+work with this algorithm used two datasets, one of a set of paintings by 50
+well known artists and the collected works of Pablo Picasso. The images used in
+this work include more obscure artists, as well as a higher proportion of
+intra-genre work.
+<!-- which exercises the algorithm's performance in face of lower
+magnitude differences in the feature space. -->
+
+[^christies]: https://www.christies.com/Results
+
 # Related Work
 <!-- DCN efforts, specifically deep clustering, like DEC, DCEC, DCEC-Paint -->
 <!-- TODO Efforts to quantify art prices, especially using extracted, not learned features -->
 
-As institutions have digitized their art collections over the preceding decades,
-many researchers have applied computational image analysis methods to art domain.
-Although applications are quite broad, a large number of efforts have focused
-on classification (of artist, genre, period, movement, medium, etc), object recognition,
-visual similarity (between artwork), the cross depiction problem (distinguishing
-the same type of object in different representations).
+As institutions digitized their art collections over the preceding decades,
+researchers responded by applying computational image analysis methods to the art domain.
+A large number of efforts focused on classification tasks, for example of
+genre[@Cetinic_et_al_2016];
+object detection and recognition[@Crowley_and_Zisserman_2014];
+visual similarity between artwork[@Castellano_et_al_2020; @Seguin_et_al_2016],
+and the cross depiction problem -- distinguishing the same type of object in different
+representations[@Hall_et_al_2015].
 
 Initial attempts to analyze art emphasized feature engineering and extraction
-[cite some people] in which domain specific characteristics of artwork are
+in which domain specific characteristics of artwork are
 identified and a given artwork's relative presence or absence of those
-features is used as input to a model. For example, (see Garcia)
-<!-- TODO: What are some places this was done and what are the features that were extracted -->
+features is used as input to a model. For example, Oliva and Torralba[@Oliva_and_Torralba_2001]
+proposed a set of "perceptual dimensions (naturalness, opennes, roughness,
+expansion, ruggedness)" which they estimated using low level pixel relationships
+and used to categorize scenes. Shamir et al.[@Shamir_et_al_2010] used 11 extracted
+features to classify paintings by their artists and art school. Spehr et al.[@Spher_et_al_2009]
+used over 200 features to cluster 10,000 paintings.
 
-While feature engineering has been shown to be effective, it's limited in its
+While feature engineering has been shown to be effective, it's limited by its
 requirement for a comprehensive set of pre-identified features for modeling the
 image characteristics. This shortcoming is especially apparent in tasks which
 attempt to consider the image as a whole, a task which seems especially complex
