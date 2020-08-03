@@ -10,7 +10,7 @@ documentclass:
 hyperrefoptions:
     - linktoc=all
     - pdfwindowui
-    - pdfpagemode=FullScreen
+    # - pagemode=FullScreen
 papersize: letter
 csl: /home/dubs/.csl/ieee.csl
 link-citations: true
@@ -208,7 +208,7 @@ genre[@Cetinic_et_al_2016];
 object detection and recognition[@Crowley_and_Zisserman_2014];
 visual similarity between artwork[@Castellano_et_al_2020; @Seguin_et_al_2016],
 and the cross depiction problem -- distinguishing the same type of object in different
-representations[@Hall_et_al_2015].
+representations, say, a cat depicted in a cubist vs an impressionist painting[@Hall_et_al_2015].
 
 Initial attempts to analyze art emphasized feature engineering and extraction
 in which domain specific characteristics of artwork are
@@ -228,31 +228,29 @@ given the myriad possible "features" that could be found in an m x n x p
 dimensioned image. Over the past decade, the computer
 vision community has focused on designing algorithms which, rather than rely on
 extracted features, learn a relevant feature set through a training process.
-Applying deep learning concepts to art analysis has proved immensely fruitful
-in a host of subfields. Cetinic et al., demonstrated the effectiveness of fine
-tuned CNNs in classifying artwork by artist, genre, style, time period, and
-even national artistic context. blah blah blah
+Applying deep learning concepts to art analysis has proved fruitful
+in a host of subfields, often employing convolutional neural nets
+[@Cetinic_et_al_2016; @Cetinic_et_al_2018;
+Crowley_and_Zisserman_2014; @Tan_et_al_2016; @Garcia_et_al_2019].
 
-The majority of art analysis research employs supervised learning, in part due
-to the availability of numerous and large labeled datasets. In recent years,
+Due to the availability of numerous and large labeled dataset, much research uses
+supervised learning methods.
+In recent years,
 however, a few authors have focused on unsupervised learning, in particular
-clustering. Outside of the art domain, Xie et al., 2016 proposed a Deep Embedded
+clustering. Seguin et al.[@Seguin_et_al_2016] used a convolutional neural net to
+cluster images for visual link retrieval. Outside the art domain,
+Xie et al.,[@Xie_et_al_2017] proposed a Deep Embedded
 Clustering (DEC) algorithm which selects clusters in two steps: first learning a reduced
 dimensionality set of features using stacked autoencoders (SAE) and second
-using stochastic gradient descent with a soft assignment loss function to perform
-clustering. Guo et. al expanded on this work by using Convolutional Autoencoder
+using stochastic gradient descent (SGD) to learn cluster centers
+Guo et. al[@Guo_et_al_2017] expanded on this work by using Convolutional Autoencoder
 rather than a stacked auto encoder, and by jointly optimizing for both clustering
-loss and image reconstruction loss so as to avoid corrupting the semantically
-meaningful feature space during the clustering component (Deep Convolutional
-Embedded Clustering (DCEC)). Finally, Castellano and Vessio, inspired by Guo et
-al., tweaked DCEC for the larger and more complex images found in art datasets.
-
-In this work we replicate the algorithm proposed by Castellano and
-Vessio, by applying it to different art datasets.
-
-
-* Cetinic et al, 2018 - performed 5 different classification tasks on 3 large art datasets
-
+and image reconstruction loss so as to avoid corrupting the reduced
+dimensionality feature space during the clustering component, naming the
+algorithm Deep Convolutional Embedded Clustering (DCEC).
+Inspired by DCEC, Castellano and Vessio[@Castellano_and_Vessio_2020]
+adapted it to more complex and larger images in the art domain and demonstrated its
+efficacy in clustering a dataset of ca. 10,000 digitized artworks.
 
 # Convolutional Neural Networks
 <!-- Motivation for what NNs offer in general -->
