@@ -20,6 +20,7 @@ link-citations: true
 * Get BibTex working with pandoc, generating to latex
 * Add entries to BibTex
 * Write Draft Introduction
+* Change neural network to deep neural network
 * Write technical discussion of neural Networks
 * Write technical discussion of Convolutional Autoencoders
 * Write partial section of methods
@@ -252,7 +253,7 @@ Inspired by DCEC, Castellano and Vessio[@Castellano_and_Vessio_2020]
 adapted it to more complex and larger images in the art domain and demonstrated its
 efficacy in clustering a dataset of ca. 10,000 digitized artworks.
 
-# Convolutional Neural Networks
+# DCEC Architecture
 <!-- Motivation for what NNs offer in general -->
 <!-- What do NN offer to image problems -->
 <!-- What do they offer to this specific problem -->
@@ -263,9 +264,13 @@ efficacy in clustering a dataset of ca. 10,000 digitized artworks.
     - The given arrangement of these pixels is what gives these images their texture/shape/complexity, etc
  -->
 
-Convolutional neural nets have become a power tool in computer vision over the
-previous decade. Their ability to extract meaningful patterns [cite here] from
-images has led to their widespread usage in vision problems such as object
+Before explaining the architecture of the DCEC-Paint algorithm, we provide a
+brief and incomprehensive overview of the mathematical concepts underlying
+CNNs and Autoencoders. For a textbook introduction to artificial neural nets,
+see [@Engelbrecht_2007].
+
+<!-- Over the past decade, researchers have used convolutional neural networks to
+investigavision problems such as object
 detection and facial recognition [cite here]. Autoencoders are a type of unsupervised neural
 net which learns a mapping from a high dimensional data space to a lower dimensional
 feature space. Like CNNs, Autoencoders have proved wildly useful in the computer vision
@@ -273,82 +278,119 @@ domain due the high dimensionality and complexity of images [cite here]. This
 section provides a brief and incomprehensive overview of the mathematical
 concepts underlying CNNs and Autoencoders. For a gentle introduction to neural
 networks and deep learning, see [Michael Nielson]. For a comprehensive look at
-neural networks including autoencoders, see [cite textbook].
+neural networks including autoencoders, see [cite textbook]. -->
 
-## Artificial Neural Network Basics
+## Artificial Neural Networks
 <!-- How and why do NNs work -->
 
 ### Architecture
 
-Artificial neural networks are non-linear functions, F_nn: R^I -> R^K, where I and
-K are the dimensionality of the input and output spaces, respectively [cite englebrecht].
+<!-- TODO This paragraph does not read very well -->
+Artificial neural networks are non-linear functions,
+$F_{nn}: \mathbb{R}^I -> \mathbb{R}^K$, where $I$ and
+$K$ are the dimensionality of the input and output spaces, respectively.
 Modeled after their biological equivalents, they achieve this non-linear functionality
-through composition of layers of artificial neurons where an individual neuron is a nonlinear function,
-y = f(x + b), typically y = [0, 1] or y = [-1, 1] , called an activation function, which accepts n > 0 input signals (x) and outputs a single value
-as a function of the inputs and the learned weights (w) and biases (b) for each
-interneuron connection [diagram here, steal from figure 1.3 in englebrecht]. Thus,
-for each edge (connection) between the jth neuron in layer i and the kth neuron in
-layer i +1, the network learns a particular weight (w_(i+1)_jk) which represents
-the relative importance of that component of the input signal. When
-layered together, the output of the neuron in the ith layer is the input to the
-neuron(s) in layer i + 1, forming a structure similar to the one depicted in the
-figure x [diagram here, steal from figure 1.4 in englebrecht], typically a directed
-acyclic graph (DAG) (footnote: the
-actual structure of a particular type and instance of network is highly variable
+through composition of layers of artificial neurons where an individual neuron
+is itself typically a nonlinear function,
+$y = f(x + b)$, (almost always $y = [0, 1]$ or $y = [-1, 1]$).
+$y$ is called an activation function, accepting n > 0 input signals (x) and
+outputing a single value as a function of the inputs and the learned weights
+(w) and biases (b) for each inter-neuron connection.
+
+**TODO** - Figure of an artificial neuron with input and output signals, annotated
+to match equations above.
+<!-- [diagram here, similar to figure 2.1 in englebrecht]. -->
+
+Thus, for each edge (connection) between the $j^{th}$ neuron in layer $i$ and
+the $k^{th}$ neuron in
+layer $i+1$, the network learns a particular weight ($w_{i+1,j,k}$) which represents
+the relative importance of that component of the total input signal. When
+layered together, the output of a neuron in layer $i$ is the input to
+neurons in layer $i + 1$, forming a structure similar to the one depicted in the
+figure x[^nn].
+<!-- Above, do:
+![This is the caption\label{mylabel}](/url/of/image.png)
+See figure \ref{mylabel}. -->
+
+**TODO** - Figure of a generic feedforward network
+
+[^nn]: While typically a directed acyclic graph (DAG), the actual structure of
+a particular type of DNN is highly variable
 within these general constraints. The activation function, number of inputs, number
-of layers, interconnectedness of the layers, and even direction of connections networks
-all vary depending on the desire of the practitioner).
+of layers, interconnectedness of the layers, and even direction of network connections
+can all vary to form different networks.
 
 <!-- Activation functions -->
-In general, an activation function is a monotonically increasing function, F_AN: R -> [0, 1] or F_AN: R -> [-1, 1]
+In general, an activation function is a monotonically increasing function,
+$F_{AN}: \mathbb{R} -> [0, 1]$ or $F_{AN}: \mathbb{R} -> [-1, 1]$
 such that:
 
-F_AN(-inf) = 0 or F_AN(-inf) = 1 and  f_AN(inf) = 1
+$$
+F_{AN}(-\infty) = 0 \quad \textrm{or} \quad F_{AN}(-\infty) = 1
+$$
 
-There are many activation forms but we focus on a single, and most common, form,
-the sigmoid:
+and
 
-equation 2.11 in englebrecht
+$$
+f_{AN}(\infty) = 1
+$$
+
+There are many viable activation functions, but we will focus on the rectifier,
+specifically the exponential linear unit (ELU). The ELU and variants such as
+the rectified linear unit (ReLU)
+have been shown to speed up training on large and deep neural networks compared
+to more traditional choices such as the logistic sigmoid and hyperbolic tangent
+(need citation here). ELU:
+
+$$
+  f(x)=\left\{
+  \begin{array}{@{}ll@{}}
+    x, & \text{if}\ x>0 \\
+    a(e^x - 1), & \text{otherwise}
+  \end{array}\right.
+$$
+
+where $a$ is a constant which can be tuned.
 
 This function has highly beneficial properties for learning. It is continuously
 differentiable along the real numbers, which, combined with the fact that it is
 monotonically increasing means that a gradient can be calculated at any place,
-facilitaing "learning" as discussed in the section below. The fact that its derivative
-asymptotically aproaches zero for large magnitude input values is detrimental to
-quick learning, however, this can be compensated for by tuning specific parameters
-in the network.
-
-
-<!-- Neural networks can be shown to approximate any function (cite this as well) -->
+facilitating "learning" as discussed in the section below. The specifics of the
+ELU compared to its variants such as the ReLU, and leaky ReLU, are too specific
+to address here. It has been shown, however, to speed up learning on deep networks
+as well as lead to better classification accuracy[@Clevert_2015].
 
 ### Artificial Learning
 
-Neural networks can be shown to approximate any continuous function [TODO cite this, pg. 28 in englebrecht] - (Hornik,  Kurt.    Approximation  capabilities  of  multilayerfeedforward networks.Neural networks, 4(2):251–257,1991.)
-to some
-desireable level of accuracy. NNs achieve this impressive result by "learning"
+Neural networks with at least a single hidden layer can be shown to approximate
+any continuous function[@Hornik_1991]. NNs achieve this impressive result by "learning"
 the appropriate weights and biases, progressively updating these values until
 an approximation is sufficiently close. There are many different learning algorithms,
-components for updating the weights and biases. In the interest of brevity, we
-focus on the most widely used learning rule, Gradient Descent. For an introduction
+the components for updating the weights ($w$) and biases ($b$) on the networks
+signals. In the interest of brevity, we
+focus on the most widely used learning rule, Stochastic Gradient Descent (SGD)
+with backpropagation. For an introduction
 to additional rules such as the Widrow-Hoff, Generalized Delta, and Error-Correction
-learning rules, see Englebrecht.
+learning rules, see [@Engelbrecht_2007].
 
-As mentioned abouve, there are a number of different types of neural networks.
-Below, we will examine in depth the convolutional autoencoder. However, to discuss
-Gradient Descent, consider a fully connected 3 layer feed forward neural net,
-depicted in figure {blank}. Each neuron in the ith layer is connected to each
-neuron in the i + 1 layer and inputs are passed only forward (that is, right to left)
+#### Stochastic Gradient Descent
+
+Consider a fully connected 3 layer feed forward neural net,
+depicted in figure (above). Each neuron in the ith layer is connected to each
+neuron in layer i + 1 and inputs are passed forward (that is, right to left)
 through the network.
 
-### Stochastic Gradient Descent
+Stochastic Gradient Descent (SGD) attempts to minimize the value of an error
+function (also known as an optimization or cost function], $\mathcal{E}(y - y')$,
+by progressively updating the network weights ($w$) and biases ($b$) in such a
+way as to follow the first derivative gradient of $\mathcal{E}$ with respect to
+the weights and biases ($\frac{\partial{\mathcal{E}}}{\partial{w}}$,
+$\frac{\partial{\mathcal{E}}}{\partial{b}}$). By
+iteratively calculating these gradients and then updating the weights and biases
+in that direction, the network progressively learns the appropriate weights for
+function approximation.
 
-Gradient Descent attempts to minimize the value of an error function [footnote:
-Also called an optimization or Cost function], Epsilon(y - y'),
-by progressively updating the network weights and biases in such a way as to follow
-the first derivative gradient of Epsilon with respect to the weights (partial epsilon wrt w). For example,
-consider a common form for epsilon, the sum of squared errors:
-
-(Also see section 2 in Nielson)
+<!-- For example, consider a common form for epsilon, the sum of squared errors:
 
 2.17 in englebrecht
 
@@ -367,71 +409,70 @@ and
 see englebrecht equation 2.20
 
 Thus, at each learning step (an epoch), gradient descent updates the weights in the direction
-that results in the largest reduction in Epsilon.
+that results in the largest reduction in Epsilon. -->
 
 #### Backpropagation
 
-From these equations, however, it remains unclear how each weight in the network
-is updated. There are a number of detailed proofs for backpropagation, see, for example,
-englebrecht, but, the algorithm has two phases:
+Despite knowing the gradient, however, it remains unclear how each weight in the network
+is updated. This is achieved via backpropagation, first appreciated by [@Rumelhart_et_al_1986].
+The details are too specific to include here, but the algorithm has two general
+steps:
 
 1.  Inputs are passed through the network and output values calculated, providing
-    the values needed to calculate epsilon and the derived gradients
+    the values needed to calculate epsilon and the derived gradients.
 2.  The error signal from the output layer is propagated backwards through the
     network such that each weight and bias is updated according to its effect on
     the overall error of the cost function.
 
-(TODO you need to explain back propagation in more detail here)
-
+(**TODO** - need to explain back propagation in more detail here)
 
 ## Convolutional Autoencoders
 
-Before delving into the specifics of convolutional autoencoders, consider the
-image below.
-
-TODO figure
+**TODO** - Some relevant art image
 
 <!-- TODO this should have a particular image associated with it, something famous -->
-While to the human eye an image may appear a mosaic of shapes and colors,
-computationally images are matrices of numeric values pertaining to pixel
+While to the human eye the image above may appear a mosaic of colorful brush
+strokes, masterfully arranged to elicit emotion,
+digitally, images are represented as matrices of numeric values pertaining to pixel
 intensity. In the case of black and white images, there is a single channel,
-meaning an image can be represented by a single matrix of size m x n. Color images are
-3 dimensional, accounting for the increase from one to p > 1 channels (3, in the case
-of RGB images). Consider a neural network tasked with learning relevant features
-from an input dataset of x, m x n x p images.
+meaning an image can be represented by a single matrix of dimensions $m \times n$.
+Color images are $3$ dimensional, accounting for the increase from one to p > 1
+channels (3, in the case of RGB images).
 
-Intuitively, neural networks seem like an appropriate tool for identifying
+Consider a neural network tasked with learning relevant features
+from an input dataset of $k$, $m \times n \times p$ images. Intuitively, a network might seem
+like an appropriate tool for identifying
 relationships between pixels. An architecture of many interconnected neurons
-seems as though it should have the ability to progressively weight more meaningful
+seems as though it should have the ability to progressively "learn" more meaningful
 patterns in the data (over the course of many epochs) by progressively weighting
-certain neuron relationships.
-
-Convolutional neural nets build on this intuition by attempting to progressively
-tease out these patterns through sequential layers in the network.
+certain neuronal relationships. Convolutional neural nets build on this intuition
+by building multiple layers that attempt to detect features at different abstraction
+layers, and which contain multiple filters in each layer, each filter targeting
+a different "feature".
 
 ### Convolutional Neural Networks
 
-<!-- Cite http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf -->
-
-Convolutional neural networks are a type of deep neural network {footnote: deep
-means more than a single hidden layer} with an architecture that is well suited
+Convolutional neural networks are a type of deep neural network[^DNN]
+with an architecture that is well suited
 to image analysis. In particular, convolutional neural nets are better able to
 extract the spatial structure of an image than traditional networks because they
-limit the connectectedness of the network by ensuring connected neurons correspond
-to spatially adjacent input pixels, by sharing weights among edges within the same
-layer, and by pooling subsequent layers to provide dimension reduction. For
+(1) limit the connectectedness of the network by ensuring connected neurons correspond
+to spatially adjacent input pixels, (2) share weights among edges within the same
+layer, and (3) pool subsequent layers to provide dimension reduction. For
 a full discussion of convolutional neural nets, see
-[levun](http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf).
-We summarize briefly here.
+[@LeCun_et_al_1998]. We summarize briefly here.
 
-Consider an input image of size 4 x 4 x 1, that is, 16 total pixels, depicted below.
+[^DNN]: Deep neural networks contain more than 2 hidden layers.
 
-TODO image
+Consider the $4 \times 4$ square input image depicted below.
+
+**TODO** - image of 4 x 4 x 1 pixels
 
 In a fully connected network, each pixel value would be input to each neuron in the
-first hidden layer. Convolutional neural networks, differ by defining a local receptive
-field of size k, where (kxk) is the number of adjacent inputs that will connect to
-the jth neuron in layer i.
+first hidden layer. Convolutional neural networks differ from fully connected
+networks by defining a local receptive
+field of size $k$, where ($k \times k$) is the number of adjacent inputs that will connect to
+the $j^{th}$ neuron in layer $i$.
 
 TODO figure
 
@@ -598,7 +639,7 @@ which have a high confidence in belonging to certain cluster will contribute
 largely to the gradient of L wrt that cluster centroid, resulting in a movement
 in the weights toward that cluster wrt to that example.
 
-### Optimization
+#### Optimization
 
 Taken together, the algorithm attempts to minimize the following objective function:
 
