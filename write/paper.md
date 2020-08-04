@@ -474,29 +474,29 @@ networks by defining a local receptive
 field of size $k$, where ($k \times k$) is the number of adjacent inputs that will connect to
 the $j^{th}$ neuron in layer $i$.
 
-TODO figure
+**TODO** - figure of the 4x4 input mapping with a 2x2 receptive field to a 3x3 input
 
 For each neuron in the hidden layer, this local receptive field is moved adjacently
-by a stride length, (l). For example, a stride length of 2 will correspond to a total
+by a stride length of $l$ pixels. For example, a stride length of 2 will correspond to a total
 of 9 local receptive fields, meaning a total of 9 neurons in the first hidden layer.
 By limiting the number of input signals passed to a single neuron, each neuron
 receives information only from adjacent pixels, rather than information from
-every input in the network, including pixels/neurons that are spatially distant.
+every input in the network, linking pixels/neurons that are spatially distant.
 Intuitively, this seems like an appropriate way to extract spatial meaning.
 
-Furthermore, by design, each neuron in the ith hidden layer has the same weights
-and biases. So, for our example, the 2*2 array of weights and biases input to the
+Furthermore, by design, each neuron in the $i^{th}$ hidden layer has the same weights
+and biases. So, for our example, the $2 \times 2$ array of weights and biases input to the
 jth neuron in the ith layer are identical to every other array of weights and biases
 in the ith layer. By making this restriction, the network ensures that all the neurons
 in the ith layer are detecting the same spatial structure. This map from an input
 layer to a hidden layer is called a feature map, and the set of weights and biases
-that define a feature map is called a filter or a kernal (cite something here).
+that define a feature map is called a filter or a kernel (**TODO** - cite something here).
 By increasing the number of feature maps at each layer, the network is able to
-detect multiple features (Bengio,  Yoshua,  Courville,  Aaron,  and  Vincent,  Pascal.Representation learning: A review and new perspectives.2013.).
+detect multiple features[@Bengio_et_al_2013].
 
-Finally, convolutional NNs pool the activations of the convolution layers in the
-aptly named, pooling layers. By pooling adjacent activations, typically by taking
-the maximum activation from a lxl sized area, the featue maps undergo
+Finally, convolutional NNs aggregate the activations of the convolution layers
+in what are known as pooling layers. By pooling adjacent activations, typically by taking
+the maximum activation from a $l \times l$ sized area, the feature maps undergo
 dimension reduction. Intuitively, this can be thought of as a function which outputs
 whether a certain feature is found anywhere within a subsection of a layer.
 
