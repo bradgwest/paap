@@ -507,32 +507,31 @@ structure of the input image.
 
 ### Autoencoders
 
-Autoencoders are a type of artificial neural network which performs dimension
-reduction in an unsupervised manner. It consists of two components, an encoder (f(x))
-and a decoder (g(x')) which together perform dimension reduction (encoder), and
-dimension expansion (decoder) in such a way as to minimize the error of x - x' = x - g(f(x)).
+Autoencoders are a type of unsupervised artificial neural network consisting of
+two components, an encoder, $x' = f(x)$,
+and a decoder $g(x')$, which perform, respectively, dimension reduction and
+expansion in such a way as to minimize the error of
+$y - y' = y - g(f(x))$, where $x'$ is a projection of $x$ from the data space into
+a much lower dimensional latent space. Figure \_ shows a rudimentary autoencoder.
 
-In the case of an input image, the encoder (v = F(x)) takes a matrix of pixel values
-and outputs a feature vector, known as the embedded space, with highly reduced
-dimensionality. The decoder (x' = G(v)) takes the feature vector as
-input and outputs an image of equal dimensionality to the input image, x. The
-neural net is tasked with minimizing the image reconstruction loss, which, for
-a single image is x' - x = G(F(x)) - x), typically given as the mean squared error:
+**TODO** - Figure of a basic feedforward autoencoder
 
-TODO Equation for mean squared error in Castellano and Vessio, pg 3
+Autoencoders have proved especially useful in denoising and dimension reduction
+of images, which are naturally highly dimensional. Typically the reconstruction
+loss function is taken to be the mean squared error:
 
-The result is that the autoencoder encodes
-the image in the much reduced feature space, similar to a nonlinear version of Principle
-Component Analysis (PCA).
+$$
+L = \frac{1}{n}\sum_{i=1}^{n} (x'_i - x_i)^2 = \frac{1}{n}\sum_{i=1}^{n} (g(f(x)) - x_i)^2
+$$
 
-<!-- The
-researchers listed above take this one step further by attaching a clustering
-layer to the embedded space, allowing them to jointly optimize for both reconstruction and clustering loss, which ensures that the clustering adheres to the model's pre-trained knowledge of the relevant feature spac -->
+The result is that the autoencoder encodes the image in the much reduced
+feature space, similar to a nonlinear version of Principle Component Analysis
+(PCA).
 
-The specifics of dimension reduction component of the encoder varies based on
+The specifics of the dimension reduction component of the encoder varies based on
 specific architectures. Convolutional Autoencoders, which we implement in this work,
-are autoencoders that employ convolutional neural nets to define the encoding and
-decoding components. The combined effect is a network which reduces the dimensionality
+are autoencoders that choose convolutional neural nets as encoders and decoders.
+The combined effect is a network which reduces the dimensionality
 of the input image (autoencoder) while learning the spatially relevant components
 of the input data (convolutional NN). Put another way, from an input image x, the network
 learns a highly dimensionally reduced representation of x that retains spatially
@@ -540,46 +539,55 @@ relevant information, a highly desirable input source for clustering data.
 
 ## DCEC-Paint
 
-In this work, we evaluate the clustering performance of a Deep Convolutional Embedding
-Clustering (DCEC-Paint) algorithm on a set of digitized fine art. This network is
-identical to the one specified by Castellano and Vessio, 2020, who made minor
-adaptations to the DCEC algorithm specified by Guo et al., 2017. The network is
-a convolutional autoencoder which has a clustering algorithm attached to the
-latent feature space. The network is tasked with jointly optimizing for image reconstruction and
+In this work, we evaluate the clustering performance of the Deep Convolutional
+Embedded Clustering (DCEC-Paint) algorithm on a set of digitized fine art. This network is
+identical to the one specified by [@Castellano_and_Vessio_2020], who made minor
+adaptations to the DCEC algorithm specified by [@Guo_et_al_2017]. A
+convolutional autoencoder with a deep learning clustering algorithm feed from the
+latent feature space, the network is tasked with jointly optimizing for image reconstruction and
 clustering loss, ensuring that clustering is performed on a reduced dimensionality, but
-spatially related representation of the input image (the latent feature space). The
-structure of the network is given in figure{} (reproduce from Castellano and Vessio
-figure 1).
+spatially related representation of the input image. The
+structure of the network is shown in figure \_.
+
+**TODO** - Figure showing DCEC-Paint, similar to figure 1 in Castellano and Vessio
 
 The overall motivation of DCEC-Paint is to preserve the embedded space structure
-while performing clustering so as to not lose meaningful spatial structure. Guo et al.,
+while performing clustering so as to not lose meaningful spatial structure. [@Guo_et_al_2017]
 noted that previous deep clustering algorithms do not attempt to maintain feature
 space integrity; the clustering algorithm is allowed to fully alter the feature
 space, effectively throwing away previously learned meaningful features. We posit
-that this is especially important for clustering digitized artworks which are
-vastly more spatially complex than some example datasets, and should, in theory, store a
+that retaining learned features is especially important for clustering digitized
+artworks which are, on the whole, spatially complex, and should in theory store a
 large amount of artistically meaningful data in the feature space.
 
-TODO This needs to include an equation with the overall clustering loss
+As mentioned above, the network is tasked with minimizing the overall loss, a
+combination of the image reconstruction and clustering loss:
 
-Below we describe the two components of the algorithm in detail.
+$$
+L = \gamma L_r + (1 - \gamma) L_c
+$$
+
+where $\gamma$ is a tunable parameter. [@Guo_et_al_2017] set $\gamma = 0.1$,
+while [@Castellano_and_Vessio_2020] used $\gamma = 0.9$, putting more importance
+on optimizing for clustering loss rather than reconstruction loss. The goal of
+clustering artwork is to optimize cluster assignment, so we follow [@Castellano_and_Vessio_2020]
+and set $\gamma = 0.9$
+
+Below we describe the derivation of the reconstruction and clustering loss in
+detail, with their component parts.
 
 ### Autoencoder
 
-As shown in figure {}, the encoder expects 128 x 128 RGB image with pixel values
+As shown in figure \_, the encoder expects $128 \times 128$ RGB image with pixel values
 scaled between 0 and 1. The encoder consists of three convolutional layers which
-have 32, 64, and 128 filters, respectively. In all cases the stride length is 2
-and the kernel size (local receptive field) is 5x5 for the first two convolutional
-layer, and 3x3 for the final layer. All layers use the ELU activation function
-which was chosen by Castellano and Vessio over the proposed ReLU for quicker
-learning:
+have 32, 64, and 128 filters, respectively. In all cases the stride length is 2 pixels
+and the kernel size (local receptive field) is $5 \times 5$ for the first two convolutional
+layers, and $3 \times 3$ for the final layer. All layers use the ELU activation function.
 
-Show equation of ELU if that is important.
-
-The output of the final convolutional layer is flattened in to a vector of dimensions
-32768, which is fully connected to the embedded space. The embedded space dimensions
-are highly strategic as an embedded space that is too large will not sufficiently
-constrain the feature reduction so no learning occurs, while a too restrictive
+The output of the final convolutional layer is flattened in to a vector of size
+$327684, which is fully connected to the embedded space. Choosing the embedded space dimensions
+is highly strategic as an embedded space that is too large will not sufficiently
+constrain the feature reduction, resulting in minimal learning, while too restrictive a
 size will result in slow learning. We initially set this size to 32 to replicate
 the value used by Castellano and Vessio, and experiment with different values.
 From the embedded space, the decoder upsamples images with an architecture that
@@ -587,76 +595,85 @@ mirrors the encoder.
 
 ### Clustering
 
-The architecture of the clustering layer is derived from Xie et al., 2016, who
-proposed the method as part of NN (Deep Embedded Clustering - DEC) which, given
+The architecture of the clustering layer is derived from [@Xie_et_al_2017], who
+introduced the method as part of Deep Embedded Clustering (DEC) which, given
 a high dimensionality data space, used
-Stacked Autoencoders to form a reduced dimensionality feature space, and then
+stacked autoencoders to form a reduced dimensionality feature space, and then
 optimized parameters by computing a probability distribution for membership to
 a set of centroids and used stochastic gradient descent via backpropagation to
 learn an mapping which minimizes the Kullback-Leibler (KL) divergence to that
 distribution.
 
-After first learning an initial feature space, we set the cluster centroids to
-initial values using K-means. DEC then iteratively performs two steps:
+After first learning an initial feature space, setting $\gamma = 0$ in the
+overall loss function, we set the cluster centroids to
+initial values using K-means and set $\gamma = 0.9$. DEC then iteratively
+performs two steps learn cluster weights:
 
-1.  Computes the similarity between a point in the feature space, z_i, and a centroid,
-    mu_j using Student's t-distribution, interpreted as the probability that
-    sample i belongs to cluster j.
+1.  Computes the similarity between a point in the feature space, $z_i$, and a centroid,
+    $\mu_j$ using Student's t-distribution, interpreted as the probability that
+    sample $i$ belongs to cluster $j$.
 2.  Calculates the clustering loss via KL divergence and updates the target distribution
     for future assignments.
 
 #### Calculation of Soft Assignment
 
-The probability that a sample from the feature space, z_i, belongs to cluster j,
-is taken to be given by Student's t-distribution, given by:
+The probability that a sample from the feature space, $z_i$, belongs to cluster $j$,
+is taken to be given by Student's t-distribution with one degree of freedom,
+given by:
 
-Equation (1) from Xie et al.
+$$
+q_{ij} = \frac{(1 + (z_i - \mu_j)^2)^{-1}}{\sum_{j'}(1 + (z_i - \mu_{j'})^2)^{-1}}
+$$
 
-In this experiment, as in (cite all others), we keep alpha = 1
+[@Xie_et_al_2017] use a t-distribution after [@Maaten_et_al_2008], who introduced
+it for t-SNE, a technique for visualizing high dimensional spaces in two or three
+dimensions.
+
+**TODO** - Details
 
 #### Minimizing Clustering Loss
 
-To improve the cluster centroids, DEC attempts to match the soft assigment to
-an auxillery target distribution, p_i, and measure the fit of the match via KL
+To improve the cluster centroids, DEC attempts to match the soft assignment to
+an auxillary target distribution, $p_i$, and measure the fit of the match via KL
 Divergence:
 
-L = KL(P||Q) = see equation 2 in Xie et al.
+$$
+L = KL(P||Q) = \sum_i \sum_j p_{ij} \log \frac{p_{ij}}{q_{ij}}
+$$
+<!-- TODO you need to build that out -->
 
-p_i is chosen carefully by Xie et al., to satisfy three conditions:
+$p_i$ is chosen carefully in [@Xie_et_al_2017], to satisfy three conditions:
 
 1. Its use will strengthen predictions
 2. It assigns more emphasis to data points that have high confidence
 3. It normalizes the loss contribution of each centroid so that large clusters
    do not out compete smaller clusters
 
-p_i is calculated as:
+$p_i$ is calculated as:
 
-Equation 3 in Xie et al.
+$$
+p_{ij} = \frac{q_{ij}^2/f_j}{\sum_{j'} g_{ij'}^2/f_{j'}}
+$$
 
 L is differentiable with respect to the cluster centroids, so we can update them
 using SGD. The overall effect of this clustering loss function, L, is that samples
 which have a high confidence in belonging to certain cluster will contribute
-largely to the gradient of L wrt that cluster centroid, resulting in a movement
-in the weights toward that cluster wrt to that example.
+largely to the gradient of L with respect to that cluster centroid, resulting in a movement
+in the weights toward that cluster for that example
 
 #### Optimization
 
-Taken together, the algorithm attempts to minimize the following objective function:
+The full DCEC-Paint algorithm proceeds as follows:
 
-L = lambda * L_r + (1 + lambda) * L_c
-
-Where L_r is the image reconstruction loss and L_c is the clustering loss given in
-the equation above.
-
-1.  We first perform a pre-training step to build the feature space, setting, lambda
+1.  We first perform a pre-training step to build the feature space, setting, $\gamma$
     equal to 1.
 2.  We then initialize cluster centroids using K-means
-3.  Setting lambda to 0.1, we jointly optimize for clustering and reconstruction loss by:
-    1.  Calculate L_c and L_r and update the autoencoder weights and cluster centers
-        according to SGD via backpopagation using partial L/z_i and partial L_c/mu_i
-    2.  Every T iterations, update the target distribution P, based on the prediction
+3.  Setting $\gamma$ to 0.1, we jointly optimize for clustering and reconstruction loss by:
+    1.  Calculating $L_c$ and $L_r$ and updating the autoencoder weights and cluster centers
+        according to SGD via backpopagation using $\frac{\partial L}{\partial z_i}$ and $\frac{\partial L_c}{\partial \mu_i}$
+    2.  Every $T$ iterations, update the target distribution $p$, based on the prediction
         from all examples in the dataset
-4.  If the percentage of points that changed cluster assigment is less than some tolerance
+4.  If the percentage of points that changed cluster assignment is less than some tolerance
     in between two epochs, then the algorithm terminates.
 
 <!-- #### Prediction, Optimization, Parameter Initialization, etc. -->
@@ -675,11 +692,14 @@ the equation above.
 # Implementation
 <!-- How long was the model trained, on what architecture, how many iterations, etc -->
 
-# Prediction Evaluation
+<!-- # Prediction Evaluation -->
 <!-- How did we evaluate the model's performance -->
 <!-- Comparison to the estimate for the painting. Those are the experts -->
 <!-- Comparison to alternative methods? What would those be? Is there precedence? -->
 <!-- Color Pallete, smoothness, brightness, and portrait scores -->
+
+# Clustering Evaluation
+<!-- How did we evaluate the performance of the network? -->
 
 # Experiment Results
 <!-- What did we see? -->
