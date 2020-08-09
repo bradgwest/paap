@@ -30,6 +30,9 @@ link-citations: true
 * Make t-SNE diagrams
 * DECISION whether you want to pursue prediction
 
+* Cross Depiction problem:
+  - How is the female form picked up? Lots of naked women in different depictions
+
 if clustering:
 * want to evaluate the performance against traditional methods
 
