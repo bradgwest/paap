@@ -1,5 +1,5 @@
 ---
-title: "Deep Convolutional Embedded Clustering of Digitized Fine Art"
+title: "WORKING PAPER - Deep Convolutional Embedded Clustering of Digitized Fine Art"
 author:
     - Brad West
 keywords: ["computer vision", "autoencoder", "clustering", "fine art"]
@@ -10,10 +10,12 @@ documentclass:
 hyperrefoptions:
     - linktoc=all
     - pdfwindowui
-    # - pagemode=FullScreen
 papersize: letter
 csl: /home/dubs/.csl/ieee.csl
 link-citations: true
+header-includes: |
+    \usepackage[margin=1.25in]{geometry}
+    \renewcommand{\baselinestretch}{1.5}
 ---
 
 <!--
@@ -32,6 +34,16 @@ link-citations: true
 
 * Cross Depiction problem:
   - How is the female form picked up? Lots of naked women in different depictions
+
+Notes about dataset:
+- More recent than other datasets because it was selected based on the top x most prolific artists
+- more diverse in medium and genre than other sets
+  - East asian art
+  - pop art
+  - modern
+  - etc
+- Larger number of artists
+- Would be interesting to see what duer's stuff compares with, as well as the chinese painters, and lucio fontana
 
 if clustering:
 * want to evaluate the performance against traditional methods
