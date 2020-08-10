@@ -44,9 +44,11 @@ Notes about dataset:
   - etc
 - Larger number of artists
 - Would be interesting to see what duer's stuff compares with, as well as the chinese painters, and lucio fontana
+- Take an artists work and visualize those works relative to the other clusters
 
 if clustering:
 * want to evaluate the performance against traditional methods
+
 
 elif prediction:
 * Rebuild network with fully connected prediction layer
@@ -693,6 +695,95 @@ The full DCEC-Paint algorithm proceeds as follows:
 
 <!-- #### Prediction, Optimization, Parameter Initialization, etc. -->
 # Methods
+
+## Dataset
+
+Christie's publicizes online the results of all public auctions held
+after December, 2005. This amounts to a truly impressive record of fine art,
+furniture, antiques, jewelry, and other collectible sales; well over half a
+million pieces auctioned over hundreds of sales held across the world and
+online. As one of world's two leading auction houses (the other being Sotheby's),
+these auction results contain reams of influential and expensive art, including
+the most expensive piece ever sold, da Vinci's Salvator Mundi[^mundi], which
+sold for an astounding $450 million.
+
+[^mundi]: https://www.christies.com/lotfinder/paintings/leonardo-da-vinci-salvator-mundi-6110563-details.aspx
+
+To obtain our final dataset we scraped the Christie's website for all auctions
+that consisted primarily of artwork in two dimensional mediums. Left with a
+set of nearly 300k works of art, we chose the top 50 most prolific artists and,
+randomly selecting 250 works of art for each artist, we hand curated the dataset
+to exclude intermediate sketches and sculptures. The final dataset contains
+$n = 10,505$ 3 channel $128 \times 128$ images which span a diverse set of
+artists, mediums, and movements.
+
+Compared to previous applications of this algorithm, we believe this dataset
+to represent a much broader set of artists and mediums. For instance, there are
+number of photographs included in the dataset, including varied works by
+Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. Within paintings,
+there are the late 19th century Chinese masters, Pu Ru and Zhang Daqian, along
+with Pablo Picasso, Salvador Dali, and Rembrant. Thus, the algorithm is tasked
+with clustering works across artistic style and medium. This is a task which will
+be inherently exposed to the cross depiction problem as it pertains to
+clustering. A well performing clustering algorithm would be expected to score
+two works, say a photograph and a surrealist painting, more similar if both
+contain a rendering of the female body. Thus we believe this is a powerful dataset
+with which to evaluate the performance of DCEC.
+
+\renewcommand{\baselinestretch}{1.0}
+| artist                       | n_images | birth | death | mediums                     | movement                             |
+|------------------------------|----------|-------|-------|-----------------------------|--------------------------------------|
+| henri cartier-bresson        | 250      | 1908  | 2004  | photography                 |                                      |
+| victor vasarely              | 250      | 1906  | 1997  | painting,sculpture          |                                      |
+| ansel adams                  | 249      | 1902  | 1984  | photography                 |                                      |
+| sam francis                  | 249      | 1923  | 1994  | painting,printmaking        |                                      |
+| hiroshi sugimoto             | 249      | 1948  |       | photography                 |                                      |
+| maurice de vlaminck          | 246      | 1876  | 1958  | painting                    |                                      |
+| wayne thiebaud               | 246      | 1920  |       | painting                    |                                      |
+| karel appel                  | 244      | 1921  | 2006  | painting                    |                                      |
+| andy warhol                  | 243      | 1928  | 1987  | painting                    | pop art                              |
+| bernard buffet               | 242      | 1928  | 1999  | panting,drawing,printmaking |                                      |
+| keith haring                 | 242      | 1958  | 1990  | pop art,street art          |                                      |
+| gerhard richter              | 241      | 1932  |       | photography,painting        |                                      |
+| jasper johns                 | 239      | 1930  |       | painting,pop art            |                                      |
+| alighiero boetti             | 238      | 1940  | 1994  | painting                    |                                      |
+| robert motherwell            | 238      | 1915  | 1991  | painting,printmaking        |                                      |
+| marc chagall                 | 237      | 1887  | 1985  | cubism,expressionism        |                                      |
+| helmut newton                | 236      | 1920  | 2004  | photography                 |                                      |
+| jean dubuffet                | 236      | 1901  | 1985  | painting                    |                                      |
+| irving penn                  | 235      | 1917  | 2009  | photographer                |                                      |
+| robert rauschenberg          | 234      | 1925  | 2008  | painting                    |                                      |
+| jim dine                     | 233      | 1935  |       | painting                    |                                      |
+| joan miro                    | 233      | 1893  |       | painting                    |                                      |
+| frank stella                 | 233      | 1936  |       | painting,printmaking        |                                      |
+| christo                      | 232      | 1935  |       | painting                    |                                      |
+| tom wesselmann               | 232      | 1931  | 1945  | painting                    |                                      |
+| takashi murakami             | 230      | 1962  |       | contemporary art            |                                      |
+| roy lichtenstein             | 229      | 1923  | 1997  | painting                    |                                      |
+| sol lewitt                   | 229      | 1928  | 2007  | painting,drawing            |                                      |
+| zao wou-ki                   | 228      | 1920  | 2013  | painting                    |                                      |
+| damien hirst                 | 227      | 1965  |       | painting                    |                                      |
+| raoul dufy                   | 226      | 1877  | 1953  | painting                    |                                      |
+| qi baishi                    | 222      | 1864  | 1957  | painting                    |                                      |
+| david hockney                | 213      | 1937  |       | pop art                     |                                      |
+| zhang daqian                 | 210      | 1899  | 1983  | painting                    |                                      |
+| laurence stephen lowry, r.a. | 209      | 1887  | 1976  | painting                    |                                      |
+| pierre-auguste renoir        | 203      | 1841  | 1919  | painting                    |                                      |
+| alexander calder             | 202      | 1898  | 1976  | sculpture                   |                                      |
+| francis newton souza         | 199      | 1924  | 2002  | painting,drawing            |                                      |
+| max ernst                    | 198      | 1891  | 1976  | painting                    | dada,surealism                       |
+| albrecht dürer               | 191      | 1471  | 1528  | painting,printmaking        |                                      |
+| pu ru                        | 179      | 1896  | 1963  | painting                    |                                      |
+| lucio fontana                | 174      | 1899  | 1968  | painting                    |                                      |
+| salvador dalí                | 173      | 1904  | 1989  | painting                    | cubism,dada,surrealism               |
+| rembrandt harmensz. van rijn | 171      | 1606  | 1669  | painting                    | dutch golden age,baroque             |
+| henry moore                  | 148      | 1898  | 1986  | bronze scuplture            | modernsim                            |
+| henri de toulouse-lautrec    | 120      | 1864  | 1901  | painting                    | post-impressionism,Art Noveau        |
+| pablo picasso                | 117      | 1881  | 1973  | painting                    | cubism,surrealism                    |
+| henri matisse                | 99       | 1869  | 1954  | painting                    | fauvism,modernism,post-impressionism |
+| edgar degas                  | 83       | 1834  | 1917  | painting                    | impressionism                        |
+| auguste rodin                | 18       | 1840  | 1917  | drawing                     |                                      |
+\renewcommand{\baselinestretch}{1.5}
 <!-- Methods go here -->
 
 <!-- ## Experiments -->
