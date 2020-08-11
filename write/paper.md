@@ -715,7 +715,7 @@ set of nearly 300k works of art, we chose the top 50 most prolific artists and,
 randomly selecting 250 works of art for each artist, we hand curated the dataset
 to exclude intermediate sketches and sculptures. The final dataset contains
 $n = 10,505$ 3 channel $128 \times 128$ images which span a diverse set of
-artists, mediums, and movements.
+artists, mediums, and movements (see figure).
 
 Compared to previous applications of this algorithm, we believe this dataset
 to represent a much broader set of artists and mediums. For instance, there are
@@ -723,14 +723,22 @@ number of photographs included in the dataset, including varied works by
 Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. Within paintings,
 there are the late 19th century Chinese masters, Pu Ru and Zhang Daqian, along
 with Pablo Picasso, Salvador Dali, and Rembrant. Thus, the algorithm is tasked
-with clustering works across artistic style and medium. This is a task which will
-be inherently exposed to the cross depiction problem as it pertains to
-clustering. A well performing clustering algorithm would be expected to score
-two works, say a photograph and a surrealist painting, more similar if both
-contain a rendering of the female body. Thus we believe this is a powerful dataset
-with which to evaluate the performance of DCEC.
+with clustering works across artistic style and medium.
 
-\renewcommand{\baselinestretch}{1.0}
+With an artistically diverse dataset, we expect the algorithm to be particularly
+exposed to the cross depiction problem. Imagine two digitized works depicting
+a clock but of different artistic styles and mediums. One, Salvador Dali's famous
+1931 "Persistence of Memory", and the other a moment captured by the
+lens of Henri Cartier-Bresson. Holding all else equal, we expect a "correct"
+clustering algorithm to find these two works more similar than a separate,
+hypothetical, pair of works that don't contain clocks. The algorithm's ability
+on these qualitative tasks is additionally important to the quantitative measures
+outlined below.
+
+**TODO** - This would be a good location for some of the images
+
+<!-- TODO - You could include a plot with distribution of image prices -->
+
 | artist                       | n_images | birth | death | mediums                     | movement                             |
 |------------------------------|----------|-------|-------|-----------------------------|--------------------------------------|
 | henri cartier-bresson        | 250      | 1908  | 2004  | photography                 |                                      |
@@ -783,7 +791,6 @@ with which to evaluate the performance of DCEC.
 | henri matisse                | 99       | 1869  | 1954  | painting                    | fauvism,modernism,post-impressionism |
 | edgar degas                  | 83       | 1834  | 1917  | painting                    | impressionism                        |
 | auguste rodin                | 18       | 1840  | 1917  | drawing                     |                                      |
-\renewcommand{\baselinestretch}{1.5}
 <!-- Methods go here -->
 
 <!-- ## Experiments -->
