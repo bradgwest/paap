@@ -17,6 +17,27 @@ spec:
             memory: "90Gi"
             cpu: 13
             nvidia.com/gpu: 1
+        env:
+          - name: DCEC_DATA_DIR
+            value: "/build/data"
+          - name: DCEC_BATCH_SIZE
+            value: "512"
+          - name: DCEC_MAX_ITER
+            value: "20000"
+          - name: DCEC_GAMMA
+            value: "0.9"
+          - name: DCEC_UPDATE_INTERVAL
+            value: "140"
+          - name: DCEC_TOLERANCE
+            value: "0.001"
+          - name: DCEC_CAE_WEIGHTS
+          - name: DCEC_SAVE_DIR
+          - name: DCEC_ALPHA
+            value: "1.0"
+          - name: DCEC_ASSERT_GPU
+            value: "True"
+          - name: DCEC_EPOCHS
+            value: "200"
       # Do not restart containers after they exit
       restartPolicy: Never
   # of retries before marking as failed.
