@@ -63,3 +63,18 @@ def load_photos_and_prints(data_path="./data/photos_and_prints_split/train"):
     print("Christies Photos and Prints:", images.shape)
 
     return images, None
+
+
+def load_christies(data_path="./data/final/"):
+    # load images
+    image_paths = [os.path.join(data_path, f) for f in os.listdir(data_path) if f.endswith(".jpg")]
+    images_raw = []
+    for fp in image_paths:
+        images_raw.append(io.imread(fp))
+    images = np.array(images_raw)
+
+    # Scale pixel values
+    images = images / 255.0
+    print("Christies final dataset:", images.shape)
+
+    return images, None

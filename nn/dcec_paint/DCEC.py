@@ -1,3 +1,4 @@
+import argparse
 import csv
 import logging
 import os
@@ -16,7 +17,7 @@ from sklearn.cluster import KMeans
 
 import metrics
 from ConvAE import CAE
-from datasets import load_mnist, load_usps, load_photos_and_prints
+from datasets import load_christies
 
 
 logger = logging.getLogger(__name__)
@@ -27,25 +28,8 @@ logger.setLevel(logging.DEBUG)
 DESCRIPTION = """
 DCEC-Paint implementation adapted from DCEC by Guo et al., 2017. See Castellano and Vessio, 2020 for more information.
 The network is a Deep Convolutional Auto Encoder for clustering artwork images with a loss function that is jointly
-optimized to minimize reporduction error and clustering loss.
+optimized to minimize reproduction error and clustering loss.
 """.strip()
-
-
-class Defaults(object):
-    DATASET_PHOTOS_AND_PRINTS = "photos_and_prints"
-    DATASET_MNIST = "mnist"
-    NUM_CLUSTERS = 10
-    BATCH_SIZE = 256
-    MAXITER = 2e4
-    GAMMA = 0.1
-    UPDATE_INTERVAL = 140
-    TOL = 0.001
-    CAE_WEIGHTS = None
-    SAVE_DIR = "results/temp"
-    # 128x128x3 (raw input) -> 64x64x32 (conv1) -> 32x32x64 (conv2) -> 16x16x128 (conv3) -> 32768 (flatten) ->
-    # 32 (fully connected) -> (mirrored decoder)
-    CONVOLUTIONAL_FILTERS = [32, 64, 128, 32]  # Final is the fully connected clustering layer
-    ALPHA = 1.0
 
 
 def save_results_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results/"):
@@ -64,6 +48,28 @@ def save_model_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/temp/"):
         p.check_returncode()
     except subprocess.CalledProcessError:
         logger.exception("Failed to write to gcs")
+
+
+def gpu_info(assert_gpu) -> None:
+    # Make sure we actually have a GPU if we want one
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    logger.info("Num GPUs Available: {}".format(len(gpus)))
+    devices = device_lib.list_local_devices()
+    logger.info(devices)
+    if assert_gpu:
+        device_types = {d.device_type for d in devices}
+        assert "GPU" in device_types, "No GPU found in devices"
+
+    if gpus:
+        try:
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+                logger.info("{} Physical GPUs, Logical GPUs {}".format(len(gpus), len(logical_gpus)))
+        except RuntimeError:
+            # Memory growth must be set before GPUs have been initialized
+            logger.exception("Failed to get GPUS")
 
 
 # TODO This will become the Prediction layer
@@ -131,13 +137,12 @@ class ClusteringLayer(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-# TODO need to rescale in here
 class DCEC(object):
     def __init__(self,
                  input_shape: Tuple[int, int, int],
-                 filters: Iterable[int] = Defaults.CONVOLUTIONAL_FILTERS,
-                 n_clusters: int = Defaults.NUM_CLUSTERS,
-                 alpha: int = Defaults.ALPHA):
+                 filters: Iterable[int] = [32, 64, 128, 32],
+                 n_clusters: int = 32,
+                 alpha: int = 1):
         """DCEC Model
 
         :param input_shape: Shape of the input layer in the model
@@ -165,6 +170,8 @@ class DCEC(object):
         self.model = Model(inputs=self.cae.input, outputs=[clustering_layer, self.cae.output])
 
     # TODO we should really be training for 200 epochs
+    # TODO Can we do a bigger batch size here?
+    # TODO Should we train for longer?
     def pretrain(self, x, batch_size=256, epochs=200, optimizer="adam", save_dir="results/temp"):
         logger.info("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
@@ -204,7 +211,7 @@ class DCEC(object):
         self,
         x,
         y=None,
-        batch_size=128,  # This was 256, Castellano used 128
+        batch_size=256,  # This was 256, Castellano used 128
         maxiter=2e4,
         tol=1e-3,
         update_interval=140,  # Was 140
@@ -227,7 +234,6 @@ class DCEC(object):
             self.cae.load_weights(cae_weights)
             logger.info("cae_weights is loaded successfully.")
 
-        # TODO Will I need some way to initialize the predictions?
         # Step 2: initialize cluster centers using k-means
         t1 = time()
         logger.info("Initializing cluster centers with k-means.")
@@ -238,7 +244,6 @@ class DCEC(object):
 
         # Step 3: deep clustering
         # logging file
-
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         logfile = open(save_dir + "/dcec_log.csv", "w")
@@ -312,69 +317,49 @@ class DCEC(object):
 
 if __name__ == "__main__":
     # setting the hyper parameters
-    import argparse
-
     parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument("dataset", default=Defaults.DATASET_PHOTOS_AND_PRINTS, help="Dataset to run on, defaults to {}".format(Defaults.DATASET_PHOTOS_AND_PRINTS))
-    parser.add_argument("--dataset-path", default="./data/photos_and_prints")
-    parser.add_argument("--n-clusters", default=Defaults.NUM_CLUSTERS, type=int, help="Final number of clusters, k, defaults to {}".format(Defaults.NUM_CLUSTERS))
-    parser.add_argument("--batch-size", default=Defaults.BATCH_SIZE, type=int, help="Training batch size, defaults to {}".format(Defaults.BATCH_SIZE))
-    parser.add_argument("--maxiter", default=Defaults.MAXITER, type=int, help="defaults to {}".format(Defaults.MAXITER))
-    parser.add_argument("--gamma", default=Defaults.GAMMA, type=float, help="coefficient of clustering loss, defaults to {}".format(Defaults.GAMMA))
-    parser.add_argument("--update-interval", default=Defaults.UPDATE_INTERVAL, type=int, help="defaults to {}".format(Defaults.UPDATE_INTERVAL))
-    parser.add_argument("--tol", default=Defaults.TOL, type=float, help="defaults to {}".format(Defaults.TOL))
-    parser.add_argument("--cae-weights", default=Defaults.CAE_WEIGHTS, help="This argument must be given, defaults to {}".format(Defaults.CAE_WEIGHTS))
-    parser.add_argument("--save-dir", default=Defaults.SAVE_DIR, help="defaults to {}".format(Defaults.SAVE_DIR))
-    parser.add_argument('--assert-gpu', action="store_true")
+    parser.add_argument("--dataset-path", default="./data/final", help="Path to data")
+    parser.add_argument("--batch-size", default=os.getenv("DCEC_BATCH_SIZE", 512), type=int, help="Training batch size")
+    parser.add_argument("--n-clusters", default=os.getenv("DCEC_N_CLUSTERS", 10), type=int, help="Final number of clusters, k")
+    parser.add_argument("--maxiter", default=os.getenv("DCEC_MAX_ITER", 20000), type=int, help="Maximum iterations to perform on final training")
+    parser.add_argument("--gamma", default=os.getenv("DCEC_GAMMA", 0.1), type=float, help="coefficient of clustering loss")
+    parser.add_argument("--update-interval", default=os.getenv("DCEC_UPDATE_INTERVAL", 140), type=int, help="How frequently to update weights")
+    parser.add_argument("--tol", default=os.getenv("DCEC_TOLERANCE", 0.001), type=float, help="Threshold at which to stop training")
+    parser.add_argument("--cae-weights", default=os.getenv("DCEC_CAE_WEIGHTS", "false").lower() == "true", type=bool, help="Whether to use the default CAE weights")
+    parser.add_argument("--save-dir", default=os.getenv("DCEC_SAVE_DIR", "./results/temp"), help="Where to save results/model to")
+    parser.add_argument("--data-dir", default=os.getenv("DCEC_DATA_DIR", "./data"), help="Where the data reside")
+    parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "false").lower() == "true", action="store_true")
+    parser.add_argument("--epochs", default=os.getenv("DCEC_EPOCHS", 200), type=int, help="Number of epochs to train CAE")
     args = parser.parse_args()
-    logger.info(args)
 
-    # Make sure we actually have a GPU if we want one
-    logger.info("Num GPUs Available: {}".format(len(tf.config.experimental.list_physical_devices('GPU'))))
-    devices = device_lib.list_local_devices()
-    print(devices)
-    if args.assert_gpu:
-        device_types = {d.device_type for d in devices}
-        assert "GPU" in device_types, "No GPU found in devices"
+    logger.info("Running with config: {}".format(["{}={}".format(k, v) for k, v in vars(args).items()]))
 
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if gpus:
-        try:
-            # Currently, memory growth needs to be the same across GPUs
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
-                logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-                logger.info("{} Physical GPUs, Logical GPUs {}".format(len(gpus), len(logical_gpus)))
-        except RuntimeError as e:
-            # Memory growth must be set before GPUs have been initialized
-            print(e)
+    # Log GPU info, optionally asserting if there isn't one
+    gpu_info(args.assert_gpu)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    # TODO Load the christies dataset - figure out what this is returning
-    # load dataset
+    if not os.path.exists(args.data_dir):
+        os.makedirs(args.data_dir)
 
-    if args.dataset == "mnist":
-        x, y = load_mnist()
-    elif args.dataset == "usps":
-        x, y = load_usps("data/usps")
-    elif args.dataset == "mnist-test":
-        x, y = load_mnist()
-        x, y = x[60000:], y[60000:]
-    elif args.dataset == "photos_and_prints":
-        x, y = load_photos_and_prints(args.dataset_path)
+    x, y = load_christies(args.dataset_path)
 
     # TODO Update filters to match what DCEC-Paint has
     # prepare the DCEC model
-    dcec = DCEC(input_shape=x.shape[1:], filters=Defaults.CONVOLUTIONAL_FILTERS, n_clusters=args.n_clusters)
+    dcec = DCEC(input_shape=x.shape[1:], filters=[32, 64, 128, 32], n_clusters=args.n_clusters)
     plot_model(dcec.model, to_file=args.save_dir + "/dcec_model.png", show_shapes=True)
     dcec.model.summary()
 
-    # TODO Parameterize these things
     # begin clustering.
-    optimizer = "adam"
-    dcec.compile(loss=["kld", "mse"], loss_weights=[args.gamma, 1], optimizer=optimizer)
+    optimizer = "adam"  # AdaMax
+    losses = ["kld", "mse"]
+    # How Keras accounts for loss_weights - https://stackoverflow.com/a/49406231
+    loss_weights = [args.gamma, 1 - args.gamma]
+
+    dcec.compile(loss=losses, loss_weights=loss_weights, optimizer=optimizer)
+
+    exit(0)
 
     dcec.fit(
         x,
@@ -385,6 +370,8 @@ if __name__ == "__main__":
         save_dir=args.save_dir,
         cae_weights=args.cae_weights,
     )
+
+    # TODO Y will always be None
     if y is not None:
         y_pred = dcec.y_pred
         logger.info(
