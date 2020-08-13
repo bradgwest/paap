@@ -19,16 +19,14 @@ header-includes: |
 ---
 
 <!--
-* Get BibTex working with pandoc, generating to latex
-* Add entries to BibTex
-* Write Draft Introduction
 * Change neural network to deep neural network
 * Write technical discussion of neural Networks
 * Write technical discussion of Convolutional Autoencoders
-* Write partial section of methods
-* Select ~10k images, preferably of a manageable number of artists, of a given time, with prices
 * Do some basic analysis on the artists, periods, and prices of those images
 * Train DCEC-paint on those images with variable number of clusters and whatnot
+    - How do you hypertune parameters
+    - What do the results look like? Do they look good? How do they look compared to Mnist
+    - How do you stop training when they are OK?
 * Make t-SNE diagrams
 * DECISION whether you want to pursue prediction
 
