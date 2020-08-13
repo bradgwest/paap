@@ -346,6 +346,8 @@ Deploy an image to the cluster
 
 ```sh
 kubectl apply -f ./job.yaml
-kubectl get pods
+watch --interval 10s "kubectl get jobs"
+watch --interval 10s "kubectl get pods"
+watch --interval 10s "kubectl describe pod <pod-id> | grep -A20 Events"
 kubectl describe pod dcec-pod
 ```
