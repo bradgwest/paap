@@ -41,7 +41,7 @@ def save_results_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results
         logger.exception("Failed to write to gcs")
 
 
-def save_model_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/temp/"):
+def save_file_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/temp/"):
     cmd = ["gsutil", "cp", src, dst]
     p = subprocess.run(cmd)
     try:
@@ -246,7 +246,8 @@ class DCEC(object):
         # logging file
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        logfile = open(save_dir + "/dcec_log.csv", "w")
+        logfile_path = save_dir + "/dcec_log.csv"
+        logfile = open(logfile_path, "w")
         logwriter = csv.DictWriter(logfile, fieldnames=["iter", "acc", "nmi", "ari", "L", "Lc", "Lr"])
         logwriter.writeheader()
 
@@ -270,8 +271,13 @@ class DCEC(object):
                     logwriter.writerow(logdict)
                     logger.info("Iter {}: Acc {}, nmi {}, ari {}; loss={}".format(ite, acc, nmi, ari, loss))
 
+                loss_dict = {"L": loss[0], "Lc": loss[1], "Lr": loss[2]}
+                logwriter.writerow(loss_dict)
+                logger.info("iter {i}; L {L}; Lc {Lc}; Lr {Lr}".format(i=ite, **loss_dict))
+
                 # check stop criterion
                 delta_label = np.sum(self.y_pred != y_pred_last).astype(np.float32) / self.y_pred.shape[0]
+                logger.info("delta_label={}".format(delta_label))
                 y_pred_last = np.copy(self.y_pred)
                 if ite > 0 and delta_label < tol:
                     logger.info("delta_label {} < tol {}".format(delta_label, tol))
@@ -295,13 +301,17 @@ class DCEC(object):
                 )
                 index += 1
 
+            if ite % 10 == 0:
+                logger.info("Loss: L={}; L_c={}; L_r={}".format(*loss))
+
             # save intermediate model
             if ite % save_interval == 0:
                 # save DCEC model checkpoints
                 logger.info("saving model to: {}".format(save_dir + "/dcec_model_" + str(ite) + ".h5"))
                 path = save_dir + "/dcec_model_" + str(ite) + ".h5"
                 self.model.save_weights(path)
-                save_model_to_gcs(path)
+                save_file_to_gcs(path)
+                save_file_to_gcs(logfile_path)
 
             ite += 1
 
@@ -314,6 +324,8 @@ class DCEC(object):
         logger.info("Clustering time: {}".format(t3 - t1))
         logger.info("Total time:      {}".format(t3 - t0))
 
+        save_results_to_gcs(save_dir)
+
 
 if __name__ == "__main__":
     # setting the hyper parameters
@@ -322,13 +334,13 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", default=os.getenv("DCEC_BATCH_SIZE", 512), type=int, help="Training batch size")
     parser.add_argument("--n-clusters", default=os.getenv("DCEC_N_CLUSTERS", 10), type=int, help="Final number of clusters, k")
     parser.add_argument("--maxiter", default=os.getenv("DCEC_MAX_ITER", 20000), type=int, help="Maximum iterations to perform on final training")
-    parser.add_argument("--gamma", default=os.getenv("DCEC_GAMMA", 0.1), type=float, help="coefficient of clustering loss")
+    parser.add_argument("--gamma", default=os.getenv("DCEC_GAMMA", 0.9), type=float, help="coefficient of clustering loss")
     parser.add_argument("--update-interval", default=os.getenv("DCEC_UPDATE_INTERVAL", 140), type=int, help="How frequently to update weights")
     parser.add_argument("--tol", default=os.getenv("DCEC_TOLERANCE", 0.001), type=float, help="Threshold at which to stop training")
-    parser.add_argument("--cae-weights", default=os.getenv("DCEC_CAE_WEIGHTS", "false").lower() == "true", type=bool, help="Whether to use the default CAE weights")
+    parser.add_argument("--cae-weights", default=os.getenv("DCEC_CAE_WEIGHTS"), type=bool, help="Whether to use the default CAE weights")
     parser.add_argument("--save-dir", default=os.getenv("DCEC_SAVE_DIR", "./results/temp"), help="Where to save results/model to")
     parser.add_argument("--data-dir", default=os.getenv("DCEC_DATA_DIR", "./data"), help="Where the data reside")
-    parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "false").lower() == "true", action="store_true")
+    parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "true").lower() == "true", action="store_true")
     parser.add_argument("--epochs", default=os.getenv("DCEC_EPOCHS", 200), type=int, help="Number of epochs to train CAE")
     args = parser.parse_args()
 
@@ -359,11 +371,10 @@ if __name__ == "__main__":
 
     dcec.compile(loss=losses, loss_weights=loss_weights, optimizer=optimizer)
 
-    exit(0)
-
     dcec.fit(
         x,
         y=y,
+        batch_size=args.batch_size,
         tol=args.tol,
         maxiter=args.maxiter,
         update_interval=args.update_interval,
