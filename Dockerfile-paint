@@ -23,7 +23,7 @@ RUN dcec/bin/pip install -r requirements.txt
 # Add data
 RUN mkdir data
 COPY --from=data /data/christies.tar.gz /build/data/
-RUN tar -xzf /build/data/christies.tar.gz
+RUN tar -xzf /build/data/christies.tar.gz -C /build/data/
 RUN rm /build/data/christies.tar.gz
 
 # Add code
