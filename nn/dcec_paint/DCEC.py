@@ -341,6 +341,7 @@ if __name__ == "__main__":
     parser.add_argument("--save-dir", default=os.getenv("DCEC_SAVE_DIR", "./results/temp"), help="Where to save results/model to")
     parser.add_argument("--data-dir", default=os.getenv("DCEC_DATA_DIR", "./data"), help="Where the data reside")
     parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "true").lower() == "true", action="store_true")
+    parser.add_argument('--no-assert-gpu', action="store_false", dest="assert_gpu")
     parser.add_argument("--epochs", default=os.getenv("DCEC_EPOCHS", 200), type=int, help="Number of epochs to train CAE")
     args = parser.parse_args()
 
@@ -370,6 +371,13 @@ if __name__ == "__main__":
     loss_weights = [args.gamma, 1 - args.gamma]
 
     dcec.compile(loss=losses, loss_weights=loss_weights, optimizer=optimizer)
+
+    # TODO Update this to save to the correct location
+    dcec.model.save(
+        "/home/dubs/dev/paap/data/models/aug_13/temp/dcec_model.h5"
+    )
+
+    exit(0)
 
     dcec.fit(
         x,
