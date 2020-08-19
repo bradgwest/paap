@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -34,6 +35,13 @@ MODEL = os.path.join(RESULT_DIR, "dcec_model.h5")
 WEIGHTS = os.path.join(RESULT_DIR, "dcec_model_14145.h5")
 
 EMBEDDED_LAYER_INDEX = 5
+
+
+def get_model_paths(d=RESULT_DIR):
+    return sorted(
+        [os.path.join(RESULT_DIR, fn) for fn in os.listdir(RESULT_DIR) if re.search(r"[0-9]\.h5", fn)],
+        key=lambda x: int(x.split("_")[-1].split(".")[0])
+    )
 
 
 def layer_outputs(model, layer=EMBEDDED_LAYER_INDEX):
@@ -91,30 +99,49 @@ def plot_3d_tsne(tsne_results, df, fn=os.path.join(IMG_DIR, "tsne_3d.png")):
     fig.savefig(fn)
 
 
+def plot_tsne_model(model, weight_file, x, fn):
+    model.load_weights(WEIGHTS)
+    f = layer_outputs(model)
+    embedded, cluster = predict(f, x)
+    df = layers_to_df(cluster, embedded)
+    tsne_results = tsne(df)
+    plot_tsne(tsne_results, df, fn)
+
+
+def plot_tsne_by_time(model, weight_files, x):
+    for fn in weight_files[-3:]:
+        epoch = int(x.split("_")[-1].split(".")[0])
+        img_name = os.path.join(IMG_DIR, "tsne_{}.png".format(epoch))
+        plot_tsne_model(model, fn, x, img_name)
+
+
 def main():
+    weight_files = get_model_paths()
+
     # load model and saved weights
     model = keras.models.load_model(
         MODEL,
         custom_objects={"ClusteringLayer": ClusteringLayer}
     )
-    model.load_weights(WEIGHTS)
+    # model.load_weights(WEIGHTS)
 
     # load data
     x, _ = load_christies(IMAGES)
     print("Loaded", len(x), "images")
 
     # get embedded layer output function
-    f = layer_outputs(model)
-    embedded, cluster = predict(f, x)
+    # f = layer_outputs(model)
+    # embedded, cluster = predict(f, x)
 
-    print(embedded.shape)
-    print(cluster.shape)
+    # print(embedded.shape)
+    # print(cluster.shape)
 
-    df = layers_to_df(cluster, embedded)
-    tsne_results = tsne(df)
+    # df = layers_to_df(cluster, embedded)
+    # tsne_results = tsne(df)
 
-    plot_tsne(tsne_results, df)
-    plot_3d_tsne(tsne_results, df)
+    # plot_tsne(tsne_results, df)
+    # plot_3d_tsne(tsne_results, df)
+    plot_tsne_by_time(model, weight_files, x)
 
 
 if __name__ == "__main__":
