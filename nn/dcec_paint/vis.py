@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 
@@ -10,6 +11,10 @@ from sklearn.manifold import TSNE
 
 from DCEC import ClusteringLayer
 from datasets import load_christies
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger.setLevel(logging.INFO)
 
 
 # Plots to do:
@@ -33,6 +38,9 @@ MODELS_DIR = os.path.join(DATA_DIR, "models")
 RESULT_DIR = os.path.join(MODELS_DIR, "aug_13", "temp")
 MODEL = os.path.join(RESULT_DIR, "dcec_model.h5")
 WEIGHTS = os.path.join(RESULT_DIR, "dcec_model_14145.h5")
+# TODO delete me
+WEIGHTS = os.path.join(RESULT_DIR, "dcec_model_0.h5")
+
 
 EMBEDDED_LAYER_INDEX = 5
 
@@ -100,7 +108,7 @@ def plot_3d_tsne(tsne_results, df, fn=os.path.join(IMG_DIR, "tsne_3d.png")):
 
 
 def plot_tsne_model(model, weight_file, x, fn):
-    model.load_weights(WEIGHTS)
+    model.load_weights(weight_file)
     f = layer_outputs(model)
     embedded, cluster = predict(f, x)
     df = layers_to_df(cluster, embedded)
@@ -109,9 +117,10 @@ def plot_tsne_model(model, weight_file, x, fn):
 
 
 def plot_tsne_by_time(model, weight_files, x):
-    for fn in weight_files[-3:]:
-        epoch = int(x.split("_")[-1].split(".")[0])
+    for i, fn in enumerate(weight_files[::3]):
+        epoch = int(fn.split("_")[-1].split(".")[0])
         img_name = os.path.join(IMG_DIR, "tsne_{}.png".format(epoch))
+        print("plotting {} of {} - {}".format(i, len(weight_files), img_name))
         plot_tsne_model(model, fn, x, img_name)
 
 
