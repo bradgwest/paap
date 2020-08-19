@@ -1,8 +1,11 @@
 import os
 
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 from tensorflow import keras
 from keras import backend as K
-# import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
 from DCEC import ClusteringLayer
 from datasets import load_christies
@@ -34,11 +37,51 @@ EMBEDDED_LAYER_INDEX = 5
 
 
 def layer_outputs(model, layer=EMBEDDED_LAYER_INDEX):
+    """Get k functions at the embedded and clustering layers"""
     # https://stackoverflow.com/a/41712013
     return K.function(
         model.layers[0].input,
         [model.layers[layer].output, model.layers[-2].output]
     )
+
+
+# Looping because of memory issues
+def predict(k_func, x):
+    """Given a K function and some data, x, get the predictions at the layers.
+    This is really a wrapper around k_func([x]) to conserve memory.
+    """
+    # preallocate some arrays
+    predictions = [np.zeros((len(x), *p.shape)) for p in k_func([x[0:1]])]
+
+    for i in range(len(x)):
+        p = k_func([x[i:(i + 1)]])
+        for j in range(len(p)):
+            predictions[j][i] = p[j]
+
+    return tuple(predictions)
+
+
+def layers_to_df(cluster_prop, embedded):
+    """Combine np arrays into dataframes"""
+    df = pd.DataFrame(np.concatenate(embedded))
+    cluster = np.apply_along_axis(lambda x: np.where(x == x.max()), 2, cluster_prop).flatten()
+    df["cluster"] = cluster
+    # TODO Should think about transforming
+    # df = StandardScaler().fit_transform(df)
+    return df
+
+
+def tsne(df):
+    """Create tsne plot"""
+    tsne = TSNE(random_state=0)
+    tsne_results = tsne.fit_transform(df)
+    return pd.DataFrame(tsne_results, columns=['tsne1', 'tsne2'])
+
+
+def plot_tsne(tsne_results, df, fn=os.path.join(IMG_DIR, "tsne.png")):
+    fig, ax = plt.subplots()
+    ax.scatter(tsne_results['tsne1'], tsne_results['tsne2'], c=df.cluster, s=1)
+    fig.savefig(fn)
 
 
 def main():
@@ -55,16 +98,15 @@ def main():
 
     # get embedded layer output function
     f = layer_outputs(model)
+    embedded, cluster = predict(f, x)
 
-    # Deal with memory issues. I need a new computer
-    embedded = []
-    cluster = []
-    for i in range(len(x)):
-        # if i % 100 == 0:
-        #     print(i)
-        e, c = f([x[(i - 1):i]])
-        embedded.append(e)
-        cluster.append(c)
+    print(embedded.shape)
+    print(cluster.shape)
+
+    df = layers_to_df(cluster, embedded)
+    tsne_results = tsne(df)
+
+    plot_tsne(tsne_results, df)
 
 
 if __name__ == "__main__":
