@@ -71,16 +71,23 @@ def layers_to_df(cluster_prop, embedded):
     return df
 
 
-def tsne(df):
+def tsne(df, dim=2):
     """Create tsne plot"""
-    tsne = TSNE(random_state=0)
+    tsne = TSNE(random_state=0, n_components=dim)
     tsne_results = tsne.fit_transform(df)
-    return pd.DataFrame(tsne_results, columns=['tsne1', 'tsne2'])
+    return pd.DataFrame(tsne_results, columns=["tsne" + str(i) for i in range(dim)])
 
 
 def plot_tsne(tsne_results, df, fn=os.path.join(IMG_DIR, "tsne.png")):
     fig, ax = plt.subplots()
-    ax.scatter(tsne_results['tsne1'], tsne_results['tsne2'], c=df.cluster, s=1)
+    ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=df.cluster, s=1)
+    fig.savefig(fn)
+
+
+def plot_3d_tsne(tsne_results, df, fn=os.path.join(IMG_DIR, "tsne_3d.png")):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=df.cluster, s=1)
     fig.savefig(fn)
 
 
@@ -107,6 +114,7 @@ def main():
     tsne_results = tsne(df)
 
     plot_tsne(tsne_results, df)
+    plot_3d_tsne(tsne_results, df)
 
 
 if __name__ == "__main__":
