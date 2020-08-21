@@ -25,13 +25,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
-
 DESCRIPTION = """
 DCEC-Paint implementation adapted from DCEC by Guo et al., 2017. See Castellano and Vessio, 2020 for more information.
 The network is a Deep Convolutional Auto Encoder for clustering artwork images with a loss function that is jointly
 optimized to minimize reproduction error and clustering loss.
 """.strip()
+
 UTC_NOW = datetime.datetime.utcnow().strftime("D%Y%m%dT%H%M%S")
+CAE_LOCAL_WEIGHTS = None
 
 
 def gcs_path():
@@ -47,7 +48,7 @@ def save_results_to_gcs(src="results/temp", dst=gcs_path()):
         logger.exception("Failed to write to gcs")
 
 
-def save_file_to_gcs(src, dst=os.path.join(gcs_path(), "temp/")):
+def gcs_copy(src, dst=os.path.join(gcs_path(), "temp/")):
     cmd = ["gsutil", "cp", src, dst]
     p = subprocess.run(cmd)
     try:
@@ -315,8 +316,8 @@ class DCEC(object):
                 logger.info("saving model to: {}".format(save_dir + "/dcec_model_" + str(ite) + ".h5"))
                 path = save_dir + "/dcec_model_" + str(ite) + ".h5"
                 self.model.save_weights(path)
-                save_file_to_gcs(path)
-                save_file_to_gcs(logfile_path)
+                gcs_copy(path)
+                gcs_copy(logfile_path)
 
             ite += 1
 
@@ -342,7 +343,7 @@ if __name__ == "__main__":
     parser.add_argument("--gamma", default=os.getenv("DCEC_GAMMA", 0.9), type=float, help="coefficient of clustering loss")
     parser.add_argument("--update-interval", default=os.getenv("DCEC_UPDATE_INTERVAL", 140), type=int, help="How frequently to update weights")
     parser.add_argument("--tol", default=os.getenv("DCEC_TOLERANCE", 0.001), type=float, help="Threshold at which to stop training")
-    parser.add_argument("--cae-weights", default=os.getenv("DCEC_CAE_WEIGHTS"), type=bool, help="Whether to use the default CAE weights")
+    parser.add_argument("--cae-weights", default=os.getenv("DCEC_CAE_WEIGHTS"), help="Path to remote weight file containing pretrained weights, or None")
     parser.add_argument("--save-dir", default=os.getenv("DCEC_SAVE_DIR", "./results/temp"), help="Where to save results/model to")
     parser.add_argument("--data-dir", default=os.getenv("DCEC_DATA_DIR", "./data"), help="Where the data reside")
     parser.add_argument('--assert-gpu', default=os.getenv("DCEC_ASSERT_GPU", "true").lower() == "true", action="store_true")
@@ -356,7 +357,12 @@ if __name__ == "__main__":
     path = os.path.join(args.save_dir, "config.txt")
     with open(path, "w") as f:
         f.writelines(cfg)
-    save_file_to_gcs(path)
+    gcs_copy(path)
+
+    if args.cae_weights is not None:
+        CAE_LOCAL_WEIGHTS = os.path.join(args.save_dir, os.path.basename(args.cae_weights))
+        print("copying to {}".format(CAE_LOCAL_WEIGHTS))
+        gcs_copy(args.cae_weights, CAE_LOCAL_WEIGHTS)
 
     # Log GPU info, optionally asserting if there isn't one
     gpu_info(args.assert_gpu)
@@ -385,7 +391,7 @@ if __name__ == "__main__":
 
     model_path = os.path.join(args.save_dir, "dcec_model.h5")
     dcec.model.save(model_path)
-    save_file_to_gcs(model_path)
+    gcs_copy(model_path)
 
     dcec.fit(
         x,
