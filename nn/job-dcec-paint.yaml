@@ -22,6 +22,8 @@ spec:
             value: "/build/data"
           - name: DCEC_BATCH_SIZE
             value: "1024"
+          - name: DCEC_N_CLUSTERS
+            value: 5
           - name: DCEC_MAX_ITER
             value: "20000"
           - name: DCEC_GAMMA
@@ -30,6 +32,8 @@ spec:
             value: "140"
           - name: DCEC_TOLERANCE
             value: "0.001"
+          - name: DCEC_CAE_WEIGHTS
+            value: "gs://paap/nn/dcec_paint/results/pretrain_cae_model.h5"
           - name: DCEC_ALPHA
             value: "1.0"
           - name: DCEC_ASSERT_GPU
