@@ -1,5 +1,6 @@
 import argparse
 import csv
+import datetime
 import logging
 import os
 import subprocess
@@ -30,9 +31,14 @@ DCEC-Paint implementation adapted from DCEC by Guo et al., 2017. See Castellano 
 The network is a Deep Convolutional Auto Encoder for clustering artwork images with a loss function that is jointly
 optimized to minimize reproduction error and clustering loss.
 """.strip()
+UTC_NOW = datetime.datetime.utcnow().strftime("D%Y%m%dT%H%M%S")
 
 
-def save_results_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results/"):
+def gcs_path():
+    return "gs://paap/nn/dcec_paint/results/{}/".format(UTC_NOW)
+
+
+def save_results_to_gcs(src="results/temp", dst=gcs_path()):
     cmd = ["gsutil", "-m", "cp", "-r", src, dst]
     p = subprocess.run(cmd)
     try:
@@ -41,7 +47,7 @@ def save_results_to_gcs(src="results/temp", dst="gs://paap/nn/dcec_paint/results
         logger.exception("Failed to write to gcs")
 
 
-def save_file_to_gcs(src, dst="gs://paap/nn/dcec_paint/results/temp/"):
+def save_file_to_gcs(src, dst=os.path.join(gcs_path(), "temp/")):
     cmd = ["gsutil", "cp", src, dst]
     p = subprocess.run(cmd)
     try:
@@ -172,14 +178,13 @@ class DCEC(object):
     # TODO we should really be training for 200 epochs
     # TODO Can we do a bigger batch size here?
     # TODO Should we train for longer?
-    def pretrain(self, x, batch_size=256, epochs=200, optimizer="adam", save_dir="results/temp"):
+    def pretrain(self, x, batch_size=512, epochs=200, optimizer="adam", save_dir="results/temp"):
         logger.info("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
         from keras.callbacks import CSVLogger
 
         csv_logger = CSVLogger(args.save_dir + "/pretrain_log.csv")
 
-        # TODO SAVE TO GCS (intermediate)
         # begin training
         t0 = time()
         self.cae.fit(x, x, batch_size=batch_size, epochs=epochs, callbacks=[csv_logger])
@@ -211,7 +216,7 @@ class DCEC(object):
         self,
         x,
         y=None,
-        batch_size=256,  # This was 256, Castellano used 128
+        batch_size=512,  # This was 256, Castellano used 128
         maxiter=2e4,
         tol=1e-3,
         update_interval=140,  # Was 140
@@ -347,6 +352,12 @@ if __name__ == "__main__":
 
     logger.info("Running with config: {}".format(["{}={}".format(k, v) for k, v in vars(args).items()]))
 
+    cfg = ["{}={}\n".format(k, v) for k, v in vars(args).items()]
+    path = os.path.join(args.save_dir, "config.txt")
+    with open(path, "w") as f:
+        f.writelines(cfg)
+    save_file_to_gcs(path)
+
     # Log GPU info, optionally asserting if there isn't one
     gpu_info(args.assert_gpu)
 
@@ -372,12 +383,9 @@ if __name__ == "__main__":
 
     dcec.compile(loss=losses, loss_weights=loss_weights, optimizer=optimizer)
 
-    # TODO Update this to save to the correct location
-    dcec.model.save(
-        "/home/dubs/dev/paap/data/models/aug_13/temp/dcec_model.h5"
-    )
-
-    exit(0)
+    model_path = os.path.join(args.save_dir, "dcec_model.h5")
+    dcec.model.save(model_path)
+    save_file_to_gcs(model_path)
 
     dcec.fit(
         x,
