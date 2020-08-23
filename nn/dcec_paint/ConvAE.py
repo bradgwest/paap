@@ -1,8 +1,7 @@
 from typing import Iterable, Tuple
 
-import numpy as np
-from keras.layers import Conv2D, Conv2DTranspose, Dense, Flatten, Reshape
-from keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, Dense, Flatten, Reshape
+from tensorflow.keras.models import Sequential
 # from keras.utils.vis_utils import plot_model
 
 RELU = "relu"

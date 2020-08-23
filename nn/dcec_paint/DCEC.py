@@ -7,24 +7,30 @@ import subprocess
 from time import time
 from typing import Tuple, Iterable
 
-import keras.backend as K
+import tensorflow.keras.backend as K
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.client import device_lib
-from keras.engine.topology import InputSpec, Layer
-from keras.models import Model
-from keras.optimizers import Adam
-from keras.utils.vis_utils import plot_model
+from tensorflow.keras.layers import InputSpec, Layer
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import plot_model
 from sklearn.cluster import KMeans
 
 import metrics
 from ConvAE import CAE
 from datasets import load_christies
 
+# Memory leak issues
+# https://github.com/keras-team/keras/issues/13118
+# https://github.com/tensorflow/tensorflow/issues/33030
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
+
+# Clear session on the off chance it helps with memory issues
+# K.clear_session()
 
 DESCRIPTION = """
 DCEC-Paint implementation adapted from DCEC by Guo et al., 2017. See Castellano and Vessio, 2020 for more information.
@@ -73,8 +79,8 @@ def gpu_info(assert_gpu) -> None:
             # Currently, memory growth needs to be the same across GPUs
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-                logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-                logger.info("{} Physical GPUs, Logical GPUs {}".format(len(gpus), len(logical_gpus)))
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            logger.info("{} Physical GPUs, Logical GPUs {}".format(len(gpus), len(logical_gpus)))
         except RuntimeError:
             # Memory growth must be set before GPUs have been initialized
             logger.exception("Failed to get GPUS")
@@ -183,7 +189,7 @@ class DCEC(object):
     def pretrain(self, x, batch_size=512, epochs=200, optimizer="adam", save_dir="results/temp"):
         logger.info("...Pretraining...")
         self.cae.compile(optimizer=optimizer, loss="mse")
-        from keras.callbacks import CSVLogger
+        from tensorflow.keras.callbacks import CSVLogger
 
         csv_logger = CSVLogger(args.save_dir + "/pretrain_log.csv")
 
@@ -263,12 +269,17 @@ class DCEC(object):
         lw2 = csv.DictWriter(l2, fieldnames=["iter", "L", "Lc", "Lr"])
         lw2.writeheader()
 
+        # Convert input to tensor so that we can use different predict function
+        x_tf = tf.convert_to_tensor(x)
+
         loss = [0, 0, 0]
         index = 0
         for ite in range(int(maxiter)):
             if ite % update_interval == 0:
                 logger.info("Updating. Iter {}".format(ite))
-                q, _ = self.model.predict(x, verbose=0)
+                # q, _ = self.model.predict(x, verbose=0)
+                # model.predict() causes a memory leak. So, use model(). See notes above
+                q, _ = self.model(x_tf, training=False)
                 p = self.target_distribution(q)  # update the auxiliary target distribution p
 
                 # evaluate the clustering performance
@@ -410,6 +421,8 @@ if __name__ == "__main__":
     model_path = os.path.join(args.save_dir, "dcec_model.h5")
     dcec.model.save(model_path)
     gcs_copy(model_path)
+
+    # tf.compat.v1.get_default_graph().finalize()
 
     dcec.fit(
         x,
