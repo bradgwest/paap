@@ -21,9 +21,9 @@ spec:
           - name: DCEC_DATA_DIR
             value: "/build/data"
           - name: DCEC_BATCH_SIZE
-            value: "1024"
+            value: "512"
           - name: DCEC_N_CLUSTERS
-            value: 5
+            value: "9"
           - name: DCEC_MAX_ITER
             value: "20000"
           - name: DCEC_GAMMA
@@ -40,8 +40,10 @@ spec:
             value: "True"
           - name: DCEC_EPOCHS
             value: "200"
+          - name: DCEC_LEARNING_RATE
+            value: "0.001"
       # Do not restart containers after they exit
       restartPolicy: Never
   # of retries before marking as failed.
-  backoffLimit: 1
+  # backoffLimit: 1
 

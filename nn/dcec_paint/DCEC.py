@@ -13,6 +13,7 @@ import tensorflow as tf
 from tensorflow.python.client import device_lib
 from keras.engine.topology import InputSpec, Layer
 from keras.models import Model
+from keras.optimizers import Adam
 from keras.utils.vis_utils import plot_model
 from sklearn.cluster import KMeans
 
@@ -257,6 +258,11 @@ class DCEC(object):
         logwriter = csv.DictWriter(logfile, fieldnames=["iter", "acc", "nmi", "ari", "L", "Lc", "Lr"])
         logwriter.writeheader()
 
+        overall_log_loss = save_dir + "/dcec_log_all.csv"
+        l2 = open(overall_log_loss, "w")
+        lw2 = csv.DictWriter(l2, fieldnames=["iter", "L", "Lc", "Lr"])
+        lw2.writeheader()
+
         loss = [0, 0, 0]
         index = 0
         for ite in range(int(maxiter)):
@@ -277,9 +283,15 @@ class DCEC(object):
                     logwriter.writerow(logdict)
                     logger.info("Iter {}: Acc {}, nmi {}, ari {}; loss={}".format(ite, acc, nmi, ari, loss))
 
-                loss_dict = {"L": loss[0], "Lc": loss[1], "Lr": loss[2]}
+                loss_dict = {"iter": ite, "L": loss[0], "Lc": loss[1], "Lr": loss[2]}
                 logwriter.writerow(loss_dict)
                 logger.info("iter {i}; L {L}; Lc {Lc}; Lr {Lr}".format(i=ite, **loss_dict))
+
+                logger.info("Evaluating full loss")
+                loss_all = self.model.evaluate(x, y=[p, x], batch_size=batch_size, verbose=0)
+                ld = {"iter": ite, "L": loss_all[0], "Lc": loss_all[1], "Lr": loss_all[2]}
+                logger.info("Overall loss. iter {iter}; L {L}; Lc {Lc}; Lr {Lr}".format(**ld))
+                lw2.writerow(ld)
 
                 # check stop criterion
                 delta_label = np.sum(self.y_pred != y_pred_last).astype(np.float32) / self.y_pred.shape[0]
@@ -307,8 +319,11 @@ class DCEC(object):
                 )
                 index += 1
 
+            loss_dict = {"iter": ite, "L": loss[0], "Lc": loss[1], "Lr": loss[2]}
+            logwriter.writerow(loss_dict)
+
             if ite % 10 == 0:
-                logger.info("Loss: L={}; L_c={}; L_r={}".format(*loss))
+                logger.info("iter={};L={};L_c={};L_r={}".format(ite, *loss))
 
             # save intermediate model
             if ite % save_interval == 0:
@@ -318,11 +333,13 @@ class DCEC(object):
                 self.model.save_weights(path)
                 gcs_copy(path)
                 gcs_copy(logfile_path)
+                gcs_copy(overall_log_loss)
 
             ite += 1
 
         # save the trained model
         logfile.close()
+        lw2.close()
         logger.info("saving model to: {}".format(save_dir + "/dcec_model_final.h5"))
         self.model.save_weights(save_dir + "/dcec_model_final.h5")
         t3 = time()
@@ -339,6 +356,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset-path", default="./data/final", help="Path to data")
     parser.add_argument("--batch-size", default=os.getenv("DCEC_BATCH_SIZE", 512), type=int, help="Training batch size")
     parser.add_argument("--n-clusters", default=os.getenv("DCEC_N_CLUSTERS", 10), type=int, help="Final number of clusters, k")
+    parser.add_argument("--learning-rate", default=os.getenv("DCEC_LEARNING_RATE", 0.001), type=float, help="Learning rate")
     parser.add_argument("--maxiter", default=os.getenv("DCEC_MAX_ITER", 20000), type=int, help="Maximum iterations to perform on final training")
     parser.add_argument("--gamma", default=os.getenv("DCEC_GAMMA", 0.9), type=float, help="coefficient of clustering loss")
     parser.add_argument("--update-interval", default=os.getenv("DCEC_UPDATE_INTERVAL", 140), type=int, help="How frequently to update weights")
@@ -353,6 +371,15 @@ if __name__ == "__main__":
 
     logger.info("Running with config: {}".format(["{}={}".format(k, v) for k, v in vars(args).items()]))
 
+    # Log GPU info, optionally asserting if there isn't one
+    gpu_info(args.assert_gpu)
+
+    if not os.path.exists(args.save_dir):
+        os.makedirs(args.save_dir)
+
+    if not os.path.exists(args.data_dir):
+        os.makedirs(args.data_dir)
+
     cfg = ["{}={}\n".format(k, v) for k, v in vars(args).items()]
     path = os.path.join(args.save_dir, "config.txt")
     with open(path, "w") as f:
@@ -364,15 +391,6 @@ if __name__ == "__main__":
         print("copying to {}".format(CAE_LOCAL_WEIGHTS))
         gcs_copy(args.cae_weights, CAE_LOCAL_WEIGHTS)
 
-    # Log GPU info, optionally asserting if there isn't one
-    gpu_info(args.assert_gpu)
-
-    if not os.path.exists(args.save_dir):
-        os.makedirs(args.save_dir)
-
-    if not os.path.exists(args.data_dir):
-        os.makedirs(args.data_dir)
-
     x, y = load_christies(args.dataset_path)
 
     # TODO Update filters to match what DCEC-Paint has
@@ -382,7 +400,7 @@ if __name__ == "__main__":
     dcec.model.summary()
 
     # begin clustering.
-    optimizer = "adam"  # AdaMax
+    optimizer = Adam(learning_rate=args.learning_rate)
     losses = ["kld", "mse"]
     # How Keras accounts for loss_weights - https://stackoverflow.com/a/49406231
     loss_weights = [args.gamma, 1 - args.gamma]
@@ -401,7 +419,7 @@ if __name__ == "__main__":
         maxiter=args.maxiter,
         update_interval=args.update_interval,
         save_dir=args.save_dir,
-        cae_weights=args.cae_weights,
+        cae_weights=CAE_LOCAL_WEIGHTS,
     )
 
     # TODO Y will always be None
