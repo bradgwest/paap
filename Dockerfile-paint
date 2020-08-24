@@ -4,7 +4,7 @@ WORKDIR /data
 COPY data/img/christies/s128/christies.tar.gz /data/
 
 # Deploy image
-FROM gcr.io/deeplearning-platform-release/tf2-gpu.2-2:latest
+FROM gcr.io/deeplearning-platform-release/tf-gpu.1-15:latest
 
 ENV SERVICE_EMAIL=paap-crawl@art-auction-prices.iam.gserviceaccount.com
 ENV GCLOUD_PROJECT=art-auction-prices
