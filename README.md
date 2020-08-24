@@ -324,9 +324,9 @@ From the [nn](nn) directory:
 # Create a cluster
 gcloud container clusters create paap-training-cluster \
     --num-nodes=1 \
-    --zone=us-central1-f \
+    --zone=us-east1-c \
     --accelerator="type=nvidia-tesla-t4,count=1" \
-    --machine-type="n1-highmem-8" \
+    --machine-type="n1-highmem-4" \
     --scopes="gke-default,storage-rw" \
     --preemptible
 
@@ -334,7 +334,7 @@ gcloud container clusters create paap-training-cluster \
 # https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#ubuntu
 # device drivers
 # use `gcloud container get-server-config` to get the default image type
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+kubectl apply -f https://raw.githubusercontent.com/googlecloudplatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
 
 # Resize the cluster
 gcloud container clusters resize paap-training-cluster --num-nodes=0
