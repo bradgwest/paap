@@ -14,8 +14,8 @@ spec:
         resources:
           # let it take the whole vm
           limits:
-            memory: "90Gi"
-            cpu: 13
+            memory: "20Gi"
+            cpu: 3
             nvidia.com/gpu: 1
         env:
           - name: DCEC_DATA_DIR
@@ -23,7 +23,7 @@ spec:
           - name: DCEC_BATCH_SIZE
             value: "512"
           - name: DCEC_N_CLUSTERS
-            value: "9"
+            value: "8"
           - name: DCEC_MAX_ITER
             value: "20000"
           - name: DCEC_GAMMA
