@@ -43,7 +43,7 @@ CAE_LOCAL_WEIGHTS = None
 
 
 def gcs_path():
-    return "gs://paap/nn/dcec_paint/results/{}/".format(UTC_NOW)
+    return "gs://paap/nn/dcec_paint/results/{}/{}/".format(os.getenv("DCEC_N_CLUSTERS", "none"), UTC_NOW)
 
 
 def save_results_to_gcs(src="results/temp", dst=gcs_path()):
@@ -269,17 +269,14 @@ class DCEC(object):
         lw2 = csv.DictWriter(l2, fieldnames=["iter", "L", "Lc", "Lr"])
         lw2.writeheader()
 
-        # Convert input to tensor so that we can use different predict function
-        x_tf = tf.convert_to_tensor(x)
-
         loss = [0, 0, 0]
         index = 0
         for ite in range(int(maxiter)):
             if ite % update_interval == 0:
                 logger.info("Updating. Iter {}".format(ite))
-                # q, _ = self.model.predict(x, verbose=0)
-                # model.predict() causes a memory leak. So, use model(). See notes above
-                q, _ = self.model(x_tf, training=False)
+                q, _ = self.model.predict(x, verbose=0)
+                # model.predict() causes a memory leak in tf2. So, use model(). See notes above
+                # q, _ = self.model(x_tf, training=False)
                 p = self.target_distribution(q)  # update the auxiliary target distribution p
 
                 # evaluate the clustering performance
@@ -350,7 +347,7 @@ class DCEC(object):
 
         # save the trained model
         logfile.close()
-        lw2.close()
+        l2.close()
         logger.info("saving model to: {}".format(save_dir + "/dcec_model_final.h5"))
         self.model.save_weights(save_dir + "/dcec_model_final.h5")
         t3 = time()
