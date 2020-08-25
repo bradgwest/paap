@@ -803,6 +803,17 @@ outlined below.
 # Implementation
 <!-- How long was the model trained, on what architecture, how many iterations, etc -->
 
+We re-implemented the model on the Tensorflow v1.5 framework and trained it on
+Google Kubernetes Engine with a single NVIDIA Tesla T4 GPU with 16 GB of GDDR6.
+Following [@Castellano_and_Vessio_2020], we used an update interval of $140$, a
+learning rate of $0.001$, and pre-trained for $200$ epochs before attaching the
+clustering layer. With a larger GPU than the previous authors used, we increased
+batch size from $256$ to $512$. The model took on the order of 1-2 hours to
+cluster after pretraining the convolutional autoencoder. Clustering terminated
+when the proportion of samples which changed clusters between two update intervals
+was less than $0.001$.
+
+
 <!-- # Prediction Evaluation -->
 <!-- How did we evaluate the model's performance -->
 <!-- Comparison to the estimate for the painting. Those are the experts -->
@@ -814,6 +825,21 @@ outlined below.
 
 # Experiment Results
 <!-- What did we see? -->
+
+The following are t-SNE plots of the embedded space for different numbers of
+clusters.
+
+<!-- Why do the figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
+!["n=3"](/home/dubs/dev/paap/img/3/tsne.png "n=3"){ width=50% }
+
+
+![n=4](/home/dubs/dev/paap/img/4/tsne.png "n=4"){ width=50% }
+![n=5](/home/dubs/dev/paap/img/5/tsne.png "n=5"){ width=50% }
+![n=6](/home/dubs/dev/paap/img/6/tsne.png "n=6"){ width=50% }
+![n=7](/home/dubs/dev/paap/img/7/tsne.png "n=7"){ width=50% }
+![n=8](/home/dubs/dev/paap/img/8/tsne.png "n=8"){ width=50% }
+![n=9](/home/dubs/dev/paap/img/9/tsne.png "n=9"){ width=50% }
+
 
 # Discussion
 <!-- Why did we see it? -->
