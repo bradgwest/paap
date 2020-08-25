@@ -58,6 +58,8 @@ class Plotter(object):
         METRICS
     ]
 
+    EMBEDDED_INDEX = ()
+
     def __init__(self, clusters, plots, artist=None):
         for plot in plots:
             if plot not in self.PLOTS:
@@ -65,7 +67,7 @@ class Plotter(object):
 
         self.plots = plots
         self.artist = artist
-        cluster_dir = "n" + str(clusters)
+        cluster_dir = str(clusters)
         model_dir = os.path.join(MODELS_DIR, cluster_dir)
         self.result_dir = os.path.join(model_dir, os.listdir(model_dir)[0], "temp")
         if not os.path.exists(self.result_dir):
@@ -95,13 +97,14 @@ class Plotter(object):
 
         # # Final dataset
         self.final_df = self.make_final_df()
+        # print(self.final_df.columns)
 
         self.loss_image_filename = os.path.join(self.img_dir, "loss.png")
         self.tsne_image_filename = os.path.join(self.img_dir, "tsne.png")
 
         self.plot_map = {
             self.TSNE_ALL: None,
-            self.TSNE_FINAL: None,
+            self.TSNE_FINAL: self.plot_tsne,
             self.TSNE_ARTIST: None,
             self.LOSS: None,
             self.METRICS: None
@@ -154,6 +157,12 @@ class Plotter(object):
         df["lot_image_id"] = self.image_ids["lot_image_id"]
         return df
 
+    def embedded_df(self):
+        return self.final_df[[i for i in range(32)]]
+
+    def embedded_and_cluster_df(self):
+        return self.final_df[[i for i in range(32)] + ["cluster"]]
+
     def make_final_df(self):
         # TODO need to test this
         christies = pd.read_json(FINAL_DATASET, orient="records", lines=True)
@@ -179,11 +188,14 @@ class Plotter(object):
         tsne_results = tsne.fit_transform(df)
         return pd.DataFrame(tsne_results, columns=["tsne" + str(i) for i in range(dim)])
 
-    def plot_tsne(self, tsne_results, df):
-        fig, ax = plt.subplots()
-        ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=df.cluster, s=1)
-        fig.savefig(self.tsne_image_filename)
-        plt.close(fig)
+    # def plot_tsne(self, tsne_results, color):
+    #     fig, ax = plt.subplots()
+    #     if len(tsne_results.columns) == 2:
+    #         ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
+    #     else:
+    #         ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=color, s=1)
+    #     fig.savefig(self.tsne_image_filename)
+    #     plt.close(fig)
 
     # def plot_3d_tsne(self, tsne_results, df):
     #     fig = plt.figure()
@@ -192,20 +204,28 @@ class Plotter(object):
     #     fig.savefig(fn)
     #     plt.close(fig)
 
-    def plot_tsne_model(self, model, weight_file, fn):
-        model.load_weights(weight_file)
-        f = self.layer_outputs(model)
-        embedded, cluster = self.predict(f, self.x)
-        df = self.layers_to_df(cluster, embedded)
+    def plot_tsne(self):
+        self.model.load_weights(self.weight_files[-1])
+        f = self.layer_outputs()
+        embedded, cluster = self.predict(f)
+        df = self.embedded_and_cluster_df()
         tsne_results = self.tsne(df)
-        self.plot_tsne(tsne_results, df, fn)
+
+        fig, ax = plt.subplots()
+        if len(tsne_results.columns) == 2:
+            ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=self.final_df["cluster"], s=1)
+        else:
+            ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=self.final_df["cluster"], s=1)
+
+        fig.savefig(self.tsne_image_filename)
+        plt.close(fig)
 
     def plot_tsne_by_time(self, model, weight_files, x):
         for i, fn in enumerate(weight_files[::3]):
             epoch = int(fn.split("_")[-1].split(".")[0])
             img_name = os.path.join(self.img_dir, "tsne_{}.png".format(epoch))
             print("plotting {} of {} - {}".format(i, len(weight_files), img_name))
-            self.plot_tsne_model(model, fn, x, img_name)
+            self.plot_tsne(model, fn, x, img_name)
 
     def plot_loss(self):
         df = pd.read_csv(self.log_file)
@@ -252,7 +272,8 @@ class Plotter(object):
         pass
 
     def plot(self):
-        pass
+        for plot in self.plots:
+            self.plot_map[plot]()
 
 
 # def get_model_paths(d=RESULT_DIR):
@@ -463,8 +484,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     plotter = Plotter(args.n, args.plots, args.artist)
-    print(plotter.final_df)
-    # plotter.plot()
+    plotter.plot()
 
     # cluster_dir = "n" + args.n
     # model_dir = os.path.join(MODELS_DIR, cluster_dir)
