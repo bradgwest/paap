@@ -42,31 +42,34 @@ ARTWORK_DIR = os.path.join(DATA_DIR, "img", "christies", "s128", "final")
 EMBEDDED_LAYER_INDEX = 5
 
 
+# def check_order(lot_image_ids, training_samples):
+#     """Check if the order of the final dataset and the order of the training samples are equivalent"""
+#     i = 0
+#     for iid, x in zip(lot_image_ids, training_samples):
+#         img_path = os.path.join(final_dir, iid + ".jpg")
+#         img = io.imread(img_path) / 255.0
+#         assert np.array_equal(x, img), "{} Don't equal eachother".format(i)
+#         del img
+#         i += 1
+
+
 class Plotter(object):
 
     # PLOTS
-    TSNE_ALL = "tsne_all"
+    TSNE_TIME = "tsne_time"
     TSNE_FINAL = "tsne_final"
     TSNE_ARTIST = "tsne_artist"
     LOSS = "loss"
     METRICS = "metrics"
     PLOTS = [
-        TSNE_ALL,
+        TSNE_TIME,
         TSNE_FINAL,
         TSNE_ARTIST,
         LOSS,
         METRICS
     ]
 
-    EMBEDDED_INDEX = ()
-
-    def __init__(self, clusters, plots, artist=None):
-        for plot in plots:
-            if plot not in self.PLOTS:
-                raise ValueError("{} not a valid plot: {}".format(plot, self.PLOTS))
-
-        self.plots = plots
-        self.artist = artist
+    def __init__(self, clusters):
         cluster_dir = str(clusters)
         model_dir = os.path.join(MODELS_DIR, cluster_dir)
         self.result_dir = os.path.join(model_dir, os.listdir(model_dir)[0], "temp")
@@ -103,11 +106,11 @@ class Plotter(object):
         self.tsne_image_filename = os.path.join(self.img_dir, "tsne.png")
 
         self.plot_map = {
-            self.TSNE_ALL: None,
+            self.TSNE_TIME: self.plot_tsne_by_time,
             self.TSNE_FINAL: self.plot_tsne,
-            self.TSNE_ARTIST: None,
-            self.LOSS: None,
-            self.METRICS: None
+            self.TSNE_ARTIST: self.plot_tsne_by_artist,
+            self.LOSS: self.plot_loss,
+            self.METRICS: self.plot_metrics
         }
 
     def get_model_paths(self):
@@ -188,15 +191,6 @@ class Plotter(object):
         tsne_results = tsne.fit_transform(df)
         return pd.DataFrame(tsne_results, columns=["tsne" + str(i) for i in range(dim)])
 
-    # def plot_tsne(self, tsne_results, color):
-    #     fig, ax = plt.subplots()
-    #     if len(tsne_results.columns) == 2:
-    #         ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
-    #     else:
-    #         ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=color, s=1)
-    #     fig.savefig(self.tsne_image_filename)
-    #     plt.close(fig)
-
     # def plot_3d_tsne(self, tsne_results, df):
     #     fig = plt.figure()
     #     ax = fig.add_subplot(111, projection="3d")
@@ -204,30 +198,50 @@ class Plotter(object):
     #     fig.savefig(fn)
     #     plt.close(fig)
 
-    def plot_tsne(self):
+    def tsne_results(self, dim=2):
         self.model.load_weights(self.weight_files[-1])
         f = self.layer_outputs()
         embedded, cluster = self.predict(f)
         df = self.embedded_and_cluster_df()
-        tsne_results = self.tsne(df)
+        return self.tsne(df, dim)
 
-        fig, ax = plt.subplots()
-        if len(tsne_results.columns) == 2:
+    def plot_tsne(self, fn=None, *args, **kwargs):
+        if fn is None:
+            fn = self.tsne_image_filename
+
+        is_3d = kwargs.get("dim", False)
+        tsne_results = self.tsne_results(dim=3 if is_3d else 2)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d" if is_3d else "2d")
+        if not is_3d:
             ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=self.final_df["cluster"], s=1)
         else:
             ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=self.final_df["cluster"], s=1)
 
-        fig.savefig(self.tsne_image_filename)
+        fig.savefig(fn)
         plt.close(fig)
 
-    def plot_tsne_by_time(self, model, weight_files, x):
-        for i, fn in enumerate(weight_files[::3]):
+    def plot_tsne_by_artist(self, artist="andy warhol", *args, **kwargs):
+        tsne_results = self.tsne_results(dim=2)
+
+        d = self.images_with_metadata(self.final_df[["lot_image_id", "lot_description"]])
+        color = d["lot_description"] == artist
+
+        fn = os.path.join(self.img_dir, "tsne_{}.png".format(artist.replace(" ", "_")))
+        fig, ax = plt.subplots()
+        ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
+        fig.savefig(fn)
+
+    def plot_tsne_by_time(self):
+        # Plot every 3rd weight file
+        for i, fn in enumerate(self.weight_files[::3]):
             epoch = int(fn.split("_")[-1].split(".")[0])
             img_name = os.path.join(self.img_dir, "tsne_{}.png".format(epoch))
-            print("plotting {} of {} - {}".format(i, len(weight_files), img_name))
-            self.plot_tsne(model, fn, x, img_name)
+            print("plotting {} of {} - {}".format(i, len(self.weight_files), img_name))
+            self.plot_tsne(fn=img_name)
 
-    def plot_loss(self):
+    def plot_loss(self, *args, **kwargs):
         df = pd.read_csv(self.log_file)
         # df = pd.read_csv("/home/dubs/Downloads/l.csv")
         # df = pd.read_csv("/home/dubs/dev/DCEC/results/temp/dcec_log.csv")
@@ -252,28 +266,17 @@ class Plotter(object):
         df = img_df.merge(metadata, how="left", on="lot_image_id")
         return df
 
-    def plot_tsne_by_artist(self, model, weight_file, df, x, artist="andy warhol"):
-        model.load_weights(weight_file)
-        f = self.layer_outputs(model)
-        embedded, cluster = self.predict(f, x)
-        layer_df = self.layers_to_df(cluster, embedded)
-        tsne_results = self.tsne(layer_df)
-
-        d = self.images_with_metadata(df[["lot_image_id", "lot_description"]])
-        color = d["lot_description"] == artist
-
-        fn = os.path.join(self.img_dir, "tsne_{}.png".format(artist.replace(" ", "_")))
-        fig, ax = plt.subplots()
-        ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
-        fig.savefig(fn)
-
-    def plot_metrics(self):
+    def plot_metrics(self, *args, **kwargs):
         """Plots the silhouette coefficient and Calinski-Harabasz index"""
         pass
 
-    def plot(self):
-        for plot in self.plots:
-            self.plot_map[plot]()
+    def plot(self, plots, *args, **kwargs):
+        for plot in plots:
+            if plot not in self.PLOTS:
+                raise ValueError("{} not a valid plot: {}".format(plot, self.PLOTS))
+
+        for plot in plots:
+            self.plot_map[plot](*args, **kwargs)
 
 
 # def get_model_paths(d=RESULT_DIR):
