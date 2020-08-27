@@ -831,8 +831,6 @@ clusters.
 
 <!-- Why do the figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
 !["n=3"](/home/dubs/dev/paap/img/3/tsne.png "n=3"){ width=50% }
-
-
 ![n=4](/home/dubs/dev/paap/img/4/tsne.png "n=4"){ width=50% }
 ![n=5](/home/dubs/dev/paap/img/5/tsne.png "n=5"){ width=50% }
 ![n=6](/home/dubs/dev/paap/img/6/tsne.png "n=6"){ width=50% }
