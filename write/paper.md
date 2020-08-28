@@ -810,9 +810,8 @@ learning rate of $0.001$, and pre-trained for $200$ epochs before attaching the
 clustering layer. With a larger GPU than the previous authors used, we increased
 batch size from $256$ to $512$. The model took on the order of 1-2 hours to
 cluster after pretraining the convolutional autoencoder. Clustering terminated
-when the proportion of samples which changed clusters between two update intervals
-was less than $0.001$.
-
+when the proportion of samples which changed clusters between two consecutive
+update intervals was less than $0.001$.
 
 <!-- # Prediction Evaluation -->
 <!-- How did we evaluate the model's performance -->
@@ -826,7 +825,7 @@ was less than $0.001$.
 # Experiment Results
 <!-- What did we see? -->
 
-The following are t-SNE plots of the embedded space for different numbers of
+The following are t-SNE plots of the embedded space for different numbers ($k \in \{3..10\}$) of
 clusters.
 
 <!-- Why do the figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
@@ -838,6 +837,21 @@ clusters.
 ![n=8](/home/dubs/dev/paap/img/8/tsne.png "n=8"){ width=50% }
 ![n=9](/home/dubs/dev/paap/img/9/tsne.png "n=9"){ width=50% }
 
+
+The following shows silhouette coefficient and Calinski Harabasz scores for clusters
+of various sizes:
+
+
+|k|ss|ch|
+|---|---|---|
+|3|0.8280|1.0000|
+|4|0.7750|0.4775|
+|5|0.8073|0.5089|
+|6|0.7834|0.3245|
+|7|0.7863|0.3873|
+|8|0.8702|0.9098|
+|9|0.8520|0.6518|
+|10|0.8284|0.4480|
 
 # Discussion
 <!-- Why did we see it? -->

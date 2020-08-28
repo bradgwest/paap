@@ -280,7 +280,12 @@ class Plotter(object):
         ss = self.silhouette_coefficient()
         ch = self.calinski_harabasz()
         print("clusters={}; ss={}; ch={}".format(self.clusters, ss, ch))
-        return self.cluster, ss, ch
+        fn = os.path.join(self.img_dir, "metrics.csv")
+        with open(fn, "w") as f:
+            f.write("k,ss,ch\n")
+            f.write("{},{},{}\n".format(self.clusters, ss, ch))
+
+        return self.clusters, ss, ch
 
     def plot(self, plots, *args, **kwargs):
         for plot in plots:
