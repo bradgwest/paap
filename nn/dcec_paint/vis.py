@@ -11,6 +11,7 @@ from tensorflow.keras import backend as K
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
+import gap
 from DCEC import ClusteringLayer
 from datasets import load_christies
 
@@ -62,12 +63,14 @@ class Plotter(object):
     TSNE_ARTIST = "tsne_artist"
     LOSS = "loss"
     METRICS = "metrics"
+    GAP = "gap"
     PLOTS = [
         TSNE_TIME,
         TSNE_FINAL,
         TSNE_ARTIST,
         LOSS,
-        METRICS
+        METRICS,
+        GAP
     ]
 
     def __init__(self, clusters):
@@ -112,7 +115,8 @@ class Plotter(object):
             self.TSNE_FINAL: self.plot_tsne,
             self.TSNE_ARTIST: self.plot_tsne_by_artist,
             self.LOSS: self.plot_loss,
-            self.METRICS: self.plot_metrics
+            self.METRICS: self.plot_metrics,
+            self.GAP: self.plot_gap
         }
 
     def get_model_paths(self):
@@ -154,8 +158,10 @@ class Plotter(object):
         # df = StandardScaler().fit_transform(df)
         return df
 
-    def make_cluster_and_embedded_df(self):
-        self.model.load_weights(self.weight_files[-1])
+    def make_cluster_and_embedded_df(self, wf=None):
+        if wf is None:
+            wf = self.weight_files[-1]
+        self.model.load_weights(wf)
         f = self.layer_outputs()
         embedded, cluster = self.predict(f)
         df = self.layers_to_df(cluster, embedded)
@@ -200,25 +206,32 @@ class Plotter(object):
     #     fig.savefig(fn)
     #     plt.close(fig)
 
-    def tsne_results(self, dim=2):
-        self.model.load_weights(self.weight_files[-1])
+    def tsne_results(self, dim=2, wf=None):
+        if wf is None:
+            wf = self.weight_files[-1]
+
+        self.model.load_weights(wf)
         f = self.layer_outputs()
         embedded, cluster = self.predict(f)
-        df = self.embedded_and_cluster_df()
+        df = self.layers_to_df(cluster, embedded)
         return self.tsne(df, dim)
 
-    def plot_tsne(self, fn=None, *args, **kwargs):
+    def plot_tsne(self, fn=None, wf=None, *args, **kwargs):
         if fn is None:
             fn = self.tsne_image_filename
 
+        if wf is None:
+            wf = self.weight_files[-1]
+
         is_3d = kwargs.get("dim", False)
-        tsne_results = self.tsne_results(dim=3 if is_3d else 2)
+        tsne_results = self.tsne_results(dim=3 if is_3d else 2, wf=wf)
 
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d" if is_3d else "2d")
         if not is_3d:
+            ax = fig.add_subplot()
             ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=self.final_df["cluster"], s=1)
         else:
+            ax = fig.add_subplot(111, projection="3d")
             ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=self.final_df["cluster"], s=1)
 
         fig.savefig(fn)
@@ -235,13 +248,14 @@ class Plotter(object):
         ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
         fig.savefig(fn)
 
-    def plot_tsne_by_time(self):
+    def plot_tsne_by_time(self, *args, **kwargs):
         # Plot every 3rd weight file
-        for i, fn in enumerate(self.weight_files[::3]):
-            epoch = int(fn.split("_")[-1].split(".")[0])
+        for i, wf in enumerate(self.weight_files[::3]):
+            print(wf)
+            epoch = int(wf.split("_")[-1].split(".")[0])
             img_name = os.path.join(self.img_dir, "tsne_{}.png".format(epoch))
             print("plotting {} of {} - {}".format(i, len(self.weight_files), img_name))
-            self.plot_tsne(fn=img_name)
+            self.plot_tsne(fn=img_name, wf=wf)
 
     def plot_loss(self, *args, **kwargs):
         df = pd.read_csv(self.log_file)
@@ -286,6 +300,24 @@ class Plotter(object):
             f.write("{},{},{}\n".format(self.clusters, ss, ch))
 
         return self.clusters, ss, ch
+
+    def plot_gap(self):
+        if self.clusters != 1:
+            raise RuntimeError("GAP only defined for 1 cluster")
+
+        f = self.layer_outputs()
+        embedded, _ = self.predict(f)
+        embedded2 = np.apply_along_axis(lambda x: x[0], 1, embedded)
+        x = list(range(1, 21))
+        g = gap.gap(embedded2, ks=x)
+        fig, ax = plt.subplots()
+        ax.plot(x, g)
+        ax.set_title("GAP Statistic on non-clustered dataset")
+        ax.set_xlabel("Clusters (k)")
+        ax.set_ylabel("GAP statistic")
+        ax.set_xticks(x)
+        fig.savefig(os.path.join(self.img_dir, "gap.png"))
+        plt.close(fig)
 
     def plot(self, plots, *args, **kwargs):
         for plot in plots:

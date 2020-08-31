@@ -217,6 +217,15 @@ class DCEC(object):
         weight = q ** 2 / q.sum(0)
         return (weight.T / weight.sum(1)).T
 
+    @staticmethod
+    def should_stop(losses, threshold=0.0005):
+        assert len(losses) >= 3, "Losses is not length 3"
+        a = sum(losses) / len(losses)
+        for x in losses:
+            if abs(x - a) > threshold:
+                return False
+        return True
+
     def compile(self, loss=["kld", "mse"], loss_weights=[1, 1], optimizer="adam"):
         self.model.compile(loss=loss, loss_weights=loss_weights, optimizer=optimizer)
 
@@ -271,6 +280,7 @@ class DCEC(object):
 
         loss = [0, 0, 0]
         index = 0
+        previous_losses = []
         for ite in range(int(maxiter)):
             if ite % update_interval == 0:
                 logger.info("Updating. Iter {}".format(ite))
@@ -297,6 +307,7 @@ class DCEC(object):
 
                 logger.info("Evaluating full loss")
                 loss_all = self.model.evaluate(x, y=[p, x], batch_size=batch_size, verbose=0)
+                previous_losses.append(loss_all[0])
                 ld = {"iter": ite, "L": loss_all[0], "Lc": loss_all[1], "Lr": loss_all[2]}
                 logger.info("Overall loss. iter {iter}; L {L}; Lc {Lc}; Lr {Lr}".format(**ld))
                 lw2.writerow(ld)
@@ -305,10 +316,13 @@ class DCEC(object):
                 delta_label = np.sum(self.y_pred != y_pred_last).astype(np.float32) / self.y_pred.shape[0]
                 logger.info("delta_label={}".format(delta_label))
                 y_pred_last = np.copy(self.y_pred)
-                if ite > 0 and delta_label < tol:
+                if self.n_clusters > 1 and ite > 0 and delta_label < tol:
                     logger.info("delta_label {} < tol {}".format(delta_label, tol))
                     logger.info("Reached tolerance threshold. Stopping training.")
                     logfile.close()
+                    break
+                elif self.n_clusters == 1 and len(previous_losses) >= 3 and self.should_stop(previous_losses):
+                    logger.info("Stopping criteria reached: Last 3 losses {}".format(previous_losses[-3:]))
                     break
 
             # train on batch
@@ -411,6 +425,9 @@ if __name__ == "__main__":
     optimizer = Adam(learning_rate=args.learning_rate)
     losses = ["kld", "mse"]
     # How Keras accounts for loss_weights - https://stackoverflow.com/a/49406231
+    # if args.n_clusters == 1:
+    #     loss_weights = [0, 1]
+    # else:
     loss_weights = [args.gamma, 1 - args.gamma]
 
     dcec.compile(loss=losses, loss_weights=loss_weights, optimizer=optimizer)

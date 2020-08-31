@@ -23,7 +23,7 @@ spec:
           - name: DCEC_BATCH_SIZE
             value: "512"
           - name: DCEC_N_CLUSTERS
-            value: "2"
+            value: "1"
           - name: DCEC_MAX_ITER
             value: "20000"
           - name: DCEC_GAMMA

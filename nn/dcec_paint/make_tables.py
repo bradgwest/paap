@@ -32,6 +32,10 @@ def print_metrics(metrics):
         print("|{}|{:.4f}|{:.4f}|".format(int(d["k"]), d["ss"], d["ch"]))
 
 
+def plot_metrics(metrics):
+    pass
+
+
 if __name__ == "__main__":
     models_dir = "/home/dubs/dev/paap/img"
     if len(sys.argv) > 1:
@@ -40,3 +44,5 @@ if __name__ == "__main__":
     metrics = load_metrics_files(models_dir)
     metrics = normalize_ch(metrics)
     print_metrics(metrics)
+
+    plot_metrics(metrics)

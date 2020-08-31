@@ -116,6 +116,12 @@ MOTIVATION
 * unsupervised clustering vs supervised learning -> broadens the potential datasets that we can use
  -->
 
+**TODO** - The following need to be done, but I'm waiting until I have a bit more
+content written
+
+* Formatting figures with captions and linking to the figure numbers in the text
+* Making images, image captions, including them in the text.
+
 # Introduction
 <!-- This is where your state the motivation -->
 <!-- contributions to the field -->
@@ -713,7 +719,7 @@ set of nearly 300k works of art, we chose the top 50 most prolific artists and,
 randomly selecting 250 works of art for each artist, we hand curated the dataset
 to exclude intermediate sketches and sculptures. The final dataset contains
 $n = 10,505$ 3 channel $128 \times 128$ images which span a diverse set of
-artists, mediums, and movements (see figure).
+artists, mediums, and movements (table \ref{artists}).
 
 Compared to previous applications of this algorithm, we believe this dataset
 to represent a much broader set of artists and mediums. For instance, there are
@@ -736,6 +742,8 @@ outlined below.
 **TODO** - This would be a good location for some of the images
 
 <!-- TODO - You could include a plot with distribution of image prices -->
+
+Table: Artists Included in Dataset \label{artists}
 
 | artist                       | n_images | birth | death | mediums                     | movement                             |
 |------------------------------|----------|-------|-------|-----------------------------|--------------------------------------|
@@ -811,7 +819,7 @@ clustering layer. With a larger GPU than the previous authors used, we increased
 batch size from $256$ to $512$. The model took on the order of 1-2 hours to
 cluster after pretraining the convolutional autoencoder. Clustering terminated
 when the proportion of samples which changed clusters between two consecutive
-update intervals was less than $0.001$.
+update intervals was less than $0.001$. We ran the network for $k \in \{1..10\}$.
 
 <!-- # Prediction Evaluation -->
 <!-- How did we evaluate the model's performance -->
@@ -822,13 +830,102 @@ update intervals was less than $0.001$.
 # Clustering Evaluation
 <!-- How did we evaluate the performance of the network? -->
 
+The digitized works included in this study are unlabeled in so far as there does
+not exist a known "correct" correct clustering. As such we evaluate model
+performance with two global methods, the average silhouette score and
+the Calinski-Harabasz index [@Calinski_Harabasz_1974]. We also measure the
+GAP statistic [@Tibshirani_2000]
+on the unclustered embedded space obtained after running the algorithm for $k=1$.
+
+The silhouette score measures how similar a data point is to its own cluster, relative
+to the other clusters, given by:
+
+<!-- See https://scikit-learn.org/0.19/modules/clustering.html#silhouette-coefficient -->
+**TODO** - equation for silhouette score
+
+The score can range from -1 to 1, with higher values corresponding to a better
+cluster fit.
+
+The Calinski-Harabasz index measures the ratio of between to within cluster
+dispersion according to:
+
+<!-- See https://scikit-learn.org/0.19/modules/clustering.html#calinski-harabaz-index -->
+**TODO** - equation for Calinski-Harabasz
+
+Higher values indicate a lower relative within cluster dispersion, i.e. tighter
+clusters. This metric is not bounded, and so we report values as a proportion of
+the highest scoring $k$.
+
+DCEC and its predecessor algorithms do not extend to the one/no cluster solution.
+At each iteration in the clustering algorithm, the probability that sample $i$
+belongs to cluster $j$ is calculated, using the Cauchy distribution referenced
+above. In the once cluster solution, this probability is $1$ and does not change,
+leading to a Kullback-Leiber divergence of zero. This implies that the model
+optimizes exclusively for image reconstruction loss. In other words, the
+algorithm is reduced to a CAE.
+
+This case is interesting, however, as it gives insight into the state of the
+algorithm after pretraining and highlights the importance of the clustering
+component in iteratively learning a feature space of $k$ clusters. To evaluate
+the presense of clusters after just running the autoencoder we report the GAP
+statistic [@Tibshirani_2000]. This statistic compares the change in the within
+cluster dispersion at each additional cluster with the change that would be
+expected if the data followed some appropriate null distribution:
+
+**TODO** - GAP statistic
+
+In addition to these quantitative metrics we perform a more qualitative assesment
+of the results for the top performing clusters. In particular we examine (1) the
+distribution of a few artists works across clusters; (2) the overall interpretation
+of the two top perfoming clusters; and (3) the distribution of different artistic
+styles across the clusters.
+
 # Experiment Results
 <!-- What did we see? -->
 
-The following are t-SNE plots of the embedded space for different numbers ($k \in \{3..10\}$) of
+Table \ref{cluster_scores} shows the average silhouette coefficient and
+Calinski-Harabasz score for clusters of various sizes:
+
+Table: Average Silhouette and Calinski-Harabasz Scores by K \label{cluster_scores}
+
+| k | ss   | ch   |
+|---| ---- | ---- |
+|  2|0.7929|0.4744|
+|  3|0.8280|1.0000|
+|  4|0.7750|0.4775|
+|  5|0.8073|0.5089|
+|  6|0.7834|0.3245|
+|  7|0.7863|0.3873|
+|  8|0.8702|0.9098|
+|  9|0.8520|0.6518|
+| 10|0.8284|0.4480|
+
+The average silhouette and Caliski-Harabasz scores disagree on the best cluster
+solution. The clusters with the top silhouette scores are 8, 9, and 10, while the
+clusters with the highest CH coefficients are 3, 8, and 9.
+
+**TODO** - Explanation for why they disagree.
+
+Overall, the silhouette score indicates that algorithm clusters well for all
+values of $k$, which we expect as the algorithm is learning a cluster oriented
+representation. We can guage the relative improvement in clustering by
+comparing the average silhouette scores between the final cluster
+output and those for the initial cluster centroids, which are generated after
+pretraining using K-means. Figure \ref{tsne_evolution} shows the cluster evolution
+for $k=8$.
+
+!["\label{tsne_evolution}"](/home/dubs/dev/paap/img/8/tsne_0.png){ width=50% }
+
+**TODO** - update this figure with a few more plots showing the evolution of the clusters
+
+
+The following are t-SNE plots of the embedded space for different numbers ($k \in \{2..10\}$) of
 clusters.
 
+**TODO** - update below with caption.
+
 <!-- Why do the figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
+!["n=2"](/home/dubs/dev/paap/img/2/tsne.png "n=2"){ width=50% }
 !["n=3"](/home/dubs/dev/paap/img/3/tsne.png "n=3"){ width=50% }
 ![n=4](/home/dubs/dev/paap/img/4/tsne.png "n=4"){ width=50% }
 ![n=5](/home/dubs/dev/paap/img/5/tsne.png "n=5"){ width=50% }
@@ -838,20 +935,30 @@ clusters.
 ![n=9](/home/dubs/dev/paap/img/9/tsne.png "n=9"){ width=50% }
 
 
-The following shows silhouette coefficient and Calinski Harabasz scores for clusters
-of various sizes:
+Figure \ref{gap}
+plots the GAP statistic [@Tibshirani_2000], for a number of clusters after
+running the Autoencoder for *20,000* epochs. The gap statistic increases throughout
+the range, indicating there is no clear "correct" number of clusters for the
+embedded space only. This highlights the importance of the clustering component
+in learning the feature space.
+
+![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the Autoencoder for *20,000* epochs. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=75% }
 
 
-|k|ss|ch|
-|---|---|---|
-|3|0.8280|1.0000|
-|4|0.7750|0.4775|
-|5|0.8073|0.5089|
-|6|0.7834|0.3245|
-|7|0.7863|0.3873|
-|8|0.8702|0.9098|
-|9|0.8520|0.6518|
-|10|0.8284|0.4480|
+<!-- GAP statistic after the pretraining weights. What does it indicate? -->
+
+<!-- Stats for KMeans vs after clustering. How do different runs of KMeans
+affect things, since KMeans is not deterministic? -->
+
+<!-- TODO - We should do a more thorough evaluation of the initial k-means
+after the pretraining. Because if there are no valid cluster centers, or if
+the distribution of the 20 cluster centers is not good, then maybe we
+shouldn't be learning in the first place? See DEC for this discussion -->
+
+<!-- Or, how variable is the algorithm performance if we were to pretrain again
+or shuffle the data? or reverse the iteration pattern? Do we still obtain the
+same results? Could order the data differently in the import -->
+
 
 # Discussion
 <!-- Why did we see it? -->
