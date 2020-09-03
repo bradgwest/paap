@@ -1,8 +1,17 @@
 import os
 import sys
 
+import matplotlib.pyplot as plt
 
-METRICS_FILENAME = "kmeans_metrics.csv"
+
+# ALGO = "DCEC"
+ALGO = "CAE+Kmeans"
+if ALGO == "DCEC":
+    METRICS_FILENAME = "metrics.csv"
+else:
+    METRICS_FILENAME = "kmeans_metrics.csv"
+
+IMG = "/home/dubs/dev/paap/img/{}.png".format("kmeans_metrics" if ALGO != "DCEC" else "dcec_metrics")
 
 
 def load_metrics_file(fn):
@@ -30,11 +39,27 @@ def normalize_ch(metrics):
     return metrics
 
 
-def print_metrics(metrics):
-    print("|{}|{}|{}|".format("k", "ss", "ch"))
-    print("|---|---|---|")
-    for d in metrics:
-        print("|{}|{:.4f}|{:.4f}|".format(int(d["k"]), d["ss"], d["ch"]))
+def plot_metrics(metrics):
+    x = [d["k"] for d in metrics]
+    ss = [d["ss"] for d in metrics]
+    ch = [d["ch"] for d in metrics]
+
+    fig, ax = plt.subplots()
+    ax.plot(x, ss, color="tab:red")
+    ax.set_title("Silhouette and Calinski-Harabasz Scores: {}".format(ALGO))
+    ax.set_xlabel("Clusters (k)")
+    ax.set_ylabel("Silhouette Score")
+    ax.set_xticks(x)
+    ax.set_ylim(0, 1)
+
+    ax2 = ax.twinx()
+    ax.set_xlabel("Clusters (k)")
+    ax2.set_ylabel("CH")
+    ax2.set_ylim(0, 1)
+    ax2.plot(x, ch, color="tab:blue")
+
+    fig.savefig(IMG)
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -44,4 +69,5 @@ if __name__ == "__main__":
 
     metrics = load_metrics_files(models_dir)
     metrics = normalize_ch(metrics)
-    print_metrics(metrics)
+
+    plot_metrics(metrics)

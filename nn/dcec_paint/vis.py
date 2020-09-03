@@ -64,13 +64,15 @@ class Plotter(object):
     LOSS = "loss"
     METRICS = "metrics"
     GAP = "gap"
+    KMEANS_METRICS = "kmeans_metrics"
     PLOTS = [
         TSNE_TIME,
         TSNE_FINAL,
         TSNE_ARTIST,
         LOSS,
         METRICS,
-        GAP
+        GAP,
+        KMEANS_METRICS
     ]
 
     def __init__(self, clusters):
@@ -107,6 +109,8 @@ class Plotter(object):
         self.final_df = self.make_final_df()
         # print(self.final_df.columns)
 
+        self.kmeans_df = self.make_cluster_and_embedded_df(self.weight_files[0])
+
         self.loss_image_filename = os.path.join(self.img_dir, "loss.png")
         self.tsne_image_filename = os.path.join(self.img_dir, "tsne.png")
 
@@ -116,7 +120,8 @@ class Plotter(object):
             self.TSNE_ARTIST: self.plot_tsne_by_artist,
             self.LOSS: self.plot_loss,
             self.METRICS: self.plot_metrics,
-            self.GAP: self.plot_gap
+            self.GAP: self.plot_gap,
+            self.KMEANS_METRICS: self.plot_kmeans_metrics,
         }
 
     def get_model_paths(self):
@@ -300,6 +305,32 @@ class Plotter(object):
             f.write("{},{},{}\n".format(self.clusters, ss, ch))
 
         return self.clusters, ss, ch
+
+    def plot_kmeans_metrics(self, *args, **kwargs):
+        embedded = self.kmeans_df[[i for i in range(32)]]
+        ss = silhouette_score(embedded, self.kmeans_df["cluster"])
+        ch = calinski_harabasz_score(embedded, self.kmeans_df["cluster"])
+        print("clusters={}; ss={}; ch={}".format(self.clusters, ss, ch))
+        fn = os.path.join(self.img_dir, "kmeans_metrics.csv")
+        with open(fn, "w") as f:
+            f.write("k,ss,ch\n")
+            f.write("{},{},{}\n".format(self.clusters, ss, ch))
+
+        return self.clusters, ss, ch
+
+    @staticmethod
+    def centroid(points):
+        """From a list of n, equal length, iterables (points), calculate the centroid"""
+        return [sum(p[i] for p in points) / len(points) for i in range(len(points[0]))]
+
+    def get_cluster_center(self, cluster):
+        pass
+
+    def sort_by_distance_from_cluster_center(self, cluster_centers):
+        pass
+
+    def get_closest_images_from_center(self):
+        pass
 
     def plot_gap(self):
         if self.clusters != 1:

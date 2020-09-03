@@ -883,22 +883,24 @@ styles across the clusters.
 # Experiment Results
 <!-- What did we see? -->
 
-Table \ref{cluster_scores} shows the average silhouette coefficient and
+Table \ref{cluster_scores} and \ref{score_plot} show the average silhouette coefficient and
 Calinski-Harabasz score for clusters of various sizes:
 
 Table: Average Silhouette and Calinski-Harabasz Scores by K \label{cluster_scores}
 
-| k | ss   | ch   |
-|---| ---- | ---- |
-|  2|0.7929|0.4744|
-|  3|0.8280|1.0000|
-|  4|0.7750|0.4775|
-|  5|0.8073|0.5089|
-|  6|0.7834|0.3245|
-|  7|0.7863|0.3873|
-|  8|0.8702|0.9098|
-|  9|0.8520|0.6518|
-| 10|0.8284|0.4480|
+| k | ss - CAE+Kmeans | ch - CAE+Kmeans | ss - DCEC  | ch - DCEC |
+|---|---|---|---|---|
+|2|0.2090|1.0000|0.7929|0.4744|
+|3|0.1426|0.8219|0.8280|1.0000|
+|4|0.1028|0.5754|0.7750|0.4775|
+|5|0.0934|0.4496|0.8073|0.5089|
+|6|0.0819|0.3705|0.7834|0.3245|
+|7|0.0884|0.3784|0.7863|0.3873|
+|8|0.0811|0.3301|0.8702|0.9098|
+|9|0.0463|0.2369|0.8520|0.6518|
+|10|0.0772|0.2750|0.8284|0.4480|
+
+!["\label{score_plot}"](/home/dubs/dev/paap/img/dcec_metrics.png){ width=50% }
 
 The average silhouette and Caliski-Harabasz scores disagree on the best cluster
 solution. The clusters with the top silhouette scores are 8, 9, and 10, while the
@@ -915,6 +917,9 @@ pretraining using K-means. Figure \ref{tsne_evolution} shows the cluster evoluti
 for $k=8$.
 
 !["\label{tsne_evolution}"](/home/dubs/dev/paap/img/8/tsne_0.png){ width=50% }
+![](/home/dubs/dev/paap/img/8/tsne_1224.png){ width=50% }
+![](/home/dubs/dev/paap/img/8/tsne_3366.png){ width=50% }
+![](/home/dubs/dev/paap/img/8/tsne_8262.png){ width=50% }
 
 **TODO** - update this figure with a few more plots showing the evolution of the clusters
 
@@ -944,14 +949,14 @@ in learning the feature space.
 
 ![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the Autoencoder for *20,000* epochs. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=75% }
 
+Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
+training show poor performance (\ref{cluster_scores_kmeans}).
 
-<!-- GAP statistic after the pretraining weights. What does it indicate? -->
 
-<!-- Stats for KMeans vs after clustering. How do different runs of KMeans
-affect things, since KMeans is not deterministic? -->
+!["\label{cluster_scores_kmeans}"](/home/dubs/dev/paap/img/kmeans_metrics.png){ width=75% }
 
-<!-- TODO - We should do a more thorough evaluation of the initial k-means
-after the pretraining. Because if there are no valid cluster centers, or if
+<!-- TODO - Should we do a more thorough evaluation of the initial k-means
+after the pretraining? Because if there are no valid cluster centers, or if
 the distribution of the 20 cluster centers is not good, then maybe we
 shouldn't be learning in the first place? See DEC for this discussion -->
 
