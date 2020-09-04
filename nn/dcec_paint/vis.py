@@ -1,5 +1,6 @@
 import argparse
 import logging
+import math
 import os
 import re
 
@@ -53,6 +54,15 @@ EMBEDDED_LAYER_INDEX = 5
 #         assert np.array_equal(x, img), "{} Don't equal eachother".format(i)
 #         del img
 #         i += 1
+def centroid(points):
+    """From a list of n, equal length, iterables (points), calculate the centroid"""
+    return [sum(p[i] for p in points) / len(points) for i in range(len(points[0]))]
+
+
+def distance(x, y):
+    """Get euclidean distance"""
+    assert len(x) == len(y)
+    return math.sqrt(sum((xi - yi) ** 2 for xi, yi in zip(x, y)))
 
 
 class Plotter(object):
@@ -65,6 +75,7 @@ class Plotter(object):
     METRICS = "metrics"
     GAP = "gap"
     KMEANS_METRICS = "kmeans_metrics"
+    CENTER_IMAGES = "center_images"
     PLOTS = [
         TSNE_TIME,
         TSNE_FINAL,
@@ -72,11 +83,12 @@ class Plotter(object):
         LOSS,
         METRICS,
         GAP,
-        KMEANS_METRICS
+        KMEANS_METRICS,
+        CENTER_IMAGES,
     ]
 
     def __init__(self, clusters):
-        self.clusters = clusters
+        self.clusters = int(clusters)
         cluster_dir = str(clusters)
         model_dir = os.path.join(MODELS_DIR, cluster_dir)
         self.result_dir = os.path.join(model_dir, os.listdir(model_dir)[0], "temp")
@@ -109,6 +121,9 @@ class Plotter(object):
         self.final_df = self.make_final_df()
         # print(self.final_df.columns)
 
+        centers = self.calculate_cluster_centers()
+        self.add_distance_from_cluster_center(centers)
+
         self.kmeans_df = self.make_cluster_and_embedded_df(self.weight_files[0])
 
         self.loss_image_filename = os.path.join(self.img_dir, "loss.png")
@@ -122,6 +137,7 @@ class Plotter(object):
             self.METRICS: self.plot_metrics,
             self.GAP: self.plot_gap,
             self.KMEANS_METRICS: self.plot_kmeans_metrics,
+            self.CENTER_IMAGES: self.plot_closest_images,
         }
 
     def get_model_paths(self):
@@ -318,19 +334,32 @@ class Plotter(object):
 
         return self.clusters, ss, ch
 
-    @staticmethod
-    def centroid(points):
-        """From a list of n, equal length, iterables (points), calculate the centroid"""
-        return [sum(p[i] for p in points) / len(points) for i in range(len(points[0]))]
+    def calculate_cluster_centers(self):
+        centers = {}
+        em = self.embedded_df()
+        for i in range(self.clusters):
+            points = list(em[self.final_df["cluster"] == i].to_records(index=False))
+            centers[i] = centroid(points)
+        return centers
 
-    def get_cluster_center(self, cluster):
-        pass
+    def add_distance_from_cluster_center(self, centers):
+        self.final_df["distance_from_centroid"] = self.embedded_and_cluster_df().apply(lambda x: distance(x[:-1], centers[x["cluster"]]), axis=1)
 
-    def sort_by_distance_from_cluster_center(self, cluster_centers):
-        pass
+    def sort_by_distance_from_cluster_center(self, n=10):
+        return self.final_df.groupby(["cluster"]) \
+            .apply(lambda x: x.sort_values(["distance_from_centroid"], ascending=True)) \
+            .reset_index(drop=True) \
+            .groupby(["cluster"]) \
+            .head(n)
 
     def get_closest_images_from_center(self):
-        pass
+        df = self.sort_by_distance_from_cluster_center()
+        df["images_path"] = df.apply(lambda x: os.path.join(ARTWORK_DIR, x["lot_image_id"] + ".jpg"), axis=1)
+        return df[["lot_image_id", "images_path", "cluster", "distance_from_centroid"]]
+
+    def plot_closest_images(self, *args, **kwargs):
+        df = self.get_closest_images_from_center()
+        df.to_csv(os.path.join(self.img_dir, "center.csv"), index=False)
 
     def plot_gap(self):
         if self.clusters != 1:
@@ -361,7 +390,7 @@ class Plotter(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument("n", help="number of clusters")
+    parser.add_argument("n", type=int, help="number of clusters")
     parser.add_argument("--plots", nargs="*", help="which plots to create", default=Plotter.PLOTS)
     parser.add_argument("--artist", help="artist for tsne plot", default="andy warhol")
     args = parser.parse_args()
