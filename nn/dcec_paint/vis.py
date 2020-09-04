@@ -76,6 +76,7 @@ class Plotter(object):
     GAP = "gap"
     KMEANS_METRICS = "kmeans_metrics"
     CENTER_IMAGES = "center_images"
+    FINAL_DATASET = "final_dataset"
     PLOTS = [
         TSNE_TIME,
         TSNE_FINAL,
@@ -85,9 +86,10 @@ class Plotter(object):
         GAP,
         KMEANS_METRICS,
         CENTER_IMAGES,
+        FINAL_DATASET,
     ]
 
-    def __init__(self, clusters):
+    def __init__(self, clusters, no_cache):
         self.clusters = int(clusters)
         cluster_dir = str(clusters)
         model_dir = os.path.join(MODELS_DIR, cluster_dir)
@@ -117,12 +119,15 @@ class Plotter(object):
         # self.christies_df = pd.read_json(FINAL_DATASET, orient="records", lines=True)
         self.image_ids = self.image_file_ids()
 
-        # # Final dataset
-        self.final_df = self.make_final_df()
+        self.final_dataset = os.path.join(self.img_dir, "df.ndjson")
+        if no_cache or not os.path.exists(self.final_dataset):
+            # Final dataset
+            self.final_df = self.make_final_df()
+            centers = self.calculate_cluster_centers()
+            self.add_distance_from_cluster_center(centers)
+        else:
+            self.final_dataset = pd.read_json(self.final_dataset, orient="records", lines=True)
         # print(self.final_df.columns)
-
-        centers = self.calculate_cluster_centers()
-        self.add_distance_from_cluster_center(centers)
 
         self.kmeans_df = self.make_cluster_and_embedded_df(self.weight_files[0])
 
@@ -138,6 +143,7 @@ class Plotter(object):
             self.GAP: self.plot_gap,
             self.KMEANS_METRICS: self.plot_kmeans_metrics,
             self.CENTER_IMAGES: self.plot_closest_images,
+            self.FINAL_DATASET: self.plot_final_dataset,
         }
 
     def get_model_paths(self):
@@ -355,11 +361,14 @@ class Plotter(object):
     def get_closest_images_from_center(self):
         df = self.sort_by_distance_from_cluster_center()
         df["images_path"] = df.apply(lambda x: os.path.join(ARTWORK_DIR, x["lot_image_id"] + ".jpg"), axis=1)
-        return df[["lot_image_id", "images_path", "cluster", "distance_from_centroid"]]
+        return df[["lot_image_id", "images_path", "lot_description", "cluster", "distance_from_centroid"]]
 
     def plot_closest_images(self, *args, **kwargs):
         df = self.get_closest_images_from_center()
         df.to_csv(os.path.join(self.img_dir, "center.csv"), index=False)
+
+    def plot_final_dataset(self, *args, **kwargs):
+        self.final_df.to_json(self.final_dataset, orient="records", lines=True)
 
     def plot_gap(self):
         if self.clusters != 1:
@@ -393,7 +402,8 @@ if __name__ == "__main__":
     parser.add_argument("n", type=int, help="number of clusters")
     parser.add_argument("--plots", nargs="*", help="which plots to create", default=Plotter.PLOTS)
     parser.add_argument("--artist", help="artist for tsne plot", default="andy warhol")
+    parser.add_argument("--no-cache", help="don't use cache", action="store_true")
     args = parser.parse_args()
 
-    plotter = Plotter(args.n)
+    plotter = Plotter(args.n, args.no_cache)
     plotter.plot(args.plots, artist=args.artist)
