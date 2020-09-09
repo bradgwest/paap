@@ -133,40 +133,55 @@ available for view at the click of a mouse[^google-arts-and-culture]. A
 proliferation of researchers
 have sought to analyze these digital collections, contributing methods for a
 wide variety of computer vision tasks from classification problems (of, for
-example, genre, style, artist, or historical period)[@Cetinic_et_al_2018;
+example, genre, style, artist, or historical period) [@Cetinic_et_al_2018;
 @Lee_and_Cha_2016] to visual relationships
 between paintings [@Garcia_et_al_2019; @Castellano_et_al_2020].
 
 [^google-arts-and-culture]: For example, Google Arts & Culture's digitization of
 hundreds of museum collections: https://artsandculture.google.com/partner.
 
+![*Femme au chapeau* (Woman with a Hat), Henri Matisse, 1905, Oil on canvas [@matisse_1905].\label{woman_with_a_hat}](img/woman_with_a_hat.jpg){ width=50% }
+
 The complete visual and emotional effect of a painting is a combination
 of many factors, for example the color, texture, spatial complexity, and
-contrast. An art expert
-recognizes those qualities and is able to place a work in its historical
-and artistic context. That task, however,
+contrast.
+While to the human eye a work like Figure \ref{woman_with_a_hat} may appear a mosaic of colorful brush
+strokes, masterfully arranged to elicit emotion,
+digitally, images are represented as matrices of numeric values pertaining to pixel
+intensity. In the case of black and white images, there is a single channel,
+meaning an image can be represented by a single matrix of dimensions $m \times n$.
+Color images are three dimensional, accounting for the increase from one to $p > 1$
+channels ($3$, in the case of RGB images), resulting in an $m \times n \times p$
+datum for each image.
+An art expert
+recognizes the artistic qualities of an image and is able to place a work in
+its historical
+and artistic context.
+That task, however,
 is difficult to articulate and exceedingly difficult to generalize to the set
-of all artwork. Early attempts at computational art analysis, nevertheless,
+of all artwork.
+Early attempts at computational art analysis, nevertheless,
 attempted to build a similar model by first engineering and extracting domain specific features
 from the pixel space (corners, edges, SIFT), and using those feature vectors
-as input to a model[@Oliva_and_Torralba_2001]. These techniques formed the
+as input to a model [@Oliva_and_Torralba_2001]. These techniques formed the
 backbone of early attempts at
 object recognition within and outside the art domain, and saw some success in
-evaluating art[@Shamir_et_al_2010]. In recent years, however, the field has
+evaluating art [@Shamir_et_al_2010]. In recent years, however, the field has
 undergone large advancements in
 computer vision techniques, in particular
 Convolution Neural Nets (CNNs) which have demonstrated outstanding results in
-extracting semantic meaning from digitized work[@Tan_et_al_2016]. These results are impressive
-both in relation to earlier, feature engineering based attempts, and
+extracting semantic meaning from digitized work [@Tan_et_al_2016]. These
+results are impressive both in relation to earlier, feature engineering based attempts, and
 in comparison to the perceived complexity of recognizing the distinct visual
 appearance of an artwork.
 
 Rather than using engineered features that attempt to
-proxy semantic attributed, CNNs attempt to learn relevant features from a large
+proxy semantic attributes, CNNs attempt to learn relevant features from a large
 set of training images. CNNs applied to fine art related tasks have benefited
-from both large annotated sources of art data[^wikiart], as well as enormous datasets of
-non-art related images[^imagenet]. In the former case, annotated art datasets allow researchers
-to train classification models without hand labeling artist and genre metadata.
+from both large annotated sources of art data[^wikiart], as well as enormous
+datasets of non-art related images[^imagenet]. In the former case, annotated art
+datasets allow researchers to train classification models without hand
+labeling artist and genre metadata.
 This has led to a number of successful models that can identify period and even
 artist [@David_et_al_2016]. In the latter case, large non-art related image datasets
 have been used to pre-train object recognition models for art-related tasks.
@@ -186,12 +201,13 @@ shared techniques between groups of artists, and distinct periods within unattri
 groups of work (e.g. ancient east Asian art). Yet clustering images has been
 historically difficult due to the difficulty in defining relevant features, and
 issues defining distance metrics that are effective in the high dimensionality
-data space of complex images. An alternative to these two problems, is to learn
-an efficient representation of the input image through a deep NN.
+data space of complex images. An alternative to these two problems is to learn
+an representation of the input image through a deep NN.
 
 In this work, we replicate a CNN clustering algorithm, Deep Embedded
-Convolutional Embedded Clustering (DCEC) first proposed by Guo et al., 2017[@Guo_et_al_2017]
-and adapted by Castellano and Vessio, 2020[@Castellano_and_Vessio_2020] to an
+Convolutional Embedded Clustering (DCEC) first proposed by Guo et al.
+[@Guo_et_al_2017]
+and adapted by Castellano and Vessio [@Castellano_and_Vessio_2020] to an
 art specific dataset. DCEC is composed of
 two components, a convolutional autoencoder (CAE) and a clustering layer
 attached to the CAE. Autoencoders perform non-linear dimension reduction of the
@@ -204,16 +220,18 @@ of the images occurs within the constraints of the latent space. In other words,
 clusters are formed in the presence of spatial attributes deemed meaningful by their
 inclusion in the latent space.
 
-We evaluate clustering performance against two separate datasets of
-digitized artwork, both scraped from Christie's' public
-record of auction house sales[^christies].
+We evaluate clustering performance against a dataset of
+digitized artwork, scraped from the public
+record of auction house sales at Christie's[^christies].
 <!-- The first dataset we cluster is a set of [TODO: n (b/w)] images, and the second
 is a set of [TODO: n (east/asian)]. -->
 The only known prior
-work with this algorithm used two datasets, one of a set of paintings by 50
-well known artists and the collected works of Pablo Picasso. The images used in
-this work include more obscure artists, as well as a higher proportion of
-intra-genre work.
+work with this algorithm used two datasets: (1) a set of paintings by 50
+well known artists and (2) the collected works of Pablo Picasso. The data used
+in this work include a broader range of mediums and genres, including a large
+set of photographs in addition to paintings, drawings, and prints. This additional
+diversity allows us to assess the algorithm's performance across more artistic
+styles and scene depictions.
 <!-- which exercises the algorithm's performance in face of lower
 magnitude differences in the feature space. -->
 
@@ -226,53 +244,61 @@ magnitude differences in the feature space. -->
 As institutions digitized their art collections over the preceding decades,
 researchers responded by applying computational image analysis methods to the art domain.
 A large number of efforts focused on classification tasks, for example of
-genre[@Cetinic_et_al_2016];
-object detection and recognition[@Crowley_and_Zisserman_2014];
-visual similarity between artwork[@Castellano_et_al_2020; @Seguin_et_al_2016],
+genre [@Cetinic_et_al_2016];
+object detection and recognition [@Crowley_and_Zisserman_2014];
+visual similarity between artwork [@Castellano_et_al_2020; @Seguin_et_al_2016],
 and the cross depiction problem -- distinguishing the same type of object in different
-representations, say, a cat depicted in a cubist vs an impressionist painting[@Hall_et_al_2015].
+representations, say, a cat depicted in a cubist vs an impressionist
+painting [@Hall_et_al_2015].
 
 Initial attempts to analyze art emphasized feature engineering and extraction
 in which domain specific characteristics of artwork are
 identified and a given artwork's relative presence or absence of those
-features is used as input to a model. For example, Oliva and Torralba[@Oliva_and_Torralba_2001]
-proposed a set of "perceptual dimensions (naturalness, opennes, roughness,
+features is used as input to a model. For example, [@Oliva_and_Torralba_2001]
+proposed a set of "perceptual dimensions (naturalness, openness, roughness,
 expansion, ruggedness)" which they estimated using low level pixel relationships
-and used to categorize scenes. Shamir et al.[@Shamir_et_al_2010] used 11 extracted
-features to classify paintings by their artists and art school. Spehr et al.[@Spher_et_al_2009]
+and used to categorize scenes. [@Shamir_et_al_2010] used 11 extracted
+features to classify paintings by their artists and art school. [@Spher_et_al_2009]
 used over 200 features to cluster 10,000 paintings.
 
 While feature engineering has been shown to be effective, it's limited by its
 requirement for a comprehensive set of pre-identified features for modeling the
 image characteristics. This shortcoming is especially apparent in tasks which
 attempt to consider the image as a whole, a task which seems especially complex
-given the myriad possible "features" that could be found in an m x n x p
-dimensioned image. Over the past decade, the computer
+given the myriad possible "features" that could be found in an
+$m \times n \times p$
+dimensioned image, where $m$, $n$, and $p$ are the pixel height, pixel width,
+and number of color channels of the image, respectively. Over the past
+decade, the computer
 vision community has focused on designing algorithms which, rather than rely on
-extracted features, learn a relevant feature set through a training process.
+extracted features, use neural networks to learn a relevant feature set.
 Applying deep learning concepts to art analysis has proved fruitful
 in a host of subfields, often employing convolutional neural nets
 [@Cetinic_et_al_2016; @Cetinic_et_al_2018;
 Crowley_and_Zisserman_2014; @Tan_et_al_2016; @Garcia_et_al_2019].
 
-Due to the availability of numerous and large labeled dataset, much research uses
-supervised learning methods.
-In recent years,
-however, a few authors have focused on unsupervised learning, in particular
+Due to the availability of large labeled datasets, much research has employed
+supervised learning methods. In recent years,
+however, a number of studies have focused on unsupervised learning, in particular
 clustering. Seguin et al.[@Seguin_et_al_2016] used a convolutional neural net to
-cluster images for visual link retrieval. Outside the art domain,
-Xie et al.,[@Xie_et_al_2017] proposed a Deep Embedded
-Clustering (DEC) algorithm which selects clusters in two steps: first learning a reduced
-dimensionality set of features using stacked autoencoders (SAE) and second
-using stochastic gradient descent (SGD) to learn cluster centers
-Guo et. al[@Guo_et_al_2017] expanded on this work by using Convolutional Autoencoder
-rather than a stacked auto encoder, and by jointly optimizing for both clustering
+cluster images for visual link retrieval. Outside the art domain, a number of
+neural network architectures have been developed for clustering images.
+[@Min_et_al_2018] surveys these methods, comparing the relative advantages of
+each algorithm class. Relevant to this work,
+Xie et al. [@Xie_et_al_2017] proposed a Deep Embedded
+Clustering (DEC) algorithm which selects clusters in two steps by first
+learning a reduced
+dimensionality set of features using stacked autoencoders (SAE) and then
+using stochastic gradient descent (SGD) to learn cluster centers.
+Guo et. al [@Guo_et_al_2017] expanded on this work by using a convolutional
+autoencoder
+rather than a stacked autoencoder, and by jointly optimizing for both clustering
 and image reconstruction loss so as to avoid corrupting the reduced
-dimensionality feature space during the clustering component, naming the
+dimensionality feature space during clustering, naming the
 algorithm Deep Convolutional Embedded Clustering (DCEC).
-Inspired by DCEC, Castellano and Vessio[@Castellano_and_Vessio_2020]
+Inspired by DCEC, Castellano and Vessio [@Castellano_and_Vessio_2020]
 adapted it to more complex and larger images in the art domain and demonstrated its
-efficacy in clustering a dataset of ca. 10,000 digitized artworks.
+efficacy in clustering a dataset of approximately 10,000 digitized artworks.
 
 # DCEC Architecture
 <!-- Motivation for what NNs offer in general -->
@@ -286,8 +312,8 @@ efficacy in clustering a dataset of ca. 10,000 digitized artworks.
  -->
 
 Before explaining the architecture of the DCEC-Paint algorithm, we provide a
-brief and incomprehensive overview of the mathematical concepts underlying
-CNNs and Autoencoders. For a textbook introduction to artificial neural nets,
+brief (and not at all comprehensive) overview of the mathematical concepts underlying
+CNNs and Autoencoders. For an introduction to artificial neural networks,
 see [@Engelbrecht_2007].
 
 <!-- Over the past decade, researchers have used convolutional neural networks to
@@ -308,86 +334,84 @@ neural networks including autoencoders, see [cite textbook]. -->
 
 <!-- TODO This paragraph does not read very well -->
 Artificial neural networks are non-linear functions,
-$F_{nn}: \mathbb{R}^I -> \mathbb{R}^K$, where $I$ and
+$F_{nn}: \mathbb{R}^I \rightarrow \mathbb{R}^K$, where $I$ and
 $K$ are the dimensionality of the input and output spaces, respectively.
 Modeled after their biological equivalents, they achieve this non-linear functionality
 through composition of layers of artificial neurons where an individual neuron
 is itself typically a nonlinear function,
 $y = f(x + b)$, (almost always $y = [0, 1]$ or $y = [-1, 1]$).
-$y$ is called an activation function, accepting n > 0 input signals (x) and
-outputing a single value as a function of the inputs and the learned weights
-(w) and biases (b) for each inter-neuron connection.
+$y$ is called an activation function, accepting $n > 0$ input signals ($x$) and
+outputting a single value as a function of the inputs and the learned weights
+($w$) and biases ($b$) for each inter-neuron connection.
 
-**TODO** - Figure of an artificial neuron with input and output signals, annotated
-to match equations above.
-<!-- [diagram here, similar to figure 2.1 in englebrecht]. -->
+![(placeholder) An artificial neuron with input and output signals.\label{artificial_neuron}](img/zeros.png){ width=60% }
 
-Thus, for each edge (connection) between the $j^{th}$ neuron in layer $i$ and
+<!-- [similar to figure 2.1 in englebrecht]. -->
+
+Figure \ref{artificial_neuron} shows an artificial neuron with input and output
+signals. For each edge (connection) between the $j^{th}$ neuron in layer $i$ and
 the $k^{th}$ neuron in
 layer $i+1$, the network learns a particular weight ($w_{i+1,j,k}$) which represents
 the relative importance of that component of the total input signal. When
 layered together, the output of a neuron in layer $i$ is the input to
-neurons in layer $i + 1$, forming a structure similar to the one depicted in the
-figure x[^nn].
+neurons in layer $i + 1$, forming a structure similar to the one depicted in
+Figure \ref{feedforward_net}[^nn].
 <!-- Above, do:
 ![This is the caption\label{mylabel}](/url/of/image.png)
 See figure \ref{mylabel}. -->
 
-**TODO** - Figure of a generic feedforward network
+![(placeholder) A simple feedforward neural network attained by chaining layers of artificial neurons.\label{feedforward_net}](img/zeros.png){ width=60% }
 
-[^nn]: While typically a directed acyclic graph (DAG), the actual structure of
-a particular type of DNN is highly variable
+[^nn]: While typically a directed acyclic graph (DAG), the architectures of DNNs
+are highly variable
 within these general constraints. The activation function, number of inputs, number
 of layers, interconnectedness of the layers, and even direction of network connections
-can all vary to form different networks.
+can all vary.
 
 <!-- Activation functions -->
 In general, an activation function is a monotonically increasing function,
-$F_{AN}: \mathbb{R} -> [0, 1]$ or $F_{AN}: \mathbb{R} -> [-1, 1]$
+$F_{AN}: \mathbb{R} \rightarrow [0, 1]$ or $F_{AN}: \mathbb{R} \rightarrow [-1, 1]$
 such that:
 
 $$
 F_{AN}(-\infty) = 0 \quad \textrm{or} \quad F_{AN}(-\infty) = 1
 $$
-
 and
-
 $$
-f_{AN}(\infty) = 1
+f_{AN}(\infty) = 1.
 $$
 
-There are many viable activation functions, but we will focus on the rectifier,
-specifically the exponential linear unit (ELU). The ELU and variants such as
-the rectified linear unit (ReLU)
-have been shown to speed up training on large and deep neural networks compared
-to more traditional choices such as the logistic sigmoid and hyperbolic tangent
-(need citation here). ELU:
+There are many viable activation functions including traditional choices such as
+the logistic and hyperbolic tangent functions. In this work, we use the exponential linear
+unit (ELU). The ELU is defined as
 
 $$
   f(x)=\left\{
   \begin{array}{@{}ll@{}}
     x, & \text{if}\ x>0 \\
-    a(e^x - 1), & \text{otherwise}
+    a(e^x - 1), & \text{otherwise},
   \end{array}\right.
 $$
 
 where $a$ is a constant which can be tuned.
 
-This function has highly beneficial properties for learning. It is continuously
+This function has highly beneficial properties for learning. Like other commonly
+used activation functions, it is continuously
 differentiable along the real numbers, which, combined with the fact that it is
 monotonically increasing means that a gradient can be calculated at any place,
 facilitating "learning" as discussed in the section below. The specifics of the
-ELU compared to its variants such as the ReLU, and leaky ReLU, are too specific
+ELU compared to its variants such as the rectified linear unit (ReLU) and leaky
+ReLU, are too specific
 to address here. It has been shown, however, to speed up learning on deep networks
-as well as lead to better classification accuracy[@Clevert_2015].
+as well as lead to better classification accuracy [@Clevert_et_al_2015].
 
 ### Artificial Learning
 
 Neural networks with at least a single hidden layer can be shown to approximate
-any continuous function[@Hornik_1991]. NNs achieve this impressive result by "learning"
+any continuous function [@Hornik_1991]. NNs achieve this impressive result by "learning"
 the appropriate weights and biases, progressively updating these values until
-an approximation is sufficiently close. There are many different learning algorithms,
-the components for updating the weights ($w$) and biases ($b$) on the networks
+an approximation is sufficiently close. There are many different algorithms for
+updating the weights ($w$) and biases ($b$) on the networks
 signals. In the interest of brevity, we
 focus on the most widely used learning rule, Stochastic Gradient Descent (SGD)
 with backpropagation. For an introduction
@@ -397,12 +421,13 @@ learning rules, see [@Engelbrecht_2007].
 #### Stochastic Gradient Descent
 
 Consider a fully connected 3 layer feed forward neural net,
-depicted in figure (above). Each neuron in the ith layer is connected to each
-neuron in layer i + 1 and inputs are passed forward (that is, right to left)
+depicted in Figure \ref{feedforward_net}. Each neuron in the $i^{th}$ layer is
+connected to each neuron in layer $i + 1$ and inputs are passed forward
+(that is, right to left)
 through the network.
 
-Stochastic Gradient Descent (SGD) attempts to minimize the value of an error
-function (also known as an optimization or cost function], $\mathcal{E}(y - y')$,
+Stochastic gradient descent attempts to minimize the value of an error
+function (also known as an optimization or cost function), $\mathcal{E}(y - y')$,
 by progressively updating the network weights ($w$) and biases ($b$) in such a
 way as to follow the first derivative gradient of $\mathcal{E}$ with respect to
 the weights and biases ($\frac{\partial{\mathcal{E}}}{\partial{w}}$,
@@ -436,8 +461,7 @@ that results in the largest reduction in Epsilon. -->
 
 Despite knowing the gradient, however, it remains unclear how each weight in the network
 is updated. This is achieved via backpropagation, first appreciated by [@Rumelhart_et_al_1986].
-The details are too specific to include here, but the algorithm has two general
-steps:
+The algorithm has two general steps:
 
 1.  Inputs are passed through the network and output values calculated, providing
     the values needed to calculate epsilon and the derived gradients.
@@ -449,27 +473,18 @@ steps:
 
 ## Convolutional Autoencoders
 
-**TODO** - Some relevant art image
-
-<!-- TODO this should have a particular image associated with it, something famous -->
-While to the human eye the image above may appear a mosaic of colorful brush
-strokes, masterfully arranged to elicit emotion,
-digitally, images are represented as matrices of numeric values pertaining to pixel
-intensity. In the case of black and white images, there is a single channel,
-meaning an image can be represented by a single matrix of dimensions $m \times n$.
-Color images are $3$ dimensional, accounting for the increase from one to p > 1
-channels (3, in the case of RGB images).
-
 Consider a neural network tasked with learning relevant features
-from an input dataset of $k$, $m \times n \times p$ images. Intuitively, a network might seem
+from an input dataset of $k$, $m \times n \times p$ images. Intuitively, a
+network might seem
 like an appropriate tool for identifying
-relationships between pixels. An architecture of many interconnected neurons
-seems as though it should have the ability to progressively "learn" more meaningful
-patterns in the data (over the course of many epochs) by progressively weighting
-certain neuronal relationships. Convolutional neural nets build on this intuition
-by building multiple layers that attempt to detect features at different abstraction
-layers, and which contain multiple filters in each layer, each filter targeting
-a different "feature".
+relationships between pixels: if pixel values are passed to neurons, then
+groups of pixels can be modeled by connected groups of neurons. If the weights
+connecting neurons are allowed to vary over time, as is characteristic of
+NNs, then it seems plausible that the network could model image structure via
+neuronal relationships. Convolutional neural nets build on this intuition
+by defining multiple layers that attempt to detect different abstractions, and
+which contain multiple feature filters in each layer, each filter
+targeting a different pixel structure.
 
 ### Convolutional Neural Networks
 
@@ -485,9 +500,11 @@ a full discussion of convolutional neural nets, see
 
 [^DNN]: Deep neural networks contain more than 2 hidden layers.
 
-Consider the $4 \times 4$ square input image depicted below.
+Consider the $4 \times 4$ square input image depicted in Figure \ref{four_by_four}
 
-**TODO** - image of 4 x 4 x 1 pixels
+![(placeholder) $4 \times 4 \times 1$ image.\label{four_by_four}](img/zeros.png){ width=60% }
+
+<!-- here -->
 
 In a fully connected network, each pixel value would be input to each neuron in the
 first hidden layer. Convolutional neural networks differ from fully connected
@@ -495,7 +512,7 @@ networks by defining a local receptive
 field of size $k$, where ($k \times k$) is the number of adjacent inputs that will connect to
 the $j^{th}$ neuron in layer $i$.
 
-**TODO** - figure of the 4x4 input mapping with a 2x2 receptive field to a 3x3 input
+**TODO** - Figure of the 4x4 input mapping with a 2x2 receptive field to a 3x3 input
 
 For each neuron in the hidden layer, this local receptive field is moved adjacently
 by a stride length of $l$ pixels. For example, a stride length of 2 will correspond to a total
@@ -568,9 +585,9 @@ convolutional autoencoder with a deep learning clustering algorithm feed from th
 latent feature space, the network is tasked with jointly optimizing for image reconstruction and
 clustering loss, ensuring that clustering is performed on a reduced dimensionality, but
 spatially related representation of the input image. The
-structure of the network is shown in figure \_.
+structure of the network is shown in Figure \_.
 
-**TODO** - Figure showing DCEC-Paint, similar to figure 1 in Castellano and Vessio
+**TODO** - Figure showing DCEC-Paint, similar to Figure 1 in Castellano and Vessio
 
 The overall motivation of DCEC-Paint is to preserve the embedded space structure
 while performing clustering so as to not lose meaningful spatial structure. [@Guo_et_al_2017]
@@ -599,7 +616,7 @@ detail, with their component parts.
 
 ### Autoencoder
 
-As shown in figure \_, the encoder expects $128 \times 128$ RGB image with pixel values
+As shown in Figure \_, the encoder expects $128 \times 128$ RGB image with pixel values
 scaled between 0 and 1. The encoder consists of three convolutional layers which
 have 32, 64, and 128 filters, respectively. In all cases the stride length is 2 pixels
 and the kernel size (local receptive field) is $5 \times 5$ for the first two convolutional
@@ -921,7 +938,7 @@ for $k=8$.
 ![](/home/dubs/dev/paap/img/8/tsne_3366.png){ width=50% }
 ![](/home/dubs/dev/paap/img/8/tsne_8262.png){ width=50% }
 
-**TODO** - update this figure with a few more plots showing the evolution of the clusters
+**TODO** - update this Figure with a few more plots showing the evolution of the clusters
 
 
 The following are t-SNE plots of the embedded space for different numbers ($k \in \{2..10\}$) of
@@ -929,7 +946,7 @@ clusters.
 
 **TODO** - update below with caption.
 
-<!-- Why do the figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
+<!-- Why do the Figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
 !["n=2"](/home/dubs/dev/paap/img/2/tsne.png "n=2"){ width=50% }
 !["n=3"](/home/dubs/dev/paap/img/3/tsne.png "n=3"){ width=50% }
 ![n=4](/home/dubs/dev/paap/img/4/tsne.png "n=4"){ width=50% }

@@ -40,9 +40,13 @@ DATA_DIR = os.path.join(ROOT, "data")
 IMAGES = os.path.join(DATA_DIR, "img/christies/s128/final/")
 MODELS_DIR = os.path.join(DATA_DIR, "models")
 FINAL_DATASET = os.path.join(DATA_DIR, "output", "christies.ndjson")
+ARTIST_DATASET = os.path.join(DATA_DIR, "output", "artists.csv")
 ARTWORK_DIR = os.path.join(DATA_DIR, "img", "christies", "s128", "final")
 
 EMBEDDED_LAYER_INDEX = 5
+
+
+artists = pd.read_csv(ARTIST_DATASET)
 
 
 # def check_order(lot_image_ids, training_samples):
@@ -65,12 +69,36 @@ def distance(x, y):
     return math.sqrt(sum((xi - yi) ** 2 for xi, yi in zip(x, y)))
 
 
+# ("joan miro", "ansel adams", "hiroshi sugimoto")
+# ("fauvism", "pop art", "guohou")
+def keywords_in_column(keywords, column):
+    def _f(x):
+        # pandas is an unbelivably horrible API. Truly horrific.
+        # It bears almost zero resemblance to actual python. My dear god
+        if type(x) != str:
+            return "other"
+
+        for keyword in keywords:
+            if keyword in x:
+                return keyword
+        else:
+            return "other"
+
+    def f(df):
+        return df[column].apply(_f)
+
+    return f
+
+
 class Plotter(object):
 
     # PLOTS
     TSNE_TIME = "tsne_time"
     TSNE_FINAL = "tsne_final"
+    # TSNE_GROUP = "tsne_group"
     TSNE_ARTIST = "tsne_artist"
+    TSNE_GENRE = "tsne_genre"
+    TSNE_PHOTO = "tsne_photo"
     LOSS = "loss"
     METRICS = "metrics"
     GAP = "gap"
@@ -81,6 +109,8 @@ class Plotter(object):
         TSNE_TIME,
         TSNE_FINAL,
         TSNE_ARTIST,
+        TSNE_GENRE,
+        TSNE_PHOTO,
         LOSS,
         METRICS,
         GAP,
@@ -119,15 +149,18 @@ class Plotter(object):
         # self.christies_df = pd.read_json(FINAL_DATASET, orient="records", lines=True)
         self.image_ids = self.image_file_ids()
 
-        self.final_dataset = os.path.join(self.img_dir, "df.ndjson")
-        if no_cache or not os.path.exists(self.final_dataset):
+        self.final_df_path = os.path.join(self.img_dir, "df.ndjson")
+        if no_cache or not os.path.exists(self.final_df_path):
             # Final dataset
             self.final_df = self.make_final_df()
             centers = self.calculate_cluster_centers()
             self.add_distance_from_cluster_center(centers)
         else:
-            self.final_dataset = pd.read_json(self.final_dataset, orient="records", lines=True)
+            self.final_df = pd.read_json(self.final_df_path, orient="records", lines=True)
         # print(self.final_df.columns)
+
+        # Merge the artist dataset
+        self.final_df = self.final_df.merge(artists, how="left", left_on="lot_description", right_on="artist")
 
         self.kmeans_df = self.make_cluster_and_embedded_df(self.weight_files[0])
 
@@ -137,7 +170,10 @@ class Plotter(object):
         self.plot_map = {
             self.TSNE_TIME: self.plot_tsne_by_time,
             self.TSNE_FINAL: self.plot_tsne,
-            self.TSNE_ARTIST: self.plot_tsne_by_artist,
+            # self.TSNE_GROUP: self.plot_tsne_by_group,
+            self.TSNE_ARTIST: self.plot_by_artist,
+            self.TSNE_GENRE: self.plot_by_genre,
+            self.TSNE_PHOTO: self.plot_by_medium,
             self.LOSS: self.plot_loss,
             self.METRICS: self.plot_metrics,
             self.GAP: self.plot_gap,
@@ -264,16 +300,39 @@ class Plotter(object):
         fig.savefig(fn)
         plt.close(fig)
 
-    def plot_tsne_by_artist(self, artist="andy warhol", *args, **kwargs):
+    def _plot_tsne_by_group(self, group_fnc, base_fn):
+        """group_fn takes a dataset and returns a series"""
         tsne_results = self.tsne_results(dim=2)
+        tsne_results["group"] = group_fnc(self.final_df)
 
-        d = self.images_with_metadata(self.final_df[["lot_image_id", "lot_description"]])
-        color = d["lot_description"] == artist
+        base_fn = base_fn if base_fn.endswith(".png") else base_fn + ".png"
+        fn = os.path.join(self.img_dir, base_fn)
 
-        fn = os.path.join(self.img_dir, "tsne_{}.png".format(artist.replace(" ", "_")))
+        groups = tsne_results.groupby("group")
+
         fig, ax = plt.subplots()
-        ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
+        for name, group in groups:
+            ax.plot(group.tsne0, group.tsne1, marker='o', linestyle='', ms=1, label=name)
+        ax.legend()
+        # ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
         fig.savefig(fn)
+
+    def plot_by_genre(self, *args, **kwargs):
+        genres = ("fauvism", "pop art", "guohuo")
+        column = "movement"
+        f = keywords_in_column(genres, column)
+        self._plot_tsne_by_group(f, "tsne_genre.png")
+
+    def plot_by_artist(self, *args, **kwargs):
+        artists = ("joan miro", "henri cartier-bresson", "ansel adams", "hiroshi sugimoto")
+        column = "lot_description"
+        f = keywords_in_column(artists, column)
+        self._plot_tsne_by_group(f, "tsne_artists.png")
+
+    def plot_by_medium(self, *args, **kwargs):
+        def f(df):
+            return df["is_photograph"]
+        self._plot_tsne_by_group(f, "tsne_photograph.png")
 
     def plot_tsne_by_time(self, *args, **kwargs):
         # Plot every 3rd weight file
