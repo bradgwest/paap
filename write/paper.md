@@ -1016,20 +1016,15 @@ after they begin to form, and within $3000$ iterations they have formed distinct
 ![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1836, 1224, 2448, 8262 (final) $\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
 
 
-The following are t-SNE plots of the embedded space for different numbers ($k \in \{2..10\}$) of
-clusters.
-
-**TODO** - update below with caption.
+Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$.
 
 <!-- Why do the Figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
-!["n=2"](/home/dubs/dev/paap/img/2/tsne.png "n=2"){ width=50% }
-!["n=3"](/home/dubs/dev/paap/img/3/tsne.png "n=3"){ width=50% }
-![n=4](/home/dubs/dev/paap/img/4/tsne.png "n=4"){ width=50% }
-![n=5](/home/dubs/dev/paap/img/5/tsne.png "n=5"){ width=50% }
-![n=6](/home/dubs/dev/paap/img/6/tsne.png "n=6"){ width=50% }
-![n=7](/home/dubs/dev/paap/img/7/tsne.png "n=7"){ width=50% }
-![n=8](/home/dubs/dev/paap/img/8/tsne.png "n=8"){ width=50% }
-![n=9](/home/dubs/dev/paap/img/9/tsne.png "n=9"){ width=50% }
+![This figure needs to include everything\label{all_tsne}](/home/dubs/dev/paap/img/2/tsne.png "n=2"){ width=100% }
+
+Diving deeper into the individual cluster results, Figure \ref{images} shows
+a selection of images for each of the clusters in the $8$ cluster solution.
+
+![A selection of images from the $k=8$ cluster solution](img/8/collage.png){ width=100% }
 
 
 <!-- Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
