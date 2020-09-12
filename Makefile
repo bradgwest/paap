@@ -31,6 +31,7 @@ paper-html:
 		--defaults=${WRITE}/defaults.yaml \
 		--standalone \
 		--bibliography=${WRITE}/papers.bib \
+		--filter pandoc-crossref \
 		--filter pandoc-citeproc \
 		--output ${WRITE}/paper.html && \
 	firefox ${WRITE}/paper.html

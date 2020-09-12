@@ -15,9 +15,14 @@ csl: /home/dubs/.csl/ieee.csl
 link-citations: true
 header-includes: |
     \usepackage[margin=1.25in]{geometry}
-    \renewcommand{\baselinestretch}{1.5}
+    \usepackage{pdflscape}
+    \usepackage{setspace}
+    \doublespacing
+    \usepackage[normalem]{ulem}
+    \useunder{\uline}{\ul}{}
 ---
 
+<!-- \renewcommand{\baselinestretch}{1.5} -->
 <!--
 * Change neural network to deep neural network
 * Write technical discussion of neural Networks
@@ -115,12 +120,6 @@ MOTIVATION
 * representation learning vs feature engineering
 * unsupervised clustering vs supervised learning -> broadens the potential datasets that we can use
  -->
-
-**TODO** - The following need to be done, but I'm waiting until I have a bit more
-content written
-
-* Formatting figures with captions and linking to the figure numbers in the text
-* Making images, image captions, including them in the text.
 
 # Introduction
 <!-- This is where your state the motivation -->
@@ -373,25 +372,25 @@ In general, an activation function is a monotonically increasing function,
 $F_{AN}: \mathbb{R} \rightarrow [0, 1]$ or $F_{AN}: \mathbb{R} \rightarrow [-1, 1]$
 such that:
 
-$$
+\begin{equation} \label{eq:act_left}
 F_{AN}(-\infty) = 0 \quad \textrm{or} \quad F_{AN}(-\infty) = 1
-$$
+\end{equation}
 and
-$$
+\begin{equation} \label{eq:act_right}
 f_{AN}(\infty) = 1.
-$$
+\end{equation}
 
 There are many viable activation functions including traditional choices such as
 the logistic and hyperbolic tangent functions. In this work, we use the exponential linear
 unit (ELU). The ELU is defined as
 
-$$
+\begin{equation} \label{eq:elu}
   f(x)=\left\{
   \begin{array}{@{}ll@{}}
     x, & \text{if}\ x>0 \\
     a(e^x - 1), & \text{otherwise},
   \end{array}\right.
-$$
+\end{equation}
 
 where $a$ is a constant which can be tuned.
 
@@ -504,42 +503,50 @@ Consider the $4 \times 4$ square input image depicted in Figure \ref{four_by_fou
 
 ![(placeholder) $4 \times 4 \times 1$ image.\label{four_by_four}](img/zeros.png){ width=60% }
 
-<!-- here -->
-
 In a fully connected network, each pixel value would be input to each neuron in the
-first hidden layer. Convolutional neural networks differ from fully connected
-networks by defining a local receptive
-field of size $k$, where ($k \times k$) is the number of adjacent inputs that will connect to
+first hidden layer. Conceptually, this means that any given neuron in the first
+hidden layer receives information from every pixel in the image, specifically
+the pixel value transformed by the weight and bias of the respective connection.
+For the image context, it intuitively seems that this structure is non-optimal:
+the relationship between the four pixel values of an image's corners seems
+irrelevant compared to the relationship of the 4 pixels in any $2 \time 2$ region
+of the image. The pixel relationships in the latter seems much more relevant to
+a model concerned with recognizing image structure at some abstraction layer.
+Convolutional neural networks acknowledge this distinction and differ from
+fully connected networks by defining a local receptive
+field of size $h$, where ($h \times h$) is the number of adjacent inputs that will connect to
 the $j^{th}$ neuron in layer $i$.
 
-**TODO** - Figure of the 4x4 input mapping with a 2x2 receptive field to a 3x3 input
+![(placeholder) $4 \times 4 \times 1$ image with a $2 \times 2$ receptive field outputting to a $3 \times 3$ layer.\label{receptive_field}](img/zeros.png){ width=60% }
 
-For each neuron in the hidden layer, this local receptive field is moved adjacently
-by a stride length of $l$ pixels. For example, a stride length of 2 will correspond to a total
-of 9 local receptive fields, meaning a total of 9 neurons in the first hidden layer.
+For each neuron in the hidden layer, the local receptive field is shifted adjacently
+by a stride length of $l$ pixels. For example, in Figure \ref{receptive_field},
+a stride length of $2$ corresponds to a total
+of $9$ local receptive fields, resulting in a $3 \times 3$ hidden layer.
 By limiting the number of input signals passed to a single neuron, each neuron
-receives information only from adjacent pixels, rather than information from
-every input in the network, linking pixels/neurons that are spatially distant.
-Intuitively, this seems like an appropriate way to extract spatial meaning.
+receives information from only adjacent pixels.
 
 Furthermore, by design, each neuron in the $i^{th}$ hidden layer has the same weights
-and biases. So, for our example, the $2 \times 2$ array of weights and biases input to the
-jth neuron in the ith layer are identical to every other array of weights and biases
-in the ith layer. By making this restriction, the network ensures that all the neurons
-in the ith layer are detecting the same spatial structure. This map from an input
+and biases. So, in Figure \ref{receptive_field}, the $2 \times 2$
+array of weights and biases input to the
+$j^{th}$ neuron in the $i^{th}$ layer are identical to every other array of weights and biases
+in the $i^{th}$ layer. By making this restriction, the network ensures that all the neurons
+in the $i^{th}$ layer are detecting the same spatial structure. This map from an input
 layer to a hidden layer is called a feature map, and the set of weights and biases
-that define a feature map is called a filter or a kernel (**TODO** - cite something here).
+that define a feature map is called a filter or a kernel [@LeCun_et_al_1990].
 By increasing the number of feature maps at each layer, the network is able to
-detect multiple features[@Bengio_et_al_2013].
+detect multiple features [@Bengio_et_al_2013].
 
-Finally, convolutional NNs aggregate the activations of the convolution layers
+CNNs aggregate the activations of the convolution layers
 in what are known as pooling layers. By pooling adjacent activations, typically by taking
 the maximum activation from a $l \times l$ sized area, the feature maps undergo
 dimension reduction. Intuitively, this can be thought of as a function which outputs
 whether a certain feature is found anywhere within a subsection of a layer.
 
-The combined effect of these three components to convolutional neural nets is to
-build a set of feature detectors which simultaneously reduce dimensionality of
+The combined effect of these three components; (1) limiting network
+connectedness, (2) sharing weights within layers, and (3) dimension reduction via
+pooling layers; is a network which
+builds a set of feature detectors while simultaneously reducing dimensionality of
 the input image, resulting in a vector containing information on the spatial
 structure of the input image.
 
@@ -549,51 +556,51 @@ Autoencoders are a type of unsupervised artificial neural network consisting of
 two components, an encoder, $x' = f(x)$,
 and a decoder $g(x')$, which perform, respectively, dimension reduction and
 expansion in such a way as to minimize the error of
-$y - y' = y - g(f(x))$, where $x'$ is a projection of $x$ from the data space into
-a much lower dimensional latent space. Figure \_ shows a rudimentary autoencoder.
+$y - y' = y - g(f(x))$, where $x'$ is a projection of the input, $x$, from the
+data space, into
+a much lower dimensional latent space. Figure \ref{ff_autoencoder} shows a
+rudimentary autoencoder.
 
-**TODO** - Figure of a basic feedforward autoencoder
+![(placeholder) A simple feedforward autoencoder\label{ff_autoencoder}](img/zeros.png){ width=60% }
 
 Autoencoders have proved especially useful in denoising and dimension reduction
 of images, which are naturally highly dimensional. Typically the reconstruction
 loss function is taken to be the mean squared error:
 
-$$
+\begin{equation} \label{eq:mse}
 L = \frac{1}{n}\sum_{i=1}^{n} (x'_i - x_i)^2 = \frac{1}{n}\sum_{i=1}^{n} (g(f(x)) - x_i)^2
-$$
+\end{equation}
 
 The result is that the autoencoder encodes the image in the much reduced
 feature space, similar to a nonlinear version of Principle Component Analysis
 (PCA).
 
 The specifics of the dimension reduction component of the encoder varies based on
-specific architectures. Convolutional Autoencoders, which we implement in this work,
+specific architectures. Convolutional autoencoders, which we implement in this work,
 are autoencoders that choose convolutional neural nets as encoders and decoders.
-The combined effect is a network which reduces the dimensionality
-of the input image (autoencoder) while learning the spatially relevant components
-of the input data (convolutional NN). Put another way, from an input image x, the network
-learns a highly dimensionally reduced representation of x that retains spatially
-relevant information, a highly desirable input source for clustering data.
+When optimizing for a convolutional autoencoder, the weights of the encoder are
+updated in the direction which results in the largest decrease in image
+reconstruction loss. The combined effect is a network which defines a dimensionality
+reduction function (autoencoder) where the output space is optimized for the image features
+that are most relevant for reconstructing the input image (CNN).
 
 ## DCEC-Paint
 
 In this work, we evaluate the clustering performance of the Deep Convolutional
-Embedded Clustering (DCEC-Paint) algorithm on a set of digitized fine art. This network is
-identical to the one specified by [@Castellano_and_Vessio_2020], who made minor
-adaptations to the DCEC algorithm specified by [@Guo_et_al_2017]. A
-convolutional autoencoder with a deep learning clustering algorithm feed from the
-latent feature space, the network is tasked with jointly optimizing for image reconstruction and
-clustering loss, ensuring that clustering is performed on a reduced dimensionality, but
-spatially related representation of the input image. The
-structure of the network is shown in Figure \_.
+Embedded Clustering (DCEC-Paint) algorithm on a new dataset of digitized fine
+art. This network is
+identical to the one specified in [@Castellano_and_Vessio_2020], who made minor
+adaptations to the DCEC algorithm specified by [@Guo_et_al_2017]. Figure \ref{arch}
+shows the architecture of the network. It is convolutional autoencoder with a
+deep learning clustering algorithm fed from the latent feature space.
 
-**TODO** - Figure showing DCEC-Paint, similar to Figure 1 in Castellano and Vessio
+![(placeholder) Deep Convolutional Embedded Clustering (DCEC-Paint) architecture.\label{arch}](img/zeros.png){ width=60% }
 
-The overall motivation of DCEC-Paint is to preserve the embedded space structure
-while performing clustering so as to not lose meaningful spatial structure. [@Guo_et_al_2017]
-noted that previous deep clustering algorithms do not attempt to maintain feature
-space integrity; the clustering algorithm is allowed to fully alter the feature
-space, effectively throwing away previously learned meaningful features. We posit
+Unlike previous deep clustering algorithms, DCEC-Paint attempts to maintain feature
+space integrity by jointly optimizing for reconstruction and clustering loss.
+Previous algorithms only optimize for clustering after the network is pre-trained
+which, over the course of clustering can result in divergence in the feature space
+from the pre-trained spatial structure. We posit
 that retaining learned features is especially important for clustering digitized
 artworks which are, on the whole, spatially complex, and should in theory store a
 large amount of artistically meaningful data in the feature space.
@@ -601,51 +608,48 @@ large amount of artistically meaningful data in the feature space.
 As mentioned above, the network is tasked with minimizing the overall loss, a
 combination of the image reconstruction and clustering loss:
 
-$$
+\begin{equation} \label{eq:loss}
 L = \gamma L_r + (1 - \gamma) L_c
-$$
+\end{equation}
 
 where $\gamma$ is a tunable parameter. [@Guo_et_al_2017] set $\gamma = 0.1$,
 while [@Castellano_and_Vessio_2020] used $\gamma = 0.9$, putting more importance
 on optimizing for clustering loss rather than reconstruction loss. The goal of
 clustering artwork is to optimize cluster assignment, so we follow [@Castellano_and_Vessio_2020]
-and set $\gamma = 0.9$
+and set $\gamma = 0.9$.
 
 Below we describe the derivation of the reconstruction and clustering loss in
 detail, with their component parts.
 
 ### Autoencoder
 
-As shown in Figure \_, the encoder expects $128 \times 128$ RGB image with pixel values
-scaled between 0 and 1. The encoder consists of three convolutional layers which
-have 32, 64, and 128 filters, respectively. In all cases the stride length is 2 pixels
+As shown in Figure \ref{arch}, the encoder expects a $128 \times 128$ RGB image with pixel values
+scaled between $0$ and $1$. The encoder consists of three convolutional layers which
+have $32$, $64$, and $128$ filters, respectively. In all cases the stride length is $2$ pixels
 and the kernel size (local receptive field) is $5 \times 5$ for the first two convolutional
 layers, and $3 \times 3$ for the final layer. All layers use the ELU activation function.
-
 The output of the final convolutional layer is flattened in to a vector of size
-$327684, which is fully connected to the embedded space. Choosing the embedded space dimensions
-is highly strategic as an embedded space that is too large will not sufficiently
-constrain the feature reduction, resulting in minimal learning, while too restrictive a
-size will result in slow learning. We initially set this size to 32 to replicate
-the value used by Castellano and Vessio, and experiment with different values.
+$327,684$, which is fully connected to the embedded space. We follow
+[@Castellano_and_Vessio_2020] and set the size of the embedded space to $32$.
 From the embedded space, the decoder upsamples images with an architecture that
 mirrors the encoder.
 
 ### Clustering
 
 The architecture of the clustering layer is derived from [@Xie_et_al_2017], who
-introduced the method as part of Deep Embedded Clustering (DEC) which, given
-a high dimensionality data space, used
-stacked autoencoders to form a reduced dimensionality feature space, and then
-optimized parameters by computing a probability distribution for membership to
-a set of centroids and used stochastic gradient descent via backpropagation to
-learn an mapping which minimizes the Kullback-Leibler (KL) divergence to that
-distribution.
+introduced the method as part of Deep Embedded Clustering (DEC) which, after
+pre-training a feature space with stacked autoencoders, optimizes network
+parameters by computing a probability distribution for membership to
+a set of cluster centroids and uses stochastic gradient descent via
+backpropagation to learn an mapping which minimizes the Kullback-Leibler
+(KL) divergence to that distribution.
 
-After first learning an initial feature space, setting $\gamma = 0$ in the
-overall loss function, we set the cluster centroids to
-initial values using K-means and set $\gamma = 0.9$. DEC then iteratively
-performs two steps learn cluster weights:
+DCEC uses the same principles, substituting, as mentioned above, a CAE for stacked
+autoencoders, and retaining the CAE during the final learning step. After pre-training
+the network to learn an initial feature space (i.e. $\gamma = 0$ in Equation \eqref{eq:loss}),
+we set the cluster centroids to
+initial values using K-means and set $\gamma = 0.9$. DCEC then iteratively
+performs two steps to learn cluster weights:
 
 1.  Computes the similarity between a point in the feature space, $z_i$, and a centroid,
     $\mu_j$ using Student's t-distribution, interpreted as the probability that
@@ -653,17 +657,19 @@ performs two steps learn cluster weights:
 2.  Calculates the clustering loss via KL divergence and updates the target distribution
     for future assignments.
 
+We expand on these two steps below.
+
 #### Calculation of Soft Assignment
 
-The probability that a sample from the feature space, $z_i$, belongs to cluster $j$,
-is taken to be given by Student's t-distribution with one degree of freedom,
-given by:
+The probability that a sample from the feature space, $z_i$, belongs to cluster $j$
+is taken to be given by Student's t-distribution with one degree of freedom
+(i.e. a Cauchy distribution), shown in Equation \eqref{eq:cauchy}.
 
-$$
+\begin{equation} \label{eq:cauchy}
 q_{ij} = \frac{(1 + (z_i - \mu_j)^2)^{-1}}{\sum_{j'}(1 + (z_i - \mu_{j'})^2)^{-1}}
-$$
+\end{equation}
 
-[@Xie_et_al_2017] use a t-distribution after [@Maaten_et_al_2008], who introduced
+[@Xie_et_al_2017] uses a t-distribution after [@Maaten_et_al_2008], who introduced
 it for t-SNE, a technique for visualizing high dimensional spaces in two or three
 dimensions.
 
@@ -671,149 +677,170 @@ dimensions.
 
 #### Minimizing Clustering Loss
 
+<!-- TODO: the only thing this sentence says is that you don't understand this math -->
 To improve the cluster centroids, DEC attempts to match the soft assignment to
 an auxillary target distribution, $p_i$, and measure the fit of the match via KL
-Divergence:
+divergence, shown in Equation \eqref{eq:kl}.
 
-$$
+\begin{equation} \label{eq:kl}
 L = KL(P||Q) = \sum_i \sum_j p_{ij} \log \frac{p_{ij}}{q_{ij}}
-$$
-<!-- TODO you need to build that out -->
+\end{equation}
 
-$p_i$ is chosen carefully in [@Xie_et_al_2017], to satisfy three conditions:
+$p_i$ is chosen in [@Xie_et_al_2017], to satisfy three conditions:
 
+<!-- TODO: You need to understand this better-->
 1. Its use will strengthen predictions
 2. It assigns more emphasis to data points that have high confidence
-3. It normalizes the loss contribution of each centroid so that large clusters
-   do not out compete smaller clusters
+3. It normalizes each centroid's contribution to the KL divergence by the clusters
+   size so that large clusters do not out compete smaller clusters
 
-$p_i$ is calculated as:
+$p_i$ is calculated in Equation \eqref{eq:aux}
 
-$$
+\begin{equation} \label{eq:aux}
 p_{ij} = \frac{q_{ij}^2/f_j}{\sum_{j'} g_{ij'}^2/f_{j'}}
-$$
+\end{equation}
 
-L is differentiable with respect to the cluster centroids, so we can update them
-using SGD. The overall effect of this clustering loss function, L, is that samples
+The clustering loss, $L$, given in Equation \eqref{eq:kl}, is differentiable
+with respect to the cluster centroids, so we can update them
+using SGD. The overall effect of the clustering loss function is that samples
 which have a high confidence in belonging to certain cluster will contribute
-largely to the gradient of L with respect to that cluster centroid, resulting in a movement
-in the weights toward that cluster for that example
+largely to the gradient of $L$ with respect to that cluster centroid,
+resulting in a movement in the weights toward that cluster for that datum.
 
 #### Optimization
 
-The full DCEC-Paint algorithm proceeds as follows:
+For a given number of clusters, $k$, the full DCEC-Paint algorithm proceeds as follows:
 
-1.  We first perform a pre-training step to build the feature space, setting, $\gamma$
-    equal to 1.
-2.  We then initialize cluster centroids using K-means
-3.  Setting $\gamma$ to 0.1, we jointly optimize for clustering and reconstruction loss by:
-    1.  Calculating $L_c$ and $L_r$ and updating the autoencoder weights and cluster centers
-        according to SGD via backpopagation using $\frac{\partial L}{\partial z_i}$ and $\frac{\partial L_c}{\partial \mu_i}$
-    2.  Every $T$ iterations, update the target distribution $p$, based on the prediction
-        from all examples in the dataset
-4.  If the percentage of points that changed cluster assignment is less than some tolerance
-    in between two epochs, then the algorithm terminates.
+1. Set $\gamma = 1$ in Equation \eqref{eq:loss}, and pretrain the network for a
+   number of epochs to build the feature space. This is equivalent to training
+   a vanilla convolutional autoencoder.
+2. Initialize $k$ cluster centroids using K-means.
+3. Set $\gamma = 0.1$ in Equation \eqref{eq:loss}. Define a mini-batch size $b$,
+   and while the stopping criteria is not been met, for each mini-batch:
+    1. Calculate $L_c$ and $L_r$ and update the autoencoder weights and cluster
+       centers according to SGD via backpopagation using
+       $\frac{\partial L}{\partial z_i}$ and
+       $\frac{\partial L_c}{\partial \mu_i}$.
+    2. On every $T^{th}$ iteration, where $T$ is an update interval, update the
+       target distribution $p$ using the entire dataset's most recent
+       predictions.
+
+
+The algorithm terminates when after the proportion of examples that change clusters
+between two mini-batches is less than some tolerance $\delta$.
 
 <!-- #### Prediction, Optimization, Parameter Initialization, etc. -->
 # Methods
 
 ## Dataset
 
-Christie's publicizes online the results of all public auctions held
+Christie's hosts the results online of all public auctions held
 after December, 2005. This amounts to a truly impressive record of fine art,
 furniture, antiques, jewelry, and other collectible sales; well over half a
 million pieces auctioned over hundreds of sales held across the world and
 online. As one of world's two leading auction houses (the other being Sotheby's),
-these auction results contain reams of influential and expensive art, including
-the most expensive piece ever sold, da Vinci's Salvator Mundi[^mundi], which
+these auction results contain thousands of influential and expensive artworks,
+including the most expensive piece ever sold, da Vinci's Salvator Mundi[^mundi], which
 sold for an astounding $450 million.
 
 [^mundi]: https://www.christies.com/lotfinder/paintings/leonardo-da-vinci-salvator-mundi-6110563-details.aspx
 
-To obtain our final dataset we scraped the Christie's website for all auctions
+To obtain the final dataset used in this work, we scraped the Christie's
+website for all auctions
 that consisted primarily of artwork in two dimensional mediums. Left with a
-set of nearly 300k works of art, we chose the top 50 most prolific artists and,
-randomly selecting 250 works of art for each artist, we hand curated the dataset
+set of nearly $300$ thousand works of art, we chose the top $50$ most prolific
+artists and,
+randomly selecting $250$ works of art for each artist, we hand curated the dataset
 to exclude intermediate sketches and sculptures. The final dataset contains
-$n = 10,505$ 3 channel $128 \times 128$ images which span a diverse set of
-artists, mediums, and movements (table \ref{artists}).
+$n = 10,505$ $3$ channel (RGB) $128 \times 128$ pixel images which span a
+diverse set of artists, mediums, and movements. The full set of artists along
+with their respective mediums and movements can be seen in
+table \ref{tab:artists}.
 
 Compared to previous applications of this algorithm, we believe this dataset
-to represent a much broader set of artists and mediums. For instance, there are
-number of photographs included in the dataset, including varied works by
-Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. Within paintings,
-there are the late 19th century Chinese masters, Pu Ru and Zhang Daqian, along
-with Pablo Picasso, Salvador Dali, and Rembrant. Thus, the algorithm is tasked
-with clustering works across artistic style and medium.
+to represent a much broader set of artists, genres, and mediums. The dataset
+includes over a thousand photographs, including varied works by
+Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. The majority of the
+dataset consists of a diverse set of paintings including 19th century
+Traditional Chinese paintings, Rennaissance works, and Pop Art. Notably, the
+dataset includes a large body of modern and contemporary works.
 
 With an artistically diverse dataset, we expect the algorithm to be particularly
 exposed to the cross depiction problem. Imagine two digitized works depicting
 a clock but of different artistic styles and mediums. One, Salvador Dali's famous
 1931 "Persistence of Memory", and the other a moment captured by the
 lens of Henri Cartier-Bresson. Holding all else equal, we expect a "correct"
-clustering algorithm to find these two works more similar than a separate,
-hypothetical, pair of works that don't contain clocks. The algorithm's ability
-on these qualitative tasks is additionally important to the quantitative measures
-outlined below.
-
-**TODO** - This would be a good location for some of the images
+clustering algorithm to find these two works more similar than a separate pair
+of works that don't contain clocks. The algorithm's ability
+on these qualitative tasks is additionally important to the quantitative
+measures outlined below.
 
 <!-- TODO - You could include a plot with distribution of image prices -->
+<!-- Maybe a figure would be better here? -->
+\begin{singlespace}
+\begin{table}[]
+\centering
+\footnotesize
+\begin{tabular}{llllll}
+\hline
+Artist                       & n   & Birth & Death & Mediums                     & Movement                                         \\ \hline
+henri cartier-bresson        & 250 & 1908  & 2004  & photography                 & street photography                               \\
+victor vasarely              & 250 & 1906  & 1997  & painting,sculpture          & Op Art                                           \\
+ansel adams                  & 249 & 1902  & 1984  & photography                 & Group f/64                                       \\
+sam francis                  & 249 & 1923  & 1994  & painting,printmaking        &                                                  \\
+hiroshi sugimoto             & 249 & 1948  &       & photography                 &                                                  \\
+maurice de vlaminck          & 246 & 1876  & 1958  & painting                    & fauvism                                          \\
+wayne thiebaud               & 246 & 1920  &       & painting                    & pop art,new realism,bay area figurative movement \\
+karel appel                  & 244 & 1921  & 2006  & painting,drawing,sculpture  & cobra                                            \\
+andy warhol                  & 243 & 1928  & 1987  & print making,painting       & pop art                                          \\
+bernard buffet               & 242 & 1928  & 1999  & panting,drawing,printmaking & expressionism                                    \\
+keith haring                 & 242 & 1958  & 1990  & painting,drawing            & pop art,street art                               \\
+gerhard richter              & 241 & 1932  &       & photography,painting        & Capitalist realism                               \\
+jasper johns                 & 239 & 1930  &       & painting,printmaking        &                                                  \\
+alighiero boetti             & 238 & 1940  & 1994  & painting                    & Abstract expressionism, Neo-Dada, pop art        \\
+robert motherwell            & 238 & 1915  & 1991  & painting,printmaking        & Abstract expressionism                           \\
+marc chagall                 & 237 & 1887  & 1985  & painting                    & cubism,expressionism                             \\
+helmut newton                & 236 & 1920  & 2004  & photography                 &                                                  \\
+jean dubuffet                & 236 & 1901  & 1985  & painting                    & Art Brut                                         \\
+irving penn                  & 235 & 1917  & 2009  & photography                 &                                                  \\
+robert rauschenberg          & 234 & 1925  & 2008  & painting                    & neo-dada,abstract expressionism                  \\
+jim dine                     & 233 & 1935  &       & painting                    & neo-data,pop art                                 \\
+joan miro                    & 233 & 1893  &       & painting                    & surrealism,dada,experimental                     \\
+frank stella                 & 233 & 1936  &       & painting,printmaking        & modernism,abstract expressionism                 \\
+christo                      & 232 & 1935  &       & painting                    & Nouveau réalisme                                 \\
+tom wesselmann               & 232 & 1931  & 1945  & painting                    & pop art                                          \\
+takashi murakami             & 230 & 1962  &       & contemporary art            & superflat                                        \\
+roy lichtenstein             & 229 & 1923  & 1997  & painting                    & pop art                                          \\
+sol lewitt                   & 229 & 1928  & 2007  & painting,drawing            & conceptual art,minimalism                        \\
+zao wou-ki                   & 228 & 1920  & 2013  & painting                    &                                                  \\
+damien hirst                 & 227 & 1965  &       & painting                    & young british artists                            \\
+raoul dufy                   & 226 & 1877  & 1953  & painting                    & fauvism,impressionism,modernism,cubism           \\
+qi baishi                    & 222 & 1864  & 1957  & painting                    & guohuo                                           \\
+david hockney                & 213 & 1937  &       & panting,print making        & pop art                                          \\
+zhang daqian                 & 210 & 1899  & 1983  & painting                    & guohuo                                           \\
+laurence stephen lowry, r.a. & 209 & 1887  & 1976  & painting                    &                                                  \\
+pierre-auguste renoir        & 203 & 1841  & 1919  & painting                    & impressionism                                    \\
+alexander calder             & 202 & 1898  & 1976  & sculpture                   &                                                  \\
+francis newton souza         & 199 & 1924  & 2002  & painting,drawing            & progressive art                                  \\
+max ernst                    & 198 & 1891  & 1976  & painting                    & dada,surealism                                   \\
+albrecht dürer               & 191 & 1471  & 1528  & painting,printmaking        & high renaissance                                 \\
+pu ru                        & 179 & 1896  & 1963  & painting                    & guohuo                                           \\
+lucio fontana                & 174 & 1899  & 1968  & painting                    & spatialism                                       \\
+salvador dalí                & 173 & 1904  & 1989  & painting                    & cubism,dada,surrealism                           \\
+rembrandt harmensz. van rijn & 171 & 1606  & 1669  & painting                    & dutch golden age,baroque                         \\
+henry moore                  & 148 & 1898  & 1986  & bronze scuplture            & modernsim                                        \\
+henri de toulouse-lautrec    & 120 & 1864  & 1901  & painting                    & post-impressionism,Art Noveau                    \\
+pablo picasso                & 117 & 1881  & 1973  & painting                    & cubism,surrealism                                \\
+henri matisse                & 99  & 1869  & 1954  & painting                    & fauvism,modernism,post-impressionism             \\
+edgar degas                  & 83  & 1834  & 1917  & painting                    & impressionism                                    \\
+auguste rodin                & 18  & 1840  & 1917  & drawing                     &                                                 
+\end{tabular}
+\caption{The 50 artists included in this dataset ($n$ - number of images included in dataset)}
+\label{tab:artists}
+\end{table}
+\end{singlespace}
 
-Table: Artists Included in Dataset \label{artists}
 
-| artist                       | n_images | birth | death | mediums                     | movement                             |
-|------------------------------|----------|-------|-------|-----------------------------|--------------------------------------|
-| henri cartier-bresson        | 250      | 1908  | 2004  | photography                 |                                      |
-| victor vasarely              | 250      | 1906  | 1997  | painting,sculpture          |                                      |
-| ansel adams                  | 249      | 1902  | 1984  | photography                 |                                      |
-| sam francis                  | 249      | 1923  | 1994  | painting,printmaking        |                                      |
-| hiroshi sugimoto             | 249      | 1948  |       | photography                 |                                      |
-| maurice de vlaminck          | 246      | 1876  | 1958  | painting                    |                                      |
-| wayne thiebaud               | 246      | 1920  |       | painting                    |                                      |
-| karel appel                  | 244      | 1921  | 2006  | painting                    |                                      |
-| andy warhol                  | 243      | 1928  | 1987  | painting                    | pop art                              |
-| bernard buffet               | 242      | 1928  | 1999  | panting,drawing,printmaking |                                      |
-| keith haring                 | 242      | 1958  | 1990  | pop art,street art          |                                      |
-| gerhard richter              | 241      | 1932  |       | photography,painting        |                                      |
-| jasper johns                 | 239      | 1930  |       | painting,pop art            |                                      |
-| alighiero boetti             | 238      | 1940  | 1994  | painting                    |                                      |
-| robert motherwell            | 238      | 1915  | 1991  | painting,printmaking        |                                      |
-| marc chagall                 | 237      | 1887  | 1985  | cubism,expressionism        |                                      |
-| helmut newton                | 236      | 1920  | 2004  | photography                 |                                      |
-| jean dubuffet                | 236      | 1901  | 1985  | painting                    |                                      |
-| irving penn                  | 235      | 1917  | 2009  | photographer                |                                      |
-| robert rauschenberg          | 234      | 1925  | 2008  | painting                    |                                      |
-| jim dine                     | 233      | 1935  |       | painting                    |                                      |
-| joan miro                    | 233      | 1893  |       | painting                    |                                      |
-| frank stella                 | 233      | 1936  |       | painting,printmaking        |                                      |
-| christo                      | 232      | 1935  |       | painting                    |                                      |
-| tom wesselmann               | 232      | 1931  | 1945  | painting                    |                                      |
-| takashi murakami             | 230      | 1962  |       | contemporary art            |                                      |
-| roy lichtenstein             | 229      | 1923  | 1997  | painting                    |                                      |
-| sol lewitt                   | 229      | 1928  | 2007  | painting,drawing            |                                      |
-| zao wou-ki                   | 228      | 1920  | 2013  | painting                    |                                      |
-| damien hirst                 | 227      | 1965  |       | painting                    |                                      |
-| raoul dufy                   | 226      | 1877  | 1953  | painting                    |                                      |
-| qi baishi                    | 222      | 1864  | 1957  | painting                    |                                      |
-| david hockney                | 213      | 1937  |       | pop art                     |                                      |
-| zhang daqian                 | 210      | 1899  | 1983  | painting                    |                                      |
-| laurence stephen lowry, r.a. | 209      | 1887  | 1976  | painting                    |                                      |
-| pierre-auguste renoir        | 203      | 1841  | 1919  | painting                    |                                      |
-| alexander calder             | 202      | 1898  | 1976  | sculpture                   |                                      |
-| francis newton souza         | 199      | 1924  | 2002  | painting,drawing            |                                      |
-| max ernst                    | 198      | 1891  | 1976  | painting                    | dada,surealism                       |
-| albrecht dürer               | 191      | 1471  | 1528  | painting,printmaking        |                                      |
-| pu ru                        | 179      | 1896  | 1963  | painting                    |                                      |
-| lucio fontana                | 174      | 1899  | 1968  | painting                    |                                      |
-| salvador dalí                | 173      | 1904  | 1989  | painting                    | cubism,dada,surrealism               |
-| rembrandt harmensz. van rijn | 171      | 1606  | 1669  | painting                    | dutch golden age,baroque             |
-| henry moore                  | 148      | 1898  | 1986  | bronze scuplture            | modernsim                            |
-| henri de toulouse-lautrec    | 120      | 1864  | 1901  | painting                    | post-impressionism,Art Noveau        |
-| pablo picasso                | 117      | 1881  | 1973  | painting                    | cubism,surrealism                    |
-| henri matisse                | 99       | 1869  | 1954  | painting                    | fauvism,modernism,post-impressionism |
-| edgar degas                  | 83       | 1834  | 1917  | painting                    | impressionism                        |
-| auguste rodin                | 18       | 1840  | 1917  | drawing                     |                                      |
 <!-- Methods go here -->
 
 <!-- ## Experiments -->
@@ -828,7 +855,7 @@ Table: Artists Included in Dataset \label{artists}
 # Implementation
 <!-- How long was the model trained, on what architecture, how many iterations, etc -->
 
-We re-implemented the model on the Tensorflow v1.5 framework and trained it on
+We re-implemented DCEC on the Tensorflow v1.5 [@tf_2015] framework and trained it on
 Google Kubernetes Engine with a single NVIDIA Tesla T4 GPU with 16 GB of GDDR6.
 Following [@Castellano_and_Vessio_2020], we used an update interval of $140$, a
 learning rate of $0.001$, and pre-trained for $200$ epochs before attaching the
@@ -847,36 +874,61 @@ update intervals was less than $0.001$. We ran the network for $k \in \{1..10\}$
 # Clustering Evaluation
 <!-- How did we evaluate the performance of the network? -->
 
-The digitized works included in this study are unlabeled in so far as there does
-not exist a known "correct" correct clustering. As such we evaluate model
+While this dataset contains metadata, the digitized works included in this
+study are unlabeled in the sense that there is no "correct" cluster for each image.
+As such, we evaluate model
 performance with two global methods, the average silhouette score and
 the Calinski-Harabasz index [@Calinski_Harabasz_1974]. We also measure the
 GAP statistic [@Tibshirani_2000]
-on the unclustered embedded space obtained after running the algorithm for $k=1$.
+on the unclustered embedded space obtained after running the algorithm for $k=1$,
+which the equivalent of pre-training the CAE to completion.
+This indicates the presense/absence of clusters before the algorithm begins
+learning cluster centers in earnest. In all cases we use euclidean distances.
 
-The silhouette score measures how similar a data point is to its own cluster, relative
-to the other clusters, given by:
+The silhouette score measures how similar a data point is to its own cluster,
+relative to the nearest cluster and is given, for a single datatum $x_i$, as:
 
-<!-- See https://scikit-learn.org/0.19/modules/clustering.html#silhouette-coefficient -->
-**TODO** - equation for silhouette score
+\begin{equation} \label{eq:ss}
+s_i = \frac{b_i - a_i}{max\{a_i, b_i\}}
+\end{equation}
 
-The score can range from -1 to 1, with higher values corresponding to a better
-cluster fit.
+where $a_i$ and $b_i$ are the mean distances from $x_i$ to all points in the same
+cluster and the nearest cluster, respectively. The Silhouette score ranges from
+$-1$ to $1$, where $1$ indicates better defined clusters. In our evaluation we
+use the average silhouette score over all datapoints as a measure of clustering
+performance.
 
-The Calinski-Harabasz index measures the ratio of between to within cluster
-dispersion according to:
+The Calinski-Harabasz index measures the ratio of between cluster dispersion and
+within cluster dispersion according to the following:
 
-<!-- See https://scikit-learn.org/0.19/modules/clustering.html#calinski-harabaz-index -->
-**TODO** - equation for Calinski-Harabasz
+\begin{equation} \label{eq:ch}
+CH_k = \frac{SS_B}{SS_W} \times \frac{N - 1}{k - 1}
+\end{equation}
 
-Higher values indicate a lower relative within cluster dispersion, i.e. tighter
-clusters. This metric is not bounded, and so we report values as a proportion of
-the highest scoring $k$.
+where $SS_W$ and $SS_B$ are the within and between cluster dispersion, given as:
+
+\begin{equation} \label{eq:chssb}
+SS_B = \sum_{j=1}^{k} n_j ||m_j - m ||^2
+\end{equation}
+and
+\begin{equation} \label{eq:chssw}
+SS_W = \sum_{j=1}^{k} \sum_{x \in c_j} ||x - m_j ||^2
+\end{equation}
+
+Where $k$ is the number of clusters, $n_j$ is the number of datapoints in the
+$j^{th}$ cluster, $m_j$ is the centroid of the $j^{th}$ cluster, $m$ is the
+mean of all the data, and x is the given datapoint.
+
+The Calinski-Harabasz index is unbounded in the positive direction. For this
+reason, we normalize the results for each cluster solution ($k \in {1...10}$) to
+the largest value to enable comparison. Higher values indicate a lower relative
+within cluster dispersion, i.e. tighter
+clusters.
 
 DCEC and its predecessor algorithms do not extend to the one/no cluster solution.
 At each iteration in the clustering algorithm, the probability that sample $i$
-belongs to cluster $j$ is calculated, using the Cauchy distribution referenced
-above. In the once cluster solution, this probability is $1$ and does not change,
+belongs to cluster $k$ is calculated according to Equation \ref{eq:cauchy}. In
+the once cluster solution, this probability is $1$ and does not change,
 leading to a Kullback-Leiber divergence of zero. This implies that the model
 optimizes exclusively for image reconstruction loss. In other words, the
 algorithm is reduced to a CAE.
@@ -884,12 +936,19 @@ algorithm is reduced to a CAE.
 This case is interesting, however, as it gives insight into the state of the
 algorithm after pretraining and highlights the importance of the clustering
 component in iteratively learning a feature space of $k$ clusters. To evaluate
-the presense of clusters after just running the autoencoder we report the GAP
-statistic [@Tibshirani_2000]. This statistic compares the change in the within
-cluster dispersion at each additional cluster with the change that would be
-expected if the data followed some appropriate null distribution:
+the presense of clusters after pretraining, we report the GAP
+statistic [@Tibshirani_2000]. This statistic, for a given number of clusters,
+$k$, examines the within cluster dispersion relative to the expected value of
+some appropriate null reference distribution for the within cluster dispersion.
+The appropriate cluster choice is the value for which the observed within cluster
+distribution is closest to the expected value:
 
-**TODO** - GAP statistic
+\begin{equation} \label{eq:gap}
+GAP_k = E(log(SS_{W_k})) - log(SS_{W_k})
+\end{equation}
+
+Where $E$ is the expected value, and $SS_W$ is given by equation \ref{eq:chssw}.
+For a complete derivation, see [@Tibshirani_2000].
 
 In addition to these quantitative metrics we perform a more qualitative assesment
 of the results for the top performing clusters. In particular we examine (1) the
@@ -900,45 +959,61 @@ styles across the clusters.
 # Experiment Results
 <!-- What did we see? -->
 
-Table \ref{cluster_scores} and \ref{score_plot} show the average silhouette coefficient and
-Calinski-Harabasz score for clusters of various sizes:
+Table \ref{cluster_scores} and Figure \ref{score_plot} show the average
+silhouette and Calinski-Harabasz scores for values of k between $2$ and $10$,
+before and after beginning the clustering component of the algorithm (CAE+Kmeans
+vs DCEC, respectively).
+The average silhouette and Caliski-Harabasz scores disagree slightly on the
+optimal cluster solution. The clusters with the top silhouette scores are 8,
+9, and 10, while the clusters with the highest CH coefficients are 3, 8, and 9.
+For all values of $k$, DCEC was clearly effective in clustering the data as the
+within to between cluster dispersion values are much higher for DCEC than the
+CAE+Kmeans solution. This is expected as the algorithm is learning a feature
+set that partially optimizes for clustering loss.
 
-Table: Average Silhouette and Calinski-Harabasz Scores by K \label{cluster_scores}
+\begin{singlespace}
+\begin{table}[]
+\centering
+\begin{tabular}{lllll}
+\hline
+k  & ss - CAE+Kmeans & ch - CAE+Kmeans & ss - DCEC & ch - DCEC \\ \hline
+2  & 0.2090          & 1.0000          & 0.7929    & 0.4744    \\
+3  & 0.1426          & 0.8219          & 0.8280    & 1.0000    \\
+4  & 0.1028          & 0.5754          & 0.7750    & 0.4775    \\
+5  & 0.0934          & 0.4496          & 0.8073    & 0.5089    \\
+6  & 0.0819          & 0.3705          & 0.7834    & 0.3245    \\
+7  & 0.0884          & 0.3784          & 0.7863    & 0.3873    \\
+8  & 0.0811          & 0.3301          & 0.8702    & 0.9098    \\
+9  & 0.0463          & 0.2369          & 0.8520    & 0.6518    \\
+10 & 0.0772          & 0.2750          & 0.8284    & 0.4480   
+\end{tabular}
+\caption{Average silhouette and Calinski-Harabasz scores by cluster}
+\label{cluster_scores}
+\end{table}
+\end{singlespace}
 
-| k | ss - CAE+Kmeans | ch - CAE+Kmeans | ss - DCEC  | ch - DCEC |
-|---|---|---|---|---|
-|2|0.2090|1.0000|0.7929|0.4744|
-|3|0.1426|0.8219|0.8280|1.0000|
-|4|0.1028|0.5754|0.7750|0.4775|
-|5|0.0934|0.4496|0.8073|0.5089|
-|6|0.0819|0.3705|0.7834|0.3245|
-|7|0.0884|0.3784|0.7863|0.3873|
-|8|0.0811|0.3301|0.8702|0.9098|
-|9|0.0463|0.2369|0.8520|0.6518|
-|10|0.0772|0.2750|0.8284|0.4480|
+![Average Silhouette and Calinski-Harabasz scores across cluster values.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=100% }
 
-!["\label{score_plot}"](/home/dubs/dev/paap/img/dcec_metrics.png){ width=50% }
+It's clear that Kmeans, what is initally used to set the cluster centroids prior
+to learning cluster centroids, is quite ineffective in producing defined
+clusters. We expect this, to some extent, as the autoencoder pretraining
+focuses exclusively on minimizing reconstruction loss. With such a diverse
+dataset, it seems reasonable to not find any distinct clusters. We examined the
+pre-clustering data further by
+running the Autoencoder for *20,000* epochs.
+Figure \ref{gap} plots the GAP statistic for a range of cluster sizes. The gap statistic increases throughout
+the range, indicating there is no clear "correct" number of clusters for the
+embedded space only - a single (no) cluster is the optimal solution. This
+highlights the importance of the clustering component in learning the feature
+space.
 
-The average silhouette and Caliski-Harabasz scores disagree on the best cluster
-solution. The clusters with the top silhouette scores are 8, 9, and 10, while the
-clusters with the highest CH coefficients are 3, 8, and 9.
+![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the Autoencoder for *20,000* epochs. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=100% }
 
-**TODO** - Explanation for why they disagree.
+Figure \ref{tsne_evolution} visualizes cluster evolution where colors correspond
+to the final cluster value. Initially there are no discernable clusters. Soon
+after they begin to form, and within $3000$ iterations they have formed distinctly.
 
-Overall, the silhouette score indicates that algorithm clusters well for all
-values of $k$, which we expect as the algorithm is learning a cluster oriented
-representation. We can guage the relative improvement in clustering by
-comparing the average silhouette scores between the final cluster
-output and those for the initial cluster centroids, which are generated after
-pretraining using K-means. Figure \ref{tsne_evolution} shows the cluster evolution
-for $k=8$.
-
-!["\label{tsne_evolution}"](/home/dubs/dev/paap/img/8/tsne_0.png){ width=50% }
-![](/home/dubs/dev/paap/img/8/tsne_1224.png){ width=50% }
-![](/home/dubs/dev/paap/img/8/tsne_3366.png){ width=50% }
-![](/home/dubs/dev/paap/img/8/tsne_8262.png){ width=50% }
-
-**TODO** - update this Figure with a few more plots showing the evolution of the clusters
+![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1836, 1224, 2448, 8262 (final) $\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
 
 
 The following are t-SNE plots of the embedded space for different numbers ($k \in \{2..10\}$) of
@@ -957,20 +1032,11 @@ clusters.
 ![n=9](/home/dubs/dev/paap/img/9/tsne.png "n=9"){ width=50% }
 
 
-Figure \ref{gap}
-plots the GAP statistic [@Tibshirani_2000], for a number of clusters after
-running the Autoencoder for *20,000* epochs. The gap statistic increases throughout
-the range, indicating there is no clear "correct" number of clusters for the
-embedded space only. This highlights the importance of the clustering component
-in learning the feature space.
-
-![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the Autoencoder for *20,000* epochs. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=75% }
-
-Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
+<!-- Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
 training show poor performance (\ref{cluster_scores_kmeans}).
 
-
 !["\label{cluster_scores_kmeans}"](/home/dubs/dev/paap/img/kmeans_metrics.png){ width=75% }
+ -->
 
 <!-- TODO - Should we do a more thorough evaluation of the initial k-means
 after the pretraining? Because if there are no valid cluster centers, or if
