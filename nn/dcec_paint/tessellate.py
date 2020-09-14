@@ -1,5 +1,4 @@
 import os
-import random
 import sys
 
 import numpy as np
@@ -10,9 +9,6 @@ ROOT = "/home/dubs/dev/paap"
 IMAGES_DIR = os.path.join(ROOT, "img")
 TMP_DIR = "/tmp"
 FILENAME = "center.csv"
-
-SEED = 22
-random.seed(SEED)
 
 
 def build_collage(images, border=0, border_color=0, orient="horizontal"):
@@ -38,7 +34,7 @@ if __name__ == "__main__":
         exit(1)
 
     cluster = int(sys.argv[1])
-    d = fn = os.path.join(IMAGES_DIR, str(cluster))
+    d = os.path.join(IMAGES_DIR, str(cluster))
 
     paths = [os.path.join(d, "tsne_" + str(n) + ".png") for n in sys.argv[2:]]
     images = [io.imread(p) for p in paths]

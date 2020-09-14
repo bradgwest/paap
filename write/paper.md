@@ -1016,16 +1016,36 @@ after they begin to form, and within $3000$ iterations they have formed distinct
 ![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1836, 1224, 2448, 8262 (final) $\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
 
 
-Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$.
+Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$ for the final
+$32$ dimensionality embedded feature space.
 
 <!-- Why do the Figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
-![This figure needs to include everything\label{all_tsne}](/home/dubs/dev/paap/img/2/tsne.png "n=2"){ width=100% }
+![t-SNE diagrams of the final $32$ dimensional feature (embedded) space.\label{all_tsne}](/home/dubs/dev/paap/img/all_tsne.png){ width=100% }
 
-Diving deeper into the individual cluster results, Figure \ref{images} shows
+Diving deeper into the individual cluster results, Figure \ref{images_8} shows
 a selection of images for each of the clusters in the $8$ cluster solution.
+Figure \ref{images_3} shows a selction for the $k=3$ solution. In these examples,
+the within cluster samples appear to be visually cohesive, but it's not immediately
+clear what artistic features each cluster share. These samples suggest that the
+clustering does not strictly follow artist or genre. for instance, in Figure
+\ref{images_8}, the $2^{nd}$ and $6^{th}$ clusters both contain works by L.S.
+Lowry, an English artist known for his drawings and paintings of industrial
+scenes of Northwest England. Indeed, both clusters show the characteristic Lowry
+work, with drawings of public outdoor spaces populated with bustling figures,
+set against a backdrop of large and active industrial buildings. If one wanted
+to find an artist whose collective body of works narrowly tracked a distinct
+style and feel, one could do worse than L.S. Lowry.
 
-![A selection of images from the $k=8$ cluster solution](img/8/collage.png){ width=100% }
+![A selection of images from the $k=8$ cluster solution\ref{images_8}](img/8/collage.png){ width=100% }
 
+![A selection of images from the $k=8$ cluster solution\ref{images_3}](img/3/collage.png){ width=100% }
+
+The algorith appears to be clustering on much more fundamental characteristics
+of the works, things like business, the presence/absence of long lines, etc.
+
+<!-- TODO: What about the distribution of RGB in these images? Does that play a part -->
+
+<!-- TODO: What about the fragility of the algorithm? -->
 
 <!-- Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
 training show poor performance (\ref{cluster_scores_kmeans}).
