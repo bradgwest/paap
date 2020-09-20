@@ -222,8 +222,6 @@ inclusion in the latent space.
 We evaluate clustering performance against a dataset of
 digitized artwork, scraped from the public
 record of auction house sales at Christie's[^christies].
-<!-- The first dataset we cluster is a set of [TODO: n (b/w)] images, and the second
-is a set of [TODO: n (east/asian)]. -->
 The only known prior
 work with this algorithm used two datasets: (1) a set of paintings by 50
 well known artists and (2) the collected works of Pablo Picasso. The data used
@@ -964,8 +962,9 @@ silhouette and Calinski-Harabasz scores for values of k between $2$ and $10$,
 before and after beginning the clustering component of the algorithm (CAE+Kmeans
 vs DCEC, respectively).
 The average silhouette and Caliski-Harabasz scores disagree slightly on the
-optimal cluster solution. The clusters with the top silhouette scores are 8,
-9, and 10, while the clusters with the highest CH coefficients are 3, 8, and 9.
+optimal cluster solution. Using silhouette scores suggests that the optimal
+number of clusters is 8 (followed by 9 and 10), while the relative CH
+coefficient suggests that the optimal solution is 3, followed by 8 and 9.
 For all values of $k$, DCEC was clearly effective in clustering the data as the
 within to between cluster dispersion values are much higher for DCEC than the
 CAE+Kmeans solution. This is expected as the algorithm is learning a feature
@@ -994,57 +993,79 @@ k  & ss - CAE+Kmeans & ch - CAE+Kmeans & ss - DCEC & ch - DCEC \\ \hline
 
 ![Average Silhouette and Calinski-Harabasz scores across cluster values.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=100% }
 
-It's clear that Kmeans, what is initally used to set the cluster centroids prior
-to learning cluster centroids, is quite ineffective in producing defined
-clusters. We expect this, to some extent, as the autoencoder pretraining
-focuses exclusively on minimizing reconstruction loss. With such a diverse
-dataset, it seems reasonable to not find any distinct clusters. We examined the
-pre-clustering data further by
+It's clear that Kmeans, which is initally used to set the cluster centroids prior
+to learning the final feature space, is quite ineffective in producing defined
+clusters. We expect this, to some extent, as the pretraining autoencoder step
+is exclusively optimized to minimize reconstruction loss. We examined the pre-clustering data by
 running the Autoencoder for *20,000* epochs.
 Figure \ref{gap} plots the GAP statistic for a range of cluster sizes. The gap statistic increases throughout
 the range, indicating there is no clear "correct" number of clusters for the
-embedded space only - a single (no) cluster is the optimal solution. This
+embedded space only - a single (zero) cluster is the optimal solution. This
 highlights the importance of the clustering component in learning the feature
 space.
 
 ![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the Autoencoder for *20,000* epochs. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=100% }
 
-Figure \ref{tsne_evolution} visualizes cluster evolution where colors correspond
-to the final cluster value. Initially there are no discernable clusters. Soon
-after they begin to form, and within $3000$ iterations they have formed distinctly.
-
-![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1836, 1224, 2448, 8262 (final) $\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
-
 
 Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$ for the final
-$32$ dimensionality embedded feature space.
+32-dimensional feature space. For all values of $k$ the algorithm
+forms readily discernable clusters, as depicted by t-SNE.
 
-<!-- Why do the Figure captions sometimes come up and sometimes not? Need to have space rather than inline image -->
 ![t-SNE diagrams of the final $32$ dimensional feature (embedded) space.\label{all_tsne}](/home/dubs/dev/paap/img/all_tsne.png){ width=100% }
+
+Figure \ref{tsne_evolution} visualizes cluster evolution. Immediately after the
+pretraining step (CAE+Kmeans) there are no discernable clusters. Within a few
+thousand epochs, however, the algorithm has learned a feature space which shows
+distinct clusters.
+
+![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1224, 1836, 2448, 8262 (final).\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
 
 Diving deeper into the individual cluster results, Figure \ref{images_8} shows
 a selection of images for each of the clusters in the $8$ cluster solution.
 Figure \ref{images_3} shows a selction for the $k=3$ solution. In these examples,
 the within cluster samples appear to be visually cohesive, but it's not immediately
 clear what artistic features each cluster share. These samples suggest that the
-clustering does not strictly follow artist or genre. for instance, in Figure
+clustering does not strictly follow artist or genre. For instance, in Figure
 \ref{images_8}, the $2^{nd}$ and $6^{th}$ clusters both contain works by L.S.
 Lowry, an English artist known for his drawings and paintings of industrial
 scenes of Northwest England. Indeed, both clusters show the characteristic Lowry
 work, with drawings of public outdoor spaces populated with bustling figures,
-set against a backdrop of large and active industrial buildings. If one wanted
-to find an artist whose collective body of works narrowly tracked a distinct
-style and feel, one could do worse than L.S. Lowry.
+set against a backdrop of in-use industrial buildings. L.S. Lowry's collective
+body of works narrowly tracks a distinct style and feel, so it's interesting
+that his work is crosses cluster boundaries.
 
-![A selection of images from the $k=8$ cluster solution\ref{images_8}](img/8/collage.png){ width=100% }
+![A selection of images from the $k=8$ cluster solution\label{images_8}](img/8/collage.png){ width=100% }
 
-![A selection of images from the $k=8$ cluster solution\ref{images_3}](img/3/collage.png){ width=100% }
+![A selection of images from the $k=3$ cluster solution\label{images_3}](img/3/collage.png){ width=100% }
 
-The algorith appears to be clustering on much more fundamental characteristics
-of the works, things like business, the presence/absence of long lines, etc.
+Figures \ref{tsne_artists} and \ref{tsne_genre} show the distribution of a set
+of artists and genres throughout the clusters, respectively. It's apparent from
+these figures that the clustering does not (strictly) follow artist or genre
+differences as all categories appear to be distributed across two or more
+clusters, for the $8$ clsuter solution.
+
+![A selection of artists artwork against the $k=8$ cluster solution\label{tsne_artists}](img/8/tsne_artists.png){ width=100% }
+
+![A selection of genres against the $k=8$ cluster solution\label{tsne_genre}](img/8/tsne_genre.png){ width=100% }
+
+Figure \ref{tsne_medium} shows the distribution of photographs vs non-photographs.
+Like genre and artist, it's apparent that clustering appears to be medium agnostic.
+
+![Photographs vs non-photographs for the $k=8$ cluster solution\label{tsne_medium}](img/8/tsne_photograph.png){ width=100% }
+
+
+Rather than proxying aesthetic differences between genre, artist, and medium, the
+algorithm appears to be clustering on much more fundamental characteristics
+of the images - e.g. busyness, the presence/absence of long lines, brush
+stroke style, and color.
+
+**TODO**
+
+* How do RGB, openness, and other image metrics map to the clusters?
+* What happens when we grayscale all the images?
+
 
 <!-- TODO: What about the distribution of RGB in these images? Does that play a part -->
-
 <!-- TODO: What about the fragility of the algorithm? -->
 
 <!-- Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
@@ -1062,9 +1083,6 @@ shouldn't be learning in the first place? See DEC for this discussion -->
 or shuffle the data? or reverse the iteration pattern? Do we still obtain the
 same results? Could order the data differently in the import -->
 
-
-# Discussion
-<!-- Why did we see it? -->
 
 # Conclusion
 
