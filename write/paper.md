@@ -424,11 +424,11 @@ connected to each neuron in layer $i + 1$ and inputs are passed forward
 through the network.
 
 Stochastic gradient descent attempts to minimize the value of an error
-function (also known as an optimization or cost function), $\mathcal{E}(y - y')$,
+function (also known as an optimization or cost function), $\mathcal{C}(y - y')$,
 by progressively updating the network weights ($w$) and biases ($b$) in such a
-way as to follow the first derivative gradient of $\mathcal{E}$ with respect to
-the weights and biases ($\frac{\partial{\mathcal{E}}}{\partial{w}}$,
-$\frac{\partial{\mathcal{E}}}{\partial{b}}$). By
+way as to follow the first derivative gradient of $\mathcal{C}$ with respect to
+the weights and biases ($\frac{\partial{\mathcal{C}}}{\partial{w}}$,
+$\frac{\partial{\mathcal{C}}}{\partial{b}}$). By
 iteratively calculating these gradients and then updating the weights and biases
 in that direction, the network progressively learns the appropriate weights for
 function approximation.
@@ -466,7 +466,54 @@ The algorithm has two general steps:
     network such that each weight and bias is updated according to its effect on
     the overall error of the cost function.
 
-(**TODO** - need to explain back propagation in more detail here)
+Step two, above is achieved by calculating the gradient of the cost function ($C$)
+with respect to each weight and bias. These values are obtained by first obtaining
+the network error at the output layer and backpropagating that error through the
+preceding layers such that the contribution of each edge's weights and biases
+can be calculated.
+
+Consider a network of $L$ layers, with a cost function $C$, and an activation
+function $\sigma$. Then, the vector of errors at the output layer is given in
+Equation \ref{eq:bp1}.
+
+\begin{equation} \label{eq:bp1}
+    \delta^{L} = \nabla_a C \odot \sigma'(z^L)
+\end{equation}
+
+where $\nabla_a C$ is vector of partial derivatives of the cost function with
+respect to the observed output values at each neuron ($\frac{\partial C}{\partial a_j^L}$),
+$\odot$ is the Hadamard product, and $z^L$ is the vector of inputs to all neurons
+in the $L^{th}$ layer.
+
+Using the error in layer $l + 1$ and the weight matrix, the error in the $l^{th}$ layer
+can be calculated.
+
+\begin{equation} \label{eq:bp2}
+    \delta^{l} = ((w^{l+1})^T \delta^{l + 1})) \odot \sigma'(z^L)
+\end{equation}
+
+where $w^{l}$ is the weight matrix for the edges input to the $l^{th}$ layer of
+the network. The rate of change of the cost function with respect to the bias
+is exactly equal to the error given by Equation \ref{eq:bp3}:
+
+\begin{equation} \label{eq:bp3}
+    \frac{\partial C}{\partial b_j^l} = \delta^l_j
+\end{equation}
+
+where $j$ refers to the $j^{th}$ neuron in the layer $l$. Finally, the contribution
+of the network weights to the derivative of $C$ is simply the error weighted
+by the previous layer's activation:
+
+\begin{equation} \label{eq:bp4}
+    \frac{\partial C}{\partial w^l_{jk}} = a^{l - 1}_k \delta^l_j
+\end{equation}
+
+where $w^l_{jk}$ is the $k^{th}$ edge weight into the $j^{th}$ neuron in the
+$l^{th}$ layer.
+
+Equations \ref{eq:bp3} and \ref{eq:bp4} are used as the input to gradient descent
+which updates the weights accordingly.
+
 
 ## Convolutional Autoencoders
 
