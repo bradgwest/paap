@@ -474,7 +474,7 @@ can be calculated.
 
 Consider a network of $L$ layers, with a cost function $C$, and an activation
 function $\sigma$. Then, the vector of errors at the output layer is given in
-Equation \ref{eq:bp1}.
+Equation \eqref{eq:bp1}.
 
 \begin{equation} \label{eq:bp1}
     \delta^{L} = \nabla_a C \odot \sigma'(z^L)
@@ -494,7 +494,7 @@ can be calculated.
 
 where $w^{l}$ is the weight matrix for the edges input to the $l^{th}$ layer of
 the network. The rate of change of the cost function with respect to the bias
-is exactly equal to the error given by Equation \ref{eq:bp3}:
+is exactly equal to the error given by Equation \eqref{eq:bp3}:
 
 \begin{equation} \label{eq:bp3}
     \frac{\partial C}{\partial b_j^l} = \delta^l_j
@@ -511,7 +511,7 @@ by the previous layer's activation:
 where $w^l_{jk}$ is the $k^{th}$ edge weight into the $j^{th}$ neuron in the
 $l^{th}$ layer.
 
-Equations \ref{eq:bp3} and \ref{eq:bp4} are used as the input to gradient descent
+Equations \eqref{eq:bp3} and \eqref{eq:bp4} are used as the input to gradient descent
 which updates the weights accordingly.
 
 
@@ -704,7 +704,7 @@ performs two steps to learn cluster weights:
 
 We expand on these two steps below.
 
-#### Calculation of Soft Assignment
+#### Calculation of Cluster Probability
 
 The probability that a sample from the feature space, $z_i$, belongs to cluster $j$
 is taken to be given by Student's t-distribution with one degree of freedom
@@ -716,41 +716,54 @@ q_{ij} = \frac{(1 + (z_i - \mu_j)^2)^{-1}}{\sum_{j'}(1 + (z_i - \mu_{j'})^2)^{-1
 
 [@Xie_et_al_2017] uses a t-distribution after [@Maaten_et_al_2008], who introduced
 it for t-SNE, a technique for visualizing high dimensional spaces in two or three
-dimensions.
-
-**TODO** - Details
+dimensions. Thus, $q_{ij}$ can be interpreted as the probability that sample $i$
+belongs to cluster $j$, under the assumption that the data follow a t-distribution.
 
 #### Minimizing Clustering Loss
 
+<!-- https://stats.stackexchange.com/questions/387500/clustering-with-kl-divergence -->
+
 <!-- TODO: the only thing this sentence says is that you don't understand this math -->
-To improve the cluster centroids, DEC attempts to match the soft assignment to
-an auxillary target distribution, $p_i$, and measure the fit of the match via KL
-divergence, shown in Equation \eqref{eq:kl}.
+To improve the cluster centroids, DEC attempts to compare the observed cluster
+assignment probability distribution ($q_{ij}$ in \eqref{eq:cauchy}) to
+a target distribution, $p_i$, by measuring the KL
+divergence. KL divergence attempts to measure the similarity of two distributions
+and, in this context, can be thought of as the amount of information lost when
+using $q_i$ to approximate $p_i$. Equation \eqref{eq:kl} gives the KL divergence
+definition.
 
 \begin{equation} \label{eq:kl}
 L = KL(P||Q) = \sum_i \sum_j p_{ij} \log \frac{p_{ij}}{q_{ij}}
 \end{equation}
 
-$p_i$ is chosen in [@Xie_et_al_2017], to satisfy three conditions:
+$L$ is the network's clustering loss, which is used in combination with reconstruction
+loss to form the network's overall loss, given by Equation \eqref{eq:loss}.
 
-<!-- TODO: You need to understand this better-->
-1. Its use will strengthen predictions
-2. It assigns more emphasis to data points that have high confidence
-3. It normalizes each centroid's contribution to the KL divergence by the clusters
-   size so that large clusters do not out compete smaller clusters
-
-$p_i$ is calculated in Equation \eqref{eq:aux}
+$p_i$ is chosen in [@Xie_et_al_2017] to be the squared $q_i$, normalized by the
+cluster size:
 
 \begin{equation} \label{eq:aux}
 p_{ij} = \frac{q_{ij}^2/f_j}{\sum_{j'} g_{ij'}^2/f_{j'}}
 \end{equation}
 
-The clustering loss, $L$, given in Equation \eqref{eq:kl}, is differentiable
-with respect to the cluster centroids, so we can update them
-using SGD. The overall effect of the clustering loss function is that samples
+where $f_j = \sum_i q_{ij}$, the frequency of per cluster.
+By squaring the observed distibution, the probability mass of $p_i$ is more concentrated
+about the centroid, forming purer clusters than $q_i$, thus creating a divergence
+between the distributions that facilitates learning.
+$p_i$ has favorable
+properties for learning, which [@Xie_et_al_2017] outline as: (1) it's use in
+Equation \eqref{eq:kl} will lead to more distinct clusters; (2) data points with
+high confidence contribute more to the distribution; (3) each cluster centroid's
+contribution to the KL divergence is normalized by the cluster size so that large
+clusters do not out compete smaller ones. [@Xie_et_al_2017] used empirical results
+to show that $p_i$ exhibits these properties.
+
+The overall effect of the clustering loss function is that samples
 which have a high confidence in belonging to certain cluster will contribute
-largely to the gradient of $L$ with respect to that cluster centroid,
-resulting in a movement in the weights toward that cluster for that datum.
+largely to defining the centroids for the target distribution, $p_i$.
+As a consequnce, the gradient of $L$ points more in the direction of these canonical
+examples, and network weights and biases are updated in a way that builds
+a feature space which with purer clusters.
 
 #### Optimization
 
