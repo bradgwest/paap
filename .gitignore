@@ -7,9 +7,9 @@ data/
 *.xlsx
 *.xls
 *.json
-*.png
 *.ndjson
-*.jpg
+
+mediadir/
 
 results/
 
