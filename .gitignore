@@ -8,6 +8,8 @@ data/
 *.xls
 *.json
 *.ndjson
+*.png
+*.jpg
 
 mediadir/
 
