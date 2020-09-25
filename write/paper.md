@@ -341,7 +341,7 @@ $y$ is called an activation function, accepting $n > 0$ input signals ($x$) and
 outputting a single value as a function of the inputs and the learned weights
 ($w$) and biases ($b$) for each inter-neuron connection.
 
-![(placeholder) An artificial neuron with input and output signals.\label{artificial_neuron}](img/zeros.png){ width=60% }
+![An artificial neuron with input signals ($z_i$) which are transformed by networks weights ($w_i$) and in put to the neuron activation function ($\sigma$). In a layered network the output of the nueron is passed to the neurons in the next layer.\label{artificial_neuron}](img/artificial_neuron.png){ width=80% }
 
 <!-- [similar to figure 2.1 in englebrecht]. -->
 
@@ -357,7 +357,7 @@ Figure \ref{feedforward_net}[^nn].
 ![This is the caption\label{mylabel}](/url/of/image.png)
 See figure \ref{mylabel}. -->
 
-![(placeholder) A simple feedforward neural network attained by chaining layers of artificial neurons.\label{feedforward_net}](img/zeros.png){ width=60% }
+![(placeholder) A simple feedforward neural network attained by chaining layers of artificial neurons. In this network, every neuron in layer $i$ is connected to every neuron in layer $i + 1$.\label{feedforward_net}](img/ffn.png){ width=100% }
 
 [^nn]: While typically a directed acyclic graph (DAG), the architectures of DNNs
 are highly variable
@@ -546,7 +546,7 @@ a full discussion of convolutional neural nets, see
 
 Consider the $4 \times 4$ square input image depicted in Figure \ref{four_by_four}
 
-![(placeholder) $4 \times 4 \times 1$ image.\label{four_by_four}](img/zeros.png){ width=60% }
+![$4 \times 4 \times 1$ image.\label{four_by_four}](img/four_by_four.png){ width=60% }
 
 In a fully connected network, each pixel value would be input to each neuron in the
 first hidden layer. Conceptually, this means that any given neuron in the first
@@ -562,7 +562,7 @@ fully connected networks by defining a local receptive
 field of size $h$, where ($h \times h$) is the number of adjacent inputs that will connect to
 the $j^{th}$ neuron in layer $i$.
 
-![(placeholder) $4 \times 4 \times 1$ image with a $2 \times 2$ receptive field outputting to a $3 \times 3$ layer.\label{receptive_field}](img/zeros.png){ width=60% }
+![(placeholder) $4 \times 4 \times 1$ image with a $2 \times 2$ receptive field outputting to a $3 \times 3$ layer.\label{receptive_field}](img/four_by_four_receptive_field.png){ width=60% }
 
 For each neuron in the hidden layer, the local receptive field is shifted adjacently
 by a stride length of $l$ pixels. For example, in Figure \ref{receptive_field},
@@ -606,7 +606,7 @@ data space, into
 a much lower dimensional latent space. Figure \ref{ff_autoencoder} shows a
 rudimentary autoencoder.
 
-![(placeholder) A simple feedforward autoencoder\label{ff_autoencoder}](img/zeros.png){ width=60% }
+![(placeholder) A simple feedforward autoencoder\label{ff_autoencoder}](img/autoencoder.png){ width=100% }
 
 Autoencoders have proved especially useful in denoising and dimension reduction
 of images, which are naturally highly dimensional. Typically the reconstruction
