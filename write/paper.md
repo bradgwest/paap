@@ -357,7 +357,7 @@ Figure \ref{feedforward_net}[^nn].
 ![This is the caption\label{mylabel}](/url/of/image.png)
 See figure \ref{mylabel}. -->
 
-![(placeholder) A simple feedforward neural network attained by chaining layers of artificial neurons. In this network, every neuron in layer $i$ is connected to every neuron in layer $i + 1$.\label{feedforward_net}](img/ffn.png){ width=100% }
+![A simple feedforward neural network attained by chaining layers of artificial neurons. In this network, every neuron in layer $i$ is connected to every neuron in layer $i + 1$.\label{feedforward_net}](img/ffn.png){ width=100% }
 
 [^nn]: While typically a directed acyclic graph (DAG), the architectures of DNNs
 are highly variable
@@ -562,7 +562,7 @@ fully connected networks by defining a local receptive
 field of size $h$, where ($h \times h$) is the number of adjacent inputs that will connect to
 the $j^{th}$ neuron in layer $i$.
 
-![(placeholder) $4 \times 4 \times 1$ image with a $2 \times 2$ receptive field outputting to a $3 \times 3$ layer.\label{receptive_field}](img/four_by_four_receptive_field.png){ width=60% }
+![$4 \times 4 \times 1$ image with a $2 \times 2$ receptive field outputting to a $3 \times 3$ layer.\label{receptive_field}](img/four_by_four_receptive_field.png){ width=60% }
 
 For each neuron in the hidden layer, the local receptive field is shifted adjacently
 by a stride length of $l$ pixels. For example, in Figure \ref{receptive_field},
@@ -606,7 +606,7 @@ data space, into
 a much lower dimensional latent space. Figure \ref{ff_autoencoder} shows a
 rudimentary autoencoder.
 
-![(placeholder) A simple feedforward autoencoder\label{ff_autoencoder}](img/autoencoder.png){ width=100% }
+![A simple feedforward autoencoder\label{ff_autoencoder}](img/autoencoder.png){ width=100% }
 
 Autoencoders have proved especially useful in denoising and dimension reduction
 of images, which are naturally highly dimensional. Typically the reconstruction
@@ -639,7 +639,7 @@ adaptations to the DCEC algorithm specified by [@Guo_et_al_2017]. Figure \ref{ar
 shows the architecture of the network. It is convolutional autoencoder with a
 deep learning clustering algorithm fed from the latent feature space.
 
-![(placeholder) Deep Convolutional Embedded Clustering (DCEC-Paint) architecture.\label{arch}](img/zeros.png){ width=60% }
+![Deep Convolutional Embedded Clustering (DCEC-Paint) architecture (adapted from [@Guo_et_al_2017]).\label{arch}](img/network.png){ width=100% }
 
 Unlike previous deep clustering algorithms, DCEC-Paint attempts to maintain feature
 space integrity by jointly optimizing for reconstruction and clustering loss.
