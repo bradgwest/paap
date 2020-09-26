@@ -839,7 +839,7 @@ measures outlined below.
 \begin{table}[]
 \centering
 \footnotesize
-\begin{tabular}{llllll}
+\begin{tabular}{p{4cm}p{0.5cm}p{0.5cm}p{0.5cm}p{3.5cm}p{4.5cm}}
 \hline
 Artist                       & n   & Birth & Death & Mediums                     & Movement                                         \\ \hline
 henri cartier-bresson        & 250 & 1908  & 2004  & photography                 & street photography                               \\
