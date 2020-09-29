@@ -2,10 +2,11 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 
-# ALGO = "DCEC"
-ALGO = "CAE+Kmeans"
+ALGO = "DCEC"
+# ALGO = "CAE+Kmeans"
 if ALGO == "DCEC":
     METRICS_FILENAME = "metrics.csv"
 else:
@@ -54,11 +55,16 @@ def plot_metrics(metrics):
 
     ax2 = ax.twinx()
     ax.set_xlabel("Clusters (k)")
-    ax2.set_ylabel("CH")
+    ax2.set_ylabel("Relative CH")
     ax2.set_ylim(0, 1)
     ax2.plot(x, ch, color="tab:blue")
 
-    fig.savefig(IMG)
+    # ask matplotlib for the plotted objects and their labels
+    custom_lines = [Line2D([0], [0], color="tab:red", lw=4),
+                    Line2D([0], [0], color="tab:blue", lw=4)]
+    ax.legend(custom_lines, ["SS", "CH"])
+
+    fig.savefig(IMG, dpi=300)
     plt.close()
 
 
