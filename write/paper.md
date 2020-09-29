@@ -1051,7 +1051,7 @@ k  & ss - CAE+Kmeans & ch - CAE+Kmeans & ss - DCEC & ch - DCEC \\ \hline
 \end{table}
 \end{singlespace}
 
-![Average Silhouette and Calinski-Harabasz scores across cluster values.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=100% }
+![Average Silhouette and Calinski-Harabasz scores across number of clusters ($k$). According to CH, the optimal cluster solution is $3$, while silhouette scores suggest the optimal solution is $8$. For all values of $k$ the algorithm achieves a high ratio of within to between cluster dispersion.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=100% }
 
 It's clear that Kmeans, which is initally used to set the cluster centroids prior
 to learning the final feature space, is quite ineffective in producing defined
@@ -1064,21 +1064,21 @@ embedded space only - a single (zero) cluster is the optimal solution. This
 highlights the importance of the clustering component in learning the feature
 space.
 
-![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the Autoencoder for *20,000* epochs. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=100% }
+![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the autoencoder, without an attached clustering layer, for *20,000* epochs. This figure demonstrates the absence of distinct clusters in the pretrained dataset. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=100% }
 
 
 Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$ for the final
 32-dimensional feature space. For all values of $k$ the algorithm
 forms readily discernable clusters, as depicted by t-SNE.
 
-![t-SNE diagrams of the final $32$ dimensional feature (embedded) space.\label{all_tsne}](/home/dubs/dev/paap/img/all_tsne.png){ width=100% }
+![t-SNE diagrams of the final $32$ dimensional feature (embedded) space. For all values of $k$ the algorithm appears to build a distinctly partitioned feature space.\label{all_tsne}](/home/dubs/dev/paap/img/all_tsne.png){ width=90% }
 
 Figure \ref{tsne_evolution} visualizes cluster evolution. Immediately after the
 pretraining step (CAE+Kmeans) there are no discernable clusters. Within a few
 thousand epochs, however, the algorithm has learned a feature space which shows
 distinct clusters.
 
-![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1224, 1836, 2448, 8262 (final).\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
+![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1224, 1836, 2448, 8262 (final epoch).\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
 
 Diving deeper into the individual cluster results, Figure \ref{images_8} shows
 a selection of images for each of the clusters in the $8$ cluster solution.
@@ -1104,14 +1104,21 @@ these figures that the clustering does not (strictly) follow artist or genre
 differences as all categories appear to be distributed across two or more
 clusters, for the $8$ clsuter solution.
 
-![A selection of artists artwork against the $k=8$ cluster solution\label{tsne_artists}](img/8/tsne_artists.png){ width=100% }
+![A selection of artists artwork against the $k=8$ cluster solution\label{tsne_artists}](img/8/tsne_artists.png){ width=50% }
 
-![A selection of genres against the $k=8$ cluster solution\label{tsne_genre}](img/8/tsne_genre.png){ width=100% }
+![A selection of artists artwork against the $k=3$ cluster solution\label{tsne_artists}](img/3/tsne_artists.png){ width=50% }
+
+![A selection of genres against the $k=8$ cluster solution\label{tsne_genre}](img/8/tsne_genre.png){ width=50% }
+
+![A selection of genres against the $k=3$ cluster solution\label{tsne_genre}](img/3/tsne_genre.png){ width=50% }
+
 
 Figure \ref{tsne_medium} shows the distribution of photographs vs non-photographs.
 Like genre and artist, it's apparent that clustering appears to be medium agnostic.
 
-![Photographs vs non-photographs for the $k=8$ cluster solution\label{tsne_medium}](img/8/tsne_photograph.png){ width=100% }
+![Photographs vs non-photographs for the $k=8$ cluster solution\label{tsne_medium}](img/8/tsne_photograph.png){ width=50% }
+
+![Photographs vs non-photographs for the $k=3$ cluster solution\label{tsne_medium}](img/3/tsne_photograph.png){ width=50% }
 
 
 Rather than proxying aesthetic differences between genre, artist, and medium, the
@@ -1119,32 +1126,19 @@ algorithm appears to be clustering on much more fundamental characteristics
 of the images - e.g. busyness, the presence/absence of long lines, brush
 stroke style, and color.
 
-**TODO**
-
-* How do RGB, openness, and other image metrics map to the clusters?
-* What happens when we grayscale all the images?
-
-
-<!-- TODO: What about the distribution of RGB in these images? Does that play a part -->
-<!-- TODO: What about the fragility of the algorithm? -->
-
-<!-- Likewise, the silhouette and Calinski-Harabasz scores for the algorithm post
-training show poor performance (\ref{cluster_scores_kmeans}).
-
-!["\label{cluster_scores_kmeans}"](/home/dubs/dev/paap/img/kmeans_metrics.png){ width=75% }
- -->
-
-<!-- TODO - Should we do a more thorough evaluation of the initial k-means
-after the pretraining? Because if there are no valid cluster centers, or if
-the distribution of the 20 cluster centers is not good, then maybe we
-shouldn't be learning in the first place? See DEC for this discussion -->
-
-<!-- Or, how variable is the algorithm performance if we were to pretrain again
-or shuffle the data? or reverse the iteration pattern? Do we still obtain the
-same results? Could order the data differently in the import -->
-
 
 # Conclusion
 
 
 # References
+
+<!-- TODO
+2. Calculate the distribution of red/green/blue in the clusters for the 3 and 8 cluster solutions
+3. Look at grayscale images vs 3 channel for the 3 and 8 cluster solutions
+4. Calculate some engineered features for each image, If we cluster on those,
+   how much overlap is there? Openness, etc
+5. Write the rest of the discussion
+6. Write conclusion
+7. What happens when we grayscale all the images and cluster on them?
+8. What happens when we introduce vertical white lines into the images? Is the algorithm fragile?
+ -->
