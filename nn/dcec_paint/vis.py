@@ -42,11 +42,13 @@ MODELS_DIR = os.path.join(DATA_DIR, "models")
 FINAL_DATASET = os.path.join(DATA_DIR, "output", "christies.ndjson")
 ARTIST_DATASET = os.path.join(DATA_DIR, "output", "artists.csv")
 ARTWORK_DIR = os.path.join(DATA_DIR, "img", "christies", "s128", "final")
+IMAGE_STATS = os.path.join(DATA_DIR, "output", "image_stats.csv")
 
 EMBEDDED_LAYER_INDEX = 5
 
 
 artists = pd.read_csv(ARTIST_DATASET)
+image_stats = pd.read_csv(IMAGE_STATS)
 
 
 # def check_order(lot_image_ids, training_samples):
@@ -105,6 +107,7 @@ class Plotter(object):
     KMEANS_METRICS = "kmeans_metrics"
     CENTER_IMAGES = "center_images"
     FINAL_DATASET = "final_dataset"
+    COLOR_HISTOGRAMS = "color_histograms"
     PLOTS = [
         TSNE_TIME,
         TSNE_FINAL,
@@ -117,6 +120,7 @@ class Plotter(object):
         KMEANS_METRICS,
         CENTER_IMAGES,
         FINAL_DATASET,
+        COLOR_HISTOGRAMS,
     ]
 
     def __init__(self, clusters, no_cache):
@@ -155,12 +159,13 @@ class Plotter(object):
             self.final_df = self.make_final_df()
             centers = self.calculate_cluster_centers()
             self.add_distance_from_cluster_center(centers)
+            # Merge the artist dataset
+            self.final_df = self.final_df.merge(artists, how="left", left_on="lot_description", right_on="artist")
+            # Merge the image stats dataset
+            self.final_df = self.final_df.merge(image_stats, how="left", on="lot_image_id")
         else:
             self.final_df = pd.read_json(self.final_df_path, orient="records", lines=True)
         # print(self.final_df.columns)
-
-        # Merge the artist dataset
-        self.final_df = self.final_df.merge(artists, how="left", left_on="lot_description", right_on="artist")
 
         self.kmeans_df = self.make_cluster_and_embedded_df(self.weight_files[0])
 
@@ -180,6 +185,7 @@ class Plotter(object):
             self.KMEANS_METRICS: self.plot_kmeans_metrics,
             self.CENTER_IMAGES: self.plot_closest_images,
             self.FINAL_DATASET: self.plot_final_dataset,
+            self.COLOR_HISTOGRAMS: self.plot_color_histograms,
         }
 
     def get_model_paths(self):
@@ -297,10 +303,10 @@ class Plotter(object):
             ax = fig.add_subplot(111, projection="3d")
             ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], tsne_results["tsne2"], c=self.final_df["cluster"], s=1)
 
-        fig.savefig(fn)
+        fig.savefig(fn, dpi=300)
         plt.close(fig)
 
-    def _plot_tsne_by_group(self, group_fnc, base_fn):
+    def _plot_tsne_by_group(self, group_fnc, base_fn, title=None):
         """group_fn takes a dataset and returns a series"""
         tsne_results = self.tsne_results(dim=2)
         tsne_results["group"] = group_fnc(self.final_df)
@@ -312,27 +318,41 @@ class Plotter(object):
 
         fig, ax = plt.subplots()
         for name, group in groups:
-            ax.plot(group.tsne0, group.tsne1, marker='o', linestyle='', ms=1, label=name)
+            if str(name) == "True":
+                name = "photograph"
+
+            if str(name) == "False":
+                name = "non-photograph"
+
+            ms = 2
+            kwargs = dict(marker='o', linestyle='', ms=ms, label=name)
+            if name == "other":
+                ms = 1
+                kwargs["c"] = "0.5"
+                kwargs["alpha"] = 0.1
+            ax.plot(group.tsne0, group.tsne1, **kwargs)
         ax.legend()
         # ax.scatter(tsne_results['tsne0'], tsne_results['tsne1'], c=color, s=1)
-        fig.savefig(fn)
+        if title is not None:
+            ax.set_title(title)
+        fig.savefig(fn, dpi=300)
 
     def plot_by_genre(self, *args, **kwargs):
         genres = ("fauvism", "pop art", "guohuo")
         column = "movement"
         f = keywords_in_column(genres, column)
-        self._plot_tsne_by_group(f, "tsne_genre.png")
+        self._plot_tsne_by_group(f, "tsne_genre.png", title="Distribution of Genre Across Clusters")
 
     def plot_by_artist(self, *args, **kwargs):
         artists = ("joan miro", "henri cartier-bresson", "ansel adams", "hiroshi sugimoto")
         column = "lot_description"
         f = keywords_in_column(artists, column)
-        self._plot_tsne_by_group(f, "tsne_artists.png")
+        self._plot_tsne_by_group(f, "tsne_artists.png", title="Distribution of Artists Across Clusters")
 
     def plot_by_medium(self, *args, **kwargs):
         def f(df):
             return df["is_photograph"]
-        self._plot_tsne_by_group(f, "tsne_photograph.png")
+        self._plot_tsne_by_group(f, "tsne_photograph.png", title="Distribution of Photographs Across Clusters")
 
     def plot_tsne_by_time(self, *args, **kwargs):
         # Plot every 3rd weight file
@@ -352,8 +372,15 @@ class Plotter(object):
         ax.scatter(df["iter"], df["L"], c="red", s=1)
         ax.scatter(df["iter"], df["Lc"] * 0.9, c="green", s=1)
         ax.scatter(df["iter"], df["Lr"] * 0.1, c="blue", s=1)
-        fig.savefig(self.loss_image_filename)
+        fig.savefig(self.loss_image_filename, dpi=300)
         plt.close(fig)
+
+    def plot_color_histograms(self, *args, **kwargs):
+        self.final_df[['blue', 'green', 'red']].hist(by=self.final_df['cluster'], color=["blue", "green", "red"], sharex=True, sharey=True)
+        plt.suptitle("Distribution of RGB Channel Pixel Intensity by Cluster", fontsize=16, y=1)
+        plt.show()
+        plt.savefig(os.path.join(self.img_dir, "histogram.png"))
+        plt.close()
 
     @staticmethod
     def image_file_ids():
@@ -427,9 +454,9 @@ class Plotter(object):
         df.to_csv(os.path.join(self.img_dir, "center.csv"), index=False)
 
     def plot_final_dataset(self, *args, **kwargs):
-        self.final_df.to_json(self.final_dataset, orient="records", lines=True)
+        self.final_df.to_json(self.final_df_path, orient="records", lines=True)
 
-    def plot_gap(self):
+    def plot_gap(self, *args, **kwargs):
         if self.clusters != 1:
             raise RuntimeError("GAP only defined for 1 cluster")
 
@@ -440,11 +467,11 @@ class Plotter(object):
         g = gap.gap(embedded2, ks=x)
         fig, ax = plt.subplots()
         ax.plot(x, g)
-        ax.set_title("GAP Statistic on non-clustered dataset")
+        ax.set_title("GAP Statistic on un-clustered dataset")
         ax.set_xlabel("Clusters (k)")
         ax.set_ylabel("GAP statistic")
         ax.set_xticks(x)
-        fig.savefig(os.path.join(self.img_dir, "gap.png"))
+        fig.savefig(os.path.join(self.img_dir, "gap.png"), dpi=300)
         plt.close(fig)
 
     def plot(self, plots, *args, **kwargs):

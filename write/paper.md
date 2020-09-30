@@ -1098,33 +1098,43 @@ that his work is crosses cluster boundaries.
 
 ![A selection of images from the $k=3$ cluster solution\label{images_3}](img/3/collage.png){ width=100% }
 
-Figures \ref{tsne_artists} and \ref{tsne_genre} show the distribution of a set
+Figures \ref{tsne_artists_8}, \ref{tsne_artists_3} and \ref{tsne_genre_8}, \ref{tsne_genre_3} show the distribution of a set
 of artists and genres throughout the clusters, respectively. It's apparent from
 these figures that the clustering does not (strictly) follow artist or genre
 differences as all categories appear to be distributed across two or more
 clusters, for the $8$ clsuter solution.
 
-![A selection of artists artwork against the $k=8$ cluster solution\label{tsne_artists}](img/8/tsne_artists.png){ width=50% }
+![A selection of artists artwork against the $k=8$ cluster solution\label{tsne_artists_8}](img/8/tsne_artists.png){ width=70% }
 
-![A selection of artists artwork against the $k=3$ cluster solution\label{tsne_artists}](img/3/tsne_artists.png){ width=50% }
+![A selection of artists artwork against the $k=3$ cluster solution\label{tsne_artists_3}](img/3/tsne_artists.png){ width=70% }
 
-![A selection of genres against the $k=8$ cluster solution\label{tsne_genre}](img/8/tsne_genre.png){ width=50% }
+![A selection of genres against the $k=8$ cluster solution\label{tsne_genre_8}](img/8/tsne_genre.png){ width=70% }
 
-![A selection of genres against the $k=3$ cluster solution\label{tsne_genre}](img/3/tsne_genre.png){ width=50% }
+![A selection of genres against the $k=3$ cluster solution\label{tsne_genre_3}](img/3/tsne_genre.png){ width=70% }
 
 
-Figure \ref{tsne_medium} shows the distribution of photographs vs non-photographs.
+Figures \ref{tsne_medium_8} and \ref{tsne_medium_3} show the distribution of photographs vs non-photographs.
 Like genre and artist, it's apparent that clustering appears to be medium agnostic.
 
-![Photographs vs non-photographs for the $k=8$ cluster solution\label{tsne_medium}](img/8/tsne_photograph.png){ width=50% }
+![Photographs vs non-photographs for the $k=8$ cluster solution\label{tsne_medium_8}](img/8/tsne_photograph.png){ width=70% }
 
-![Photographs vs non-photographs for the $k=3$ cluster solution\label{tsne_medium}](img/3/tsne_photograph.png){ width=50% }
-
+![Photographs vs non-photographs for the $k=3$ cluster solution\label{tsne_medium_3}](img/3/tsne_photograph.png){ width=70% }
 
 Rather than proxying aesthetic differences between genre, artist, and medium, the
 algorithm appears to be clustering on much more fundamental characteristics
 of the images - e.g. busyness, the presence/absence of long lines, brush
-stroke style, and color.
+stroke style, and color. Figures \ref{color_hist_3} and \ref{color_hist_8} show
+histogram of pixel color values for the three and eight cluster solutions,
+respectively. For the 3 cluster solution we see that all three clusters have
+similar channel distributions with blue pixel values being slightly less
+intense than greens and reds, incdicating the clusters share a similar color
+distribution. However, cluster two contains much higher pixel intensity,
+indicating that cluster contains darker images than its two counterparts. This
+is reflected in the example images shown in Figure \ref{images_3}.
+
+![Histograms of RGB channel pixel intensity for the three cluster solution\label{color_hist_3}](img/3/histogram.png){ width=70% }
+
+![Histograms of RGB channel pixel intensity for the eight cluster solution\label{color_hist_8}](img/8/histogram.png){ width=70% }
 
 
 # Conclusion
