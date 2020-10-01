@@ -1130,7 +1130,14 @@ similar channel distributions with blue pixel values being slightly less
 intense than greens and reds, incdicating the clusters share a similar color
 distribution. However, cluster two contains much higher pixel intensity,
 indicating that cluster contains darker images than its two counterparts. This
-is reflected in the example images shown in Figure \ref{images_3}.
+is reflected in the example images shown in Figure \ref{images_3}. The eight cluster
+solution depicted in Figure \ref{color_hist_8} shows more variability
+between clusters RGB channels than does the three cluster solution. For instance,
+cluster three has high intensity values across the color spectrum, resulting in
+the lighter images depicted in Figure \ref{color_hist_8}, while cluster two has
+relatively low intensity colors resulting in dark images. In cluster two the
+red channel has much higher intensity than  blue, resulting in reddish toned
+images.
 
 ![Histograms of RGB channel pixel intensity for the three cluster solution\label{color_hist_3}](img/3/histogram.png){ width=70% }
 

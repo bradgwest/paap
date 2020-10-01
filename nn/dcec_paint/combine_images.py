@@ -99,4 +99,4 @@ if __name__ == "__main__":
     fn = os.path.join(IMAGES_DIR, str(clusters), "collage.png")
     io.imsave(fn, final)
 
-    # print_images(rows)
+    print_images(rows)

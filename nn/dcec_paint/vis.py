@@ -376,10 +376,10 @@ class Plotter(object):
         plt.close(fig)
 
     def plot_color_histograms(self, *args, **kwargs):
-        self.final_df[['blue', 'green', 'red']].hist(by=self.final_df['cluster'], color=["blue", "green", "red"], sharex=True, sharey=True)
-        plt.suptitle("Distribution of RGB Channel Pixel Intensity by Cluster", fontsize=16, y=1)
+        self.final_df[['blue', 'green', 'red']].hist(by=self.final_df['cluster'] + 1, color=["blue", "green", "red"], density=True, sharex=True, sharey=True)
+        plt.suptitle("Distribution of RGB Channel Pixel Intensity by Cluster (k={})".format(self.clusters), fontsize=16, y=1)
         plt.show()
-        plt.savefig(os.path.join(self.img_dir, "histogram.png"))
+        plt.savefig(os.path.join(self.img_dir, "histogram.png"), dpi=300)
         plt.close()
 
     @staticmethod
