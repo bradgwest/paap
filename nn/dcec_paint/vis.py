@@ -108,6 +108,7 @@ class Plotter(object):
     CENTER_IMAGES = "center_images"
     FINAL_DATASET = "final_dataset"
     COLOR_HISTOGRAMS = "color_histograms"
+    ENTROPY = "entropy"
     PLOTS = [
         TSNE_TIME,
         TSNE_FINAL,
@@ -121,6 +122,7 @@ class Plotter(object):
         CENTER_IMAGES,
         FINAL_DATASET,
         COLOR_HISTOGRAMS,
+        ENTROPY,
     ]
 
     def __init__(self, clusters, no_cache):
@@ -186,6 +188,7 @@ class Plotter(object):
             self.CENTER_IMAGES: self.plot_closest_images,
             self.FINAL_DATASET: self.plot_final_dataset,
             self.COLOR_HISTOGRAMS: self.plot_color_histograms,
+            self.ENTROPY: self.plot_entropy,
         }
 
     def get_model_paths(self):
@@ -326,7 +329,7 @@ class Plotter(object):
 
             ms = 2
             kwargs = dict(marker='o', linestyle='', ms=ms, label=name)
-            if name == "other":
+            if name == "other" or name == "non-photograph":
                 ms = 1
                 kwargs["c"] = "0.5"
                 kwargs["alpha"] = 0.1
@@ -338,7 +341,7 @@ class Plotter(object):
         fig.savefig(fn, dpi=300)
 
     def plot_by_genre(self, *args, **kwargs):
-        genres = ("fauvism", "pop art", "guohuo")
+        genres = ("fauvism", "impressionism", "guohuo")
         column = "movement"
         f = keywords_in_column(genres, column)
         self._plot_tsne_by_group(f, "tsne_genre.png", title="Distribution of Genre Across Clusters")
@@ -377,9 +380,22 @@ class Plotter(object):
 
     def plot_color_histograms(self, *args, **kwargs):
         self.final_df[['blue', 'green', 'red']].hist(by=self.final_df['cluster'] + 1, color=["blue", "green", "red"], density=True, sharex=True, sharey=True)
-        plt.suptitle("Distribution of RGB Channel Pixel Intensity by Cluster (k={})".format(self.clusters), fontsize=16, y=1)
+        plt.suptitle("Distribution of RGB Pixel Intensity by Cluster (k={})".format(self.clusters), fontsize=16, y=1)
         plt.show()
-        plt.savefig(os.path.join(self.img_dir, "histogram.png"), dpi=300)
+        plt.savefig(os.path.join(self.img_dir, "rgb_histogram.png"), dpi=300)
+        plt.close()
+
+        self.final_df[['cie_l']].hist(by=self.final_df['cluster'] + 1, color=["blue"], density=True, sharex=True, sharey=True, bins=20)
+        plt.suptitle("CIE Lightness by Cluster (k={})".format(self.clusters), fontsize=16, y=1)
+        plt.show()
+        plt.savefig(os.path.join(self.img_dir, "lightness_histogram.png"), dpi=300)
+        plt.close()
+
+    def plot_entropy(self, *args, **kwargs):
+        self.final_df[['entropy']].hist(by=self.final_df['cluster'] + 1, color=["green"], density=True, sharex=True, sharey=True, bins=20)
+        plt.suptitle("Local Entropy by Cluster (k={})".format(self.clusters), fontsize=16, y=1)
+        plt.show()
+        plt.savefig(os.path.join(self.img_dir, "entropy_histogram.png"), dpi=300)
         plt.close()
 
     @staticmethod

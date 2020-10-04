@@ -1,10 +1,20 @@
 ---
-title: "WORKING PAPER - Deep Convolutional Embedded Clustering of Digitized Fine Art"
+title: "DRAFT - Deep Convolutional Embedded Clustering of Digitized Fine Art"
 author:
     - Brad West
 keywords: ["computer vision", "autoencoder", "clustering", "fine art"]
 abstract: |
-    An abstract which has yet to be written.
+    In this work, we replicate a convolutional neural network clustering algorithm, Deep Embedded
+    Convolutional Embedded Clustering (DCEC) to cluster 10,505 images of of
+    fine art. DCEC is an convolutional autoencoder with clustering component, and
+    is tasked with jointly optimizing for image reconstruction and clustering loss.
+    In this way, the algorithm learns an artistically relevant reduced
+    dimensionality image structure which partitions into clusters. We find that
+    DCEC is effective in forming distinct clusters that cross artistic, genre,
+    and medium boundaries. We believe this method is a useful tool for algorithmically
+    identifying structural similarities between artwork and complements more
+    traditional feature-engineering and metadata based approaches to clustering
+    artwork.
 documentclass:
     - article
 hyperrefoptions:
@@ -17,6 +27,8 @@ header-includes: |
     \usepackage[margin=1.25in]{geometry}
     \usepackage{pdflscape}
     \usepackage{setspace}
+    \usepackage{caption}
+    \usepackage{subcaption}
     \doublespacing
     \usepackage[normalem]{ulem}
     \useunder{\uline}{\ul}{}
@@ -131,9 +143,9 @@ collections move onto the internet, millions of artworks have been made
 available for view at the click of a mouse[^google-arts-and-culture]. A
 proliferation of researchers
 have sought to analyze these digital collections, contributing methods for a
-wide variety of computer vision tasks from classification problems (of, for
+wide variety of computer vision tasks, such as classification problems (of, for
 example, genre, style, artist, or historical period) [@Cetinic_et_al_2018;
-@Lee_and_Cha_2016] to visual relationships
+@Lee_and_Cha_2016] and defining visual relationships
 between paintings [@Garcia_et_al_2019; @Castellano_et_al_2020].
 
 [^google-arts-and-culture]: For example, Google Arts & Culture's digitization of
@@ -144,33 +156,34 @@ hundreds of museum collections: https://artsandculture.google.com/partner.
 The complete visual and emotional effect of a painting is a combination
 of many factors, for example the color, texture, spatial complexity, and
 contrast.
-While to the human eye a work like Figure \ref{woman_with_a_hat} may appear a mosaic of colorful brush
-strokes, masterfully arranged to elicit emotion,
-digitally, images are represented as matrices of numeric values pertaining to pixel
+To the human eye, a work like Henri Matisse's *Femme au chapeau*,
+depicted in Figure \ref{woman_with_a_hat} appears as a mosaic of colorful brush
+strokes, expertly arranged to elicit emotion.
+Digitally, however, images are represented as matrices of numeric values pertaining to pixel
 intensity. In the case of black and white images, there is a single channel,
-meaning an image can be represented by a single matrix of dimensions $m \times n$.
+meaning an image can be represented by a single two-dimensional matrix of dimensions $m \times n$.
 Color images are three dimensional, accounting for the increase from one to $p > 1$
 channels ($3$, in the case of RGB images), resulting in an $m \times n \times p$
-datum for each image.
+matrix for each image.
 An art expert
 recognizes the artistic qualities of an image and is able to place a work in
-its historical
-and artistic context.
-That task, however,
-is difficult to articulate and exceedingly difficult to generalize to the set
-of all artwork.
+its historical and artistic context.
+That task, however, is difficult to articulate and exceedingly difficult to
+generalize to the set of all artwork.
 Early attempts at computational art analysis, nevertheless,
-attempted to build a similar model by first engineering and extracting domain specific features
+attempted to build a similar model by first engineering and extracting domain
+specific features
 from the pixel space (corners, edges, SIFT), and using those feature vectors
 as input to a model [@Oliva_and_Torralba_2001]. These techniques formed the
 backbone of early attempts at
 object recognition within and outside the art domain, and saw some success in
 evaluating art [@Shamir_et_al_2010]. In recent years, however, the field has
 undergone large advancements in
-computer vision techniques, in particular
-Convolution Neural Nets (CNNs) which have demonstrated outstanding results in
+computer vision techniques. In particular,
+Convolution Neural Nets (CNNs) have demonstrated outstanding results in
 extracting semantic meaning from digitized work [@Tan_et_al_2016]. These
-results are impressive both in relation to earlier, feature engineering based attempts, and
+results are impressive both in relation to earlier, feature engineering
+based attempts, and
 in comparison to the perceived complexity of recognizing the distinct visual
 appearance of an artwork.
 
@@ -180,8 +193,7 @@ set of training images. CNNs applied to fine art related tasks have benefited
 from both large annotated sources of art data[^wikiart], as well as enormous
 datasets of non-art related images[^imagenet]. In the former case, annotated art
 datasets allow researchers to train classification models without hand
-labeling artist and genre metadata.
-This has led to a number of successful models that can identify period and even
+labeling artist and genre metadata, leading to a number of successful models that can identify period and even
 artist [@David_et_al_2016]. In the latter case, large non-art related image datasets
 have been used to pre-train object recognition models for art-related tasks.
 
@@ -194,14 +206,14 @@ hand annotated images.
 The large availability of annotated datasets has led many authors to focus on
 supervised learning tasks. Comparatively little art research focuses on unsupervised
 learning, including clustering. Clustering artwork has a number of applications to
-aid the art expert in knowledge discovery, including identifying stylistic
+aid the art expert, including identifying stylistic
 discontinuities within an artists career,
 shared techniques between groups of artists, and distinct periods within unattributed
 groups of work (e.g. ancient east Asian art). Yet clustering images has been
-historically difficult due to the difficulty in defining relevant features, and
+historically difficult due to the difficulty in defining relevant features and
 issues defining distance metrics that are effective in the high dimensionality
 data space of complex images. An alternative to these two problems is to learn
-an representation of the input image through a deep NN.
+a representation of the input image through a deep NN.
 
 In this work, we replicate a CNN clustering algorithm, Deep Embedded
 Convolutional Embedded Clustering (DCEC) first proposed by Guo et al.
@@ -216,7 +228,7 @@ from the latent space to a reconstructed image in the data space. By attaching
 a clustering layer to the CAE and simultaneously optimizing
 for both clustering and image reconstruction loss, DCEC ensures that clustering
 of the images occurs within the constraints of the latent space. In other words,
-clusters are formed in the presence of spatial attributes deemed meaningful by their
+clusters are formed in the presence of spatial features deemed meaningful by their
 inclusion in the latent space.
 
 We evaluate clustering performance against a dataset of
@@ -295,7 +307,7 @@ dimensionality feature space during clustering, naming the
 algorithm Deep Convolutional Embedded Clustering (DCEC).
 Inspired by DCEC, Castellano and Vessio [@Castellano_and_Vessio_2020]
 adapted it to more complex and larger images in the art domain and demonstrated its
-efficacy in clustering a dataset of approximately 10,000 digitized artworks.
+efficacy in clustering a dataset of approximately *10,000* digitized artworks.
 
 # DCEC Architecture
 <!-- Motivation for what NNs offer in general -->
@@ -308,7 +320,7 @@ efficacy in clustering a dataset of approximately 10,000 digitized artworks.
     - The given arrangement of these pixels is what gives these images their texture/shape/complexity, etc
  -->
 
-Before explaining the architecture of the DCEC-Paint algorithm, we provide a
+Before explaining the architecture of the DCEC algorithm, we provide a
 brief (and not at all comprehensive) overview of the mathematical concepts underlying
 CNNs and Autoencoders. For an introduction to artificial neural networks,
 see [@Engelbrecht_2007].
@@ -341,7 +353,7 @@ $y$ is called an activation function, accepting $n > 0$ input signals ($x$) and
 outputting a single value as a function of the inputs and the learned weights
 ($w$) and biases ($b$) for each inter-neuron connection.
 
-![An artificial neuron with input signals ($z_i$) which are transformed by networks weights ($w_i$) and in put to the neuron activation function ($\sigma$). In a layered network the output of the nueron is passed to the neurons in the next layer.\label{artificial_neuron}](img/artificial_neuron.png){ width=80% }
+![An artificial neuron with input signals ($z_i$) which are transformed by networks weights ($w_i$) and input to the neuron activation function ($\sigma$). In a layered network the output of the neuron is passed to the neurons in the next layer.\label{artificial_neuron}](img/artificial_neuron.png){ width=80% }
 
 <!-- [similar to figure 2.1 in englebrecht]. -->
 
@@ -395,11 +407,11 @@ where $a$ is a constant which can be tuned.
 This function has highly beneficial properties for learning. Like other commonly
 used activation functions, it is continuously
 differentiable along the real numbers, which, combined with the fact that it is
-monotonically increasing means that a gradient can be calculated at any place,
+monotonically increasing, means that a gradient can be calculated at any place,
 facilitating "learning" as discussed in the section below. The specifics of the
 ELU compared to its variants such as the rectified linear unit (ReLU) and leaky
 ReLU, are too specific
-to address here. It has been shown, however, to speed up learning on deep networks
+to address here. It has been shown to speed up learning on deep networks
 as well as lead to better classification accuracy [@Clevert_et_al_2015].
 
 ### Artificial Learning
@@ -420,8 +432,7 @@ learning rules, see [@Engelbrecht_2007].
 Consider a fully connected 3 layer feed forward neural net,
 depicted in Figure \ref{feedforward_net}. Each neuron in the $i^{th}$ layer is
 connected to each neuron in layer $i + 1$ and inputs are passed forward
-(that is, right to left)
-through the network.
+(that is, right to left) through the network.
 
 Stochastic gradient descent attempts to minimize the value of an error
 function (also known as an optimization or cost function), $\mathcal{C}(y - y')$,
@@ -466,11 +477,8 @@ The algorithm has two general steps:
     network such that each weight and bias is updated according to its effect on
     the overall error of the cost function.
 
-Step two, above is achieved by calculating the gradient of the cost function ($C$)
-with respect to each weight and bias. These values are obtained by first obtaining
-the network error at the output layer and backpropagating that error through the
-preceding layers such that the contribution of each edge's weights and biases
-can be calculated.
+
+We explain step two in more detail here. For a complete derivation, see [@Rumelhart_et_al_1986].
 
 Consider a network of $L$ layers, with a cost function $C$, and an activation
 function $\sigma$. Then, the vector of errors at the output layer is given in
@@ -514,7 +522,6 @@ $l^{th}$ layer.
 Equations \eqref{eq:bp3} and \eqref{eq:bp4} are used as the input to gradient descent
 which updates the weights accordingly.
 
-
 ## Convolutional Autoencoders
 
 Consider a neural network tasked with learning relevant features
@@ -544,7 +551,7 @@ a full discussion of convolutional neural nets, see
 
 [^DNN]: Deep neural networks contain more than 2 hidden layers.
 
-Consider the $4 \times 4$ square input image depicted in Figure \ref{four_by_four}
+Consider the $4 \times 4$ square input image depicted in Figure \ref{four_by_four}.
 
 ![$4 \times 4 \times 1$ image.\label{four_by_four}](img/four_by_four.png){ width=60% }
 
@@ -553,10 +560,10 @@ first hidden layer. Conceptually, this means that any given neuron in the first
 hidden layer receives information from every pixel in the image, specifically
 the pixel value transformed by the weight and bias of the respective connection.
 For the image context, it intuitively seems that this structure is non-optimal:
-the relationship between the four pixel values of an image's corners seems
-irrelevant compared to the relationship of the 4 pixels in any $2 \time 2$ region
-of the image. The pixel relationships in the latter seems much more relevant to
-a model concerned with recognizing image structure at some abstraction layer.
+the relationship between the four pixel values of an image's corners seem
+less important for modelling image structure than the relationship of adjacent
+pixels in any $2 \times 2$ region
+of the image.
 Convolutional neural networks acknowledge this distinction and differ from
 fully connected networks by defining a local receptive
 field of size $h$, where ($h \times h$) is the number of adjacent inputs that will connect to
@@ -602,13 +609,13 @@ two components, an encoder, $x' = f(x)$,
 and a decoder $g(x')$, which perform, respectively, dimension reduction and
 expansion in such a way as to minimize the error of
 $y - y' = y - g(f(x))$, where $x'$ is a projection of the input, $x$, from the
-data space, into
+data space into
 a much lower dimensional latent space. Figure \ref{ff_autoencoder} shows a
 rudimentary autoencoder.
 
 ![A simple feedforward autoencoder\label{ff_autoencoder}](img/autoencoder.png){ width=100% }
 
-Autoencoders have proved especially useful in denoising and dimension reduction
+Autoencoders have proved especially useful in de-noising and dimension reduction
 of images, which are naturally highly dimensional. Typically the reconstruction
 loss function is taken to be the mean squared error:
 
@@ -620,8 +627,8 @@ The result is that the autoencoder encodes the image in the much reduced
 feature space, similar to a nonlinear version of Principle Component Analysis
 (PCA).
 
-The specifics of the dimension reduction component of the encoder varies based on
-specific architectures. Convolutional autoencoders, which we implement in this work,
+The specifics of the dimension reduction component of the encoder vary across
+architectures. Convolutional autoencoders, which we implement in this work,
 are autoencoders that choose convolutional neural nets as encoders and decoders.
 When optimizing for a convolutional autoencoder, the weights of the encoder are
 updated in the direction which results in the largest decrease in image
@@ -629,7 +636,7 @@ reconstruction loss. The combined effect is a network which defines a dimensiona
 reduction function (autoencoder) where the output space is optimized for the image features
 that are most relevant for reconstructing the input image (CNN).
 
-## DCEC-Paint
+## Deep Convolutional Embedded Clustering
 
 In this work, we evaluate the clustering performance of the Deep Convolutional
 Embedded Clustering (DCEC-Paint) algorithm on a new dataset of digitized fine
@@ -643,7 +650,7 @@ deep learning clustering algorithm fed from the latent feature space.
 
 Unlike previous deep clustering algorithms, DCEC-Paint attempts to maintain feature
 space integrity by jointly optimizing for reconstruction and clustering loss.
-Previous algorithms only optimize for clustering after the network is pre-trained
+Previous algorithms only optimize for clustering after the network is pre-trained,
 which, over the course of clustering can result in divergence in the feature space
 from the pre-trained spatial structure. We posit
 that retaining learned features is especially important for clustering digitized
@@ -676,7 +683,7 @@ layers, and $3 \times 3$ for the final layer. All layers use the ELU activation 
 The output of the final convolutional layer is flattened in to a vector of size
 $327,684$, which is fully connected to the embedded space. We follow
 [@Castellano_and_Vessio_2020] and set the size of the embedded space to $32$.
-From the embedded space, the decoder upsamples images with an architecture that
+From the embedded space, the decoder recreates images with an architecture that
 mirrors the encoder.
 
 ### Clustering
@@ -686,7 +693,7 @@ introduced the method as part of Deep Embedded Clustering (DEC) which, after
 pre-training a feature space with stacked autoencoders, optimizes network
 parameters by computing a probability distribution for membership to
 a set of cluster centroids and uses stochastic gradient descent via
-backpropagation to learn an mapping which minimizes the Kullback-Leibler
+backpropagation to learn a mapping which minimizes the Kullback-Leibler
 (KL) divergence to that distribution.
 
 DCEC uses the same principles, substituting, as mentioned above, a CAE for stacked
@@ -696,7 +703,7 @@ we set the cluster centroids to
 initial values using K-means and set $\gamma = 0.9$. DCEC then iteratively
 performs two steps to learn cluster weights:
 
-1.  Computes the similarity between a point in the feature space, $z_i$, and a centroid,
+1.  Computes the similarity between a point in the feature (embedded) space, $z_i$, where $i \in {1..32}$, and a centroid,
     $\mu_j$ using Student's t-distribution, interpreted as the probability that
     sample $i$ belongs to cluster $j$.
 2.  Calculates the clustering loss via KL divergence and updates the target distribution
@@ -707,7 +714,7 @@ We expand on these two steps below.
 #### Calculation of Cluster Probability
 
 The probability that a sample from the feature space, $z_i$, belongs to cluster $j$
-is taken to be given by Student's t-distribution with one degree of freedom
+is given by Student's t-distribution with one degree of freedom
 (i.e. a Cauchy distribution), shown in Equation \eqref{eq:cauchy}.
 
 \begin{equation} \label{eq:cauchy}
@@ -724,7 +731,7 @@ belongs to cluster $j$, under the assumption that the data follow a t-distributi
 <!-- https://stats.stackexchange.com/questions/387500/clustering-with-kl-divergence -->
 
 <!-- TODO: the only thing this sentence says is that you don't understand this math -->
-To improve the cluster centroids, DEC attempts to compare the observed cluster
+To improve the cluster centroids, DCEC attempts to compare the observed cluster
 assignment probability distribution ($q_{ij}$ in \eqref{eq:cauchy}) to
 a target distribution, $p_i$, by measuring the KL
 divergence. KL divergence attempts to measure the similarity of two distributions
@@ -763,17 +770,17 @@ which have a high confidence in belonging to certain cluster will contribute
 largely to defining the centroids for the target distribution, $p_i$.
 As a consequnce, the gradient of $L$ points more in the direction of these canonical
 examples, and network weights and biases are updated in a way that builds
-a feature space which with purer clusters.
+a feature space with purer clusters.
 
 #### Optimization
 
 For a given number of clusters, $k$, the full DCEC-Paint algorithm proceeds as follows:
 
-1. Set $\gamma = 1$ in Equation \eqref{eq:loss}, and pretrain the network for a
+1. Set $\gamma = 0$ in Equation \eqref{eq:loss}, and pretrain the network for a
    number of epochs to build the feature space. This is equivalent to training
    a vanilla convolutional autoencoder.
 2. Initialize $k$ cluster centroids using K-means.
-3. Set $\gamma = 0.1$ in Equation \eqref{eq:loss}. Define a mini-batch size $b$,
+3. Set $\gamma = 0.9$ in Equation \eqref{eq:loss}. Define a mini-batch size $b$,
    and while the stopping criteria is not been met, for each mini-batch:
     1. Calculate $L_c$ and $L_r$ and update the autoencoder weights and cluster
        centers according to SGD via backpopagation using
@@ -783,8 +790,7 @@ For a given number of clusters, $k$, the full DCEC-Paint algorithm proceeds as f
        target distribution $p$ using the entire dataset's most recent
        predictions.
 
-
-The algorithm terminates when after the proportion of examples that change clusters
+The algorithm terminates when the proportion of examples that change clusters
 between two mini-batches is less than some tolerance $\delta$.
 
 <!-- #### Prediction, Optimization, Parameter Initialization, etc. -->
@@ -792,13 +798,13 @@ between two mini-batches is less than some tolerance $\delta$.
 
 ## Dataset
 
-Christie's hosts the results online of all public auctions held
+Christie's hosts online results of all public auctions held
 after December, 2005. This amounts to a truly impressive record of fine art,
 furniture, antiques, jewelry, and other collectible sales; well over half a
 million pieces auctioned over hundreds of sales held across the world and
 online. As one of world's two leading auction houses (the other being Sotheby's),
 these auction results contain thousands of influential and expensive artworks,
-including the most expensive piece ever sold, da Vinci's Salvator Mundi[^mundi], which
+including the world's most expensive painting, da Vinci's Salvator Mundi[^mundi], which
 sold for an astounding $450 million.
 
 [^mundi]: https://www.christies.com/lotfinder/paintings/leonardo-da-vinci-salvator-mundi-6110563-details.aspx
@@ -809,21 +815,16 @@ that consisted primarily of artwork in two dimensional mediums. Left with a
 set of nearly $300$ thousand works of art, we chose the top $50$ most prolific
 artists and,
 randomly selecting $250$ works of art for each artist, we hand curated the dataset
-to exclude intermediate sketches and sculptures. The final dataset contains
-$n = 10,505$ $3$ channel (RGB) $128 \times 128$ pixel images which span a
+to exclude intermediate sketches and sculptures.
+We downsampled images so that the shortest dimension was 128 pixels in length,
+and then cropped the center to obtain a $128 \times 128$ three-channel (RGB) image.
+The final dataset contains
+$n = 10,505$ images which span a
 diverse set of artists, mediums, and movements. The full set of artists along
 with their respective mediums and movements can be seen in
 table \ref{tab:artists}.
 
-Compared to previous applications of this algorithm, we believe this dataset
-to represent a much broader set of artists, genres, and mediums. The dataset
-includes over a thousand photographs, including varied works by
-Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. The majority of the
-dataset consists of a diverse set of paintings including 19th century
-Traditional Chinese paintings, Rennaissance works, and Pop Art. Notably, the
-dataset includes a large body of modern and contemporary works.
-
-With an artistically diverse dataset, we expect the algorithm to be particularly
+<!-- With an artistically diverse dataset, we expect the algorithm to be particularly
 exposed to the cross depiction problem. Imagine two digitized works depicting
 a clock but of different artistic styles and mediums. One, Salvador Dali's famous
 1931 "Persistence of Memory", and the other a moment captured by the
@@ -831,7 +832,7 @@ lens of Henri Cartier-Bresson. Holding all else equal, we expect a "correct"
 clustering algorithm to find these two works more similar than a separate pair
 of works that don't contain clocks. The algorithm's ability
 on these qualitative tasks is additionally important to the quantitative
-measures outlined below.
+measures outlined below. -->
 
 <!-- TODO - You could include a plot with distribution of image prices -->
 <!-- Maybe a figure would be better here? -->
@@ -898,6 +899,13 @@ auguste rodin                & 18  & 1840  & 1917  & drawing                    
 \end{table}
 \end{singlespace}
 
+Compared to previous applications of this algorithm, we believe this dataset
+to represent a much broader set of artists, genres, and mediums. The dataset
+includes over a thousand photographs, including varied works by
+Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. The majority of the
+dataset consists of a diverse set of paintings including 19th century
+Traditional Chinese paintings, Rennaissance works, and Pop Art. Notably, the
+dataset includes a large body of modern and contemporary works.
 
 <!-- Methods go here -->
 
@@ -918,7 +926,7 @@ Google Kubernetes Engine with a single NVIDIA Tesla T4 GPU with 16 GB of GDDR6.
 Following [@Castellano_and_Vessio_2020], we used an update interval of $140$, a
 learning rate of $0.001$, and pre-trained for $200$ epochs before attaching the
 clustering layer. With a larger GPU than the previous authors used, we increased
-batch size from $256$ to $512$. The model took on the order of 1-2 hours to
+batch size from $256$ to $512$. The model took on the order of 2 hours to
 cluster after pretraining the convolutional autoencoder. Clustering terminated
 when the proportion of samples which changed clusters between two consecutive
 update intervals was less than $0.001$. We ran the network for $k \in \{1..10\}$.
@@ -939,7 +947,7 @@ performance with two global methods, the average silhouette score and
 the Calinski-Harabasz index [@Calinski_Harabasz_1974]. We also measure the
 GAP statistic [@Tibshirani_2000]
 on the unclustered embedded space obtained after running the algorithm for $k=1$,
-which the equivalent of pre-training the CAE to completion.
+which is the equivalent of pre-training the CAE to completion.
 This indicates the presense/absence of clusters before the algorithm begins
 learning cluster centers in earnest. In all cases we use euclidean distances.
 
@@ -980,13 +988,12 @@ mean of all the data, and x is the given datapoint.
 The Calinski-Harabasz index is unbounded in the positive direction. For this
 reason, we normalize the results for each cluster solution ($k \in {1...10}$) to
 the largest value to enable comparison. Higher values indicate a lower relative
-within cluster dispersion, i.e. tighter
-clusters.
+within cluster dispersion, i.e. tighter clusters.
 
 DCEC and its predecessor algorithms do not extend to the one/no cluster solution.
 At each iteration in the clustering algorithm, the probability that sample $i$
 belongs to cluster $k$ is calculated according to Equation \ref{eq:cauchy}. In
-the once cluster solution, this probability is $1$ and does not change,
+the one cluster solution, this probability is $1$ and does not change,
 leading to a Kullback-Leiber divergence of zero. This implies that the model
 optimizes exclusively for image reconstruction loss. In other words, the
 algorithm is reduced to a CAE.
@@ -1009,22 +1016,24 @@ Where $E$ is the expected value, and $SS_W$ is given by equation \ref{eq:chssw}.
 For a complete derivation, see [@Tibshirani_2000].
 
 In addition to these quantitative metrics we perform a more qualitative assesment
-of the results for the top performing clusters. In particular we examine (1) the
+of the results for the top performing clusters. In particular, for the most optimal
+values of $k$, we examine (1) the
 distribution of a few artists works across clusters; (2) the overall interpretation
 of the two top perfoming clusters; and (3) the distribution of different artistic
-styles across the clusters.
+styles across the clusters. We also examine the distribution of some common color
+and image statistics for each cluster in the optimal solutions for $k$.
 
-# Experiment Results
+# Experimental Results and Discussion
 <!-- What did we see? -->
 
 Table \ref{cluster_scores} and Figure \ref{score_plot} show the average
 silhouette and Calinski-Harabasz scores for values of k between $2$ and $10$,
 before and after beginning the clustering component of the algorithm (CAE+Kmeans
-vs DCEC, respectively).
+vs. DCEC, respectively).
 The average silhouette and Caliski-Harabasz scores disagree slightly on the
 optimal cluster solution. Using silhouette scores suggests that the optimal
-number of clusters is 8 (followed by 9 and 10), while the relative CH
-coefficient suggests that the optimal solution is 3, followed by 8 and 9.
+number of clusters is $8$ (followed by $9$ and $10$), while the relative CH
+coefficient suggests that the optimal solution is $3$, followed by $8$ and $9$.
 For all values of $k$, DCEC was clearly effective in clustering the data as the
 within to between cluster dispersion values are much higher for DCEC than the
 CAE+Kmeans solution. This is expected as the algorithm is learning a feature
@@ -1051,21 +1060,21 @@ k  & ss - CAE+Kmeans & ch - CAE+Kmeans & ss - DCEC & ch - DCEC \\ \hline
 \end{table}
 \end{singlespace}
 
-![Average Silhouette and Calinski-Harabasz scores across number of clusters ($k$). According to CH, the optimal cluster solution is $3$, while silhouette scores suggest the optimal solution is $8$. For all values of $k$ the algorithm achieves a high ratio of within to between cluster dispersion.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=100% }
+![Average Silhouette and Calinski-Harabasz scores across number of clusters ($k$). According to CH, the optimal cluster solution is $3$, while silhouette scores suggest the optimal solution is $8$. For all values of $k$ the algorithm achieves a high ratio of within to between cluster dispersion.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=70% }
 
 It's clear that Kmeans, which is initally used to set the cluster centroids prior
 to learning the final feature space, is quite ineffective in producing defined
 clusters. We expect this, to some extent, as the pretraining autoencoder step
 is exclusively optimized to minimize reconstruction loss. We examined the pre-clustering data by
 running the Autoencoder for *20,000* epochs.
-Figure \ref{gap} plots the GAP statistic for a range of cluster sizes. The gap statistic increases throughout
+Figure \ref{gap} plots the GAP statistic for a range of cluster sizes. The gap
+statistic increases throughout
 the range, indicating there is no clear "correct" number of clusters for the
-embedded space only - a single (zero) cluster is the optimal solution. This
+embedded space only - a single cluster is the optimal solution. This
 highlights the importance of the clustering component in learning the feature
 space.
 
-![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the autoencoder, without an attached clustering layer, for *20,000* epochs. This figure demonstrates the absence of distinct clusters in the pretrained dataset. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=100% }
-
+![GAP statistic for cluster sizes $k=1$ through $k=20$, performed on the embedded space after running the autoencoder, without an attached clustering layer, for *20,000* epochs. This figure demonstrates the absence of distinct clusters in the pretrained dataset. See text for discussion.\label{gap}](/home/dubs/dev/paap/img/1/gap.png "gap"){ width=70% }
 
 Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$ for the final
 32-dimensional feature space. For all values of $k$ the algorithm
@@ -1076,9 +1085,13 @@ forms readily discernable clusters, as depicted by t-SNE.
 Figure \ref{tsne_evolution} visualizes cluster evolution. Immediately after the
 pretraining step (CAE+Kmeans) there are no discernable clusters. Within a few
 thousand epochs, however, the algorithm has learned a feature space which shows
-distinct clusters.
+distinct clusters. This image demonstrates the effectiveness of using KL-divergence
+as a clustering los component, and in particular choosing $q_i^2$ (the
+observed probability of belonging to a cluster, squared) as the target distribution
+in the KL divergence equation. This choice is effective in forming distinct and
+relatively uniformily defined clusters.
 
-![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1224, 1836, 2448, 8262 (final epoch).\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=100% }
+![Cluster evolution for $k=8$. Images are t-SNE projections at the following iterations: 0, 612, 1224, 1836, 2448, 8262 (final epoch).\label{tsne_evolution}](/home/dubs/dev/paap/img/8/cluster_evolution.png){ width=80% }
 
 Diving deeper into the individual cluster results, Figure \ref{images_8} shows
 a selection of images for each of the clusters in the $8$ cluster solution.
@@ -1092,70 +1105,222 @@ scenes of Northwest England. Indeed, both clusters show the characteristic Lowry
 work, with drawings of public outdoor spaces populated with bustling figures,
 set against a backdrop of in-use industrial buildings. L.S. Lowry's collective
 body of works narrowly tracks a distinct style and feel, so it's interesting
-that his work is crosses cluster boundaries.
+that his work crosses cluster boundaries.
 
 ![A selection of images from the $k=8$ cluster solution\label{images_8}](img/8/collage.png){ width=100% }
 
 ![A selection of images from the $k=3$ cluster solution\label{images_3}](img/3/collage.png){ width=100% }
 
-Figures \ref{tsne_artists_8}, \ref{tsne_artists_3} and \ref{tsne_genre_8}, \ref{tsne_genre_3} show the distribution of a set
+Figures \ref{fig:tsne_artists} and \ref{fig:tsne_genre} show the distribution of a set
 of artists and genres throughout the clusters, respectively. It's apparent from
-these figures that the clustering does not (strictly) follow artist or genre
+these figures that the clustering does not strictly follow artist or genre
 differences as all categories appear to be distributed across two or more
-clusters, for the $8$ clsuter solution.
+clusters, for both the $3$ and $8$ clsuter solutions. On some level this is surprising. Works
+are categorized in genres due to their shared stylistic characteristics. These
+stylistic distinctions are taken to be artistically meaningful so we might expect
+clusters generated by DCEC to reflect genre differences. Take,
+for instance works of fauvism, a genre which is know for its distinctive use
+of unnaturally bright and vibrant colors. It's a genre which is immediately
+recognizable. That each of the eight clusters in the $k=8$ solution contain multiple
+works of fauvism is slightly curious from an artistic standpoint. The algorithm's
+generated feature set is an abstraction that appears to not map strongly to genre
+or artist. Although curious, this behavior is not without precedence.
+[@Wallraven_et_al_2008] asked naiive art viewers to cluster works of art and found
+that the resulting clusters did not correspond to art period, indicating
+percieved perceptual differences need not track genre or even artist. On the other
+hand, Figures \ref{fig:tsne_artists} and \ref{fig:tsne_genre} show that artists
+and genre are not evenly distributed throughout clusters, for instance traditional
+Chinese works (Guohou) are relatively pervasive in cluster three and nearly
+absent from cluster one. In some ways, these are exactly the results we expect this
+algorithm to have - it's feature space is constructed from numerous lower level
+abstractions which together form the visual structure of an image. Many works of
+a genre will share some of those visual abstractions, but will also share
+structural components with other genres. This pattern would lead to the diffuse
+grouping of images by genre or artist throughout the clsuters.
 
-![A selection of artists artwork against the $k=8$ cluster solution\label{tsne_artists_8}](img/8/tsne_artists.png){ width=70% }
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/3/tsne_artists.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/8/tsne_artists.png}
+\end{subfigure}
+\caption{A selection of artists plotted against the $k=3$ and $k=8$ cluster solutions.}
+\label{fig:tsne_artists}
+\end{figure}
 
-![A selection of artists artwork against the $k=3$ cluster solution\label{tsne_artists_3}](img/3/tsne_artists.png){ width=70% }
 
-![A selection of genres against the $k=8$ cluster solution\label{tsne_genre_8}](img/8/tsne_genre.png){ width=70% }
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/3/tsne_genre.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/8/tsne_genre.png}
+\end{subfigure}
+\caption{A selection of genres plotted against the $k=3$ and $k=8$ cluster solutions.}
+\label{fig:tsne_genre}
+\end{figure}
 
-![A selection of genres against the $k=3$ cluster solution\label{tsne_genre_3}](img/3/tsne_genre.png){ width=70% }
+Figure \ref{tsne_medium} show the distribution of photographs vs other mediums.
+Although not perfectly, the algorithm appears to cluster photgraphs together,
+with some clusters showing only a handful of photographs. Again, we expect some
+of this similarity. Many of the photographs are grayscale, converted to RGB, resulting
+in homogenous channel values for each pixel. This reduces pixel variability and is
+an image feature shared across all grayscale images. In addition, as explored
+below in figures \ref{color_hist_3} and \ref{color_hist_8}, the pixel intensity
+and entropy of photographs is likely to be more similar than the universe of
+paintings and photographs; visualising the natural world is a stricter constraint
+on artistic variability than what's possible with a brush and paint.
 
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/3/tsne_photograph.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/8/tsne_photograph.png}
+\end{subfigure}
+\caption{Photographs vs non-photographs for the $k=3$ and $k=8$ cluster solution.}
+\label{fig:tsne_medium}
+\end{figure}
 
-Figures \ref{tsne_medium_8} and \ref{tsne_medium_3} show the distribution of photographs vs non-photographs.
-Like genre and artist, it's apparent that clustering appears to be medium agnostic.
-
-![Photographs vs non-photographs for the $k=8$ cluster solution\label{tsne_medium_8}](img/8/tsne_photograph.png){ width=70% }
-
-![Photographs vs non-photographs for the $k=3$ cluster solution\label{tsne_medium_3}](img/3/tsne_photograph.png){ width=70% }
-
-Rather than proxying aesthetic differences between genre, artist, and medium, the
-algorithm appears to be clustering on much more fundamental characteristics
-of the images - e.g. busyness, the presence/absence of long lines, brush
-stroke style, and color. Figures \ref{color_hist_3} and \ref{color_hist_8} show
-histogram of pixel color values for the three and eight cluster solutions,
-respectively. For the 3 cluster solution we see that all three clusters have
+Figures \ref{color_hist_3} and \ref{color_hist_8} show
+histograms of pixel color values for the three and eight cluster solutions,
+respectively, for both RGB channels and the CIE-LAB lightness channel. For the
+3 cluster solution we see that all three clusters have
 similar channel distributions with blue pixel values being slightly less
-intense than greens and reds, incdicating the clusters share a similar color
-distribution. However, cluster two contains much higher pixel intensity,
-indicating that cluster contains darker images than its two counterparts. This
+intense than greens and reds, indicating the clusters share a similar color
+distribution. However, cluster two contains much higher pixel intensity and lightness,
+indicating that cluster contains lighter images than its two counterparts. Likewise,
+cluster 2 shows the darkest photos. This
 is reflected in the example images shown in Figure \ref{images_3}. The eight cluster
 solution depicted in Figure \ref{color_hist_8} shows more variability
-between clusters RGB channels than does the three cluster solution. For instance,
+between cluster RGB channels than does the three cluster solution. For instance,
 cluster three has high intensity values across the color spectrum, resulting in
-the lighter images depicted in Figure \ref{color_hist_8}, while cluster two has
+the lighter images depicted in Figure \ref{color_hist_8}, while cluster four has
 relatively low intensity colors resulting in dark images. In cluster two the
-red channel has much higher intensity than  blue, resulting in reddish toned
+red channel has much higher intensity than blue, resulting in reddish toned
 images.
 
-![Histograms of RGB channel pixel intensity for the three cluster solution\label{color_hist_3}](img/3/histogram.png){ width=70% }
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/3/rgb_histogram.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/3/lightness_histogram.png}
+\end{subfigure}
+\caption{Histograms of RGB channel pixel intensity and CIE-LAB lightness for the $k=3$ cluster solution}
+\label{color_hist_3}
+\end{figure}
 
-![Histograms of RGB channel pixel intensity for the eight cluster solution\label{color_hist_8}](img/8/histogram.png){ width=70% }
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/8/rgb_histogram.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/8/lightness_histogram.png}
+\end{subfigure}
+\caption{Histograms of RGB channel pixel intensity and CIE-LAB lightness for the $k=8$ cluster solution}
+\label{color_hist_8}
+\end{figure}
+
+Figure \ref{fig:entropy} shows the histograms of the mean image local entropy
+for each cluster in the three and eight cluster solutions. Entropy proxies
+the complexity of the grayscale image by calculating entropy of the pixel intensity.
+The darker images of the second cluster in the $k=3$ solution have much higher
+entropy, on average, than their counterparts. For the eight cluster solution, only
+cluster four, which includes lighter images than the other clusters, has an
+entropy distribution markedly different from the other clusters.
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/3/entropy_histogram.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{img/8/entropy_histogram.png}
+\end{subfigure}
+\caption{Histograms of local image entropy for the $k=3$ and the $k=8$ cluster solutions}
+\label{fig:entropy}
+\end{figure}
 
 
 # Conclusion
 
+DCEC is an effective method for unsupervised clustering of fine art images. By
+learning a feature space while clustering, DCEC constructs artistically distinct
+clusters from strictly spatial properties of the image. Compared to previous
+methods for clustering artwork, which used engineered features, DCEC offers a new
+approach for discovering artistic similarities between paintings in a way that
+is independent from artist, genre, or medium. While this compelling, it is not
+without its drawbacks. DCEC, like other neural network methods, lacks interpretability,
+which can be especially frustrating in this context. An art expert employing
+DCEC for artwork similarity analysis would logically ask why two images are similar
+or dissimilar. DCEC's feature space is uninterpretable, leaving this question
+unanswered. Using a more conventional, feature engineering approach, the art analyst
+could easily answer this question with simple tools, such as a similarity matrix.
+
+Compared to other unsupervised clustering
+methods, DCEC is computationally slow and expensive. On a relatively small
+dataset we needed to run this algorithm on a remote machine with special hardware.
+This makes the model intimidating to employ, especially when tasked with
+training and tuning on a new dataset.
+
+Neural networks have been shown to be fragile, in the sense that a minor pertubation
+to an input, $x$, will result in a large change in the output. Future research
+should investigate DCEC's fragility; if small pertubations in the input images
+result in different cluster assignments, then the algorithm's usefulness is further
+reduced.
+
+Finally, DCEC cannot clsuter an image dataset for $k=1$. This further limits the
+usefulness of the algorithm as an analyst cannot explor the one cluster
+solution.
+
+DCEC is effective in automated detection of similarities in artwork structure
+between pieces. In our opinion, it is most useful when employed in conjunction
+with more conventional methods for clustering, which incorporate artwork metadata
+and engineered features.
 
 # References
 
 <!-- TODO
-2. Calculate the distribution of red/green/blue in the clusters for the 3 and 8 cluster solutions
-3. Look at grayscale images vs 3 channel for the 3 and 8 cluster solutions
 4. Calculate some engineered features for each image, If we cluster on those,
    how much overlap is there? Openness, etc
+    - Color pallette score
+    - smoothness - Canny edge detector Maybe don't use this?
+        - https://scikit-image.org/docs/dev/auto_examples/edges/plot_canny.html?highlight=canny%20edge
+    - brightness - We changed the image color space from RGB to YUV,because Y-channel corresponds to the luminosity of the image. We simplyaveraged the Y-channel values for each pixel in the image and obtaineda brightness score.
+        - 
+    - From Spehr - colourproperties, spatial scale properties, composition and content.The outputs of these analyses are represented in a compactfeature vector or ‘signature’ for each image in the database.We then take these signatures as input to unsupervised clus-tering methods, to return a set of clusters derived from thesimilarity between image signatures
+    - HSV, Luv and Lab 
+      - https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_rgb_to_hsv.html
+    - We  computed  the  localpixel entropy across the image with a sliding window
+    - Scene Gist
 5. Write the rest of the discussion
 6. Write conclusion
 7. What happens when we grayscale all the images and cluster on them?
 8. What happens when we introduce vertical white lines into the images? Is the algorithm fragile?
+
+TODO Tomorrow
+* CIELAB color space and then make plots of it and RGB together
+* entropy average
+* Remove the extra image in the k=8 photo
+
+* Statement about photographs (lack there of) in the 3rd cluster
  -->

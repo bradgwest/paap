@@ -1,6 +1,8 @@
 #! /usr/bin/bash
 
-for i in {2..10}; do
+clusters=(3 8)
+
+for i in $clusters; do
     echo "Plotting k=${i}"
     # python combine_images.py $i 6
     python vis.py $i --plots \
