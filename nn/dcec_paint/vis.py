@@ -347,7 +347,8 @@ class Plotter(object):
         self._plot_tsne_by_group(f, "tsne_genre.png", title="Distribution of Genre Across Clusters")
 
     def plot_by_artist(self, *args, **kwargs):
-        artists = ("joan miro", "henri cartier-bresson", "ansel adams", "hiroshi sugimoto")
+        artists = ("rembrandt harmensz. van rij", "raoul dufy", "pierre-auguste renoir", "andy warhol", "laurence stephen lowry, r.a.")
+        # artists = ("joan miro", "henri cartier-bresson", "ansel adams", "hiroshi sugimoto")
         column = "lot_description"
         f = keywords_in_column(artists, column)
         self._plot_tsne_by_group(f, "tsne_artists.png", title="Distribution of Artists Across Clusters")
