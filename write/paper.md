@@ -773,7 +773,7 @@ cluster size:
 p_{ij} = \frac{q_{ij}^2/f_j}{\sum_{j'} g_{ij'}^2/f_{j'}}
 \end{equation}
 
-where $f_j = \sum_i q_{ij}$, the frequency of per cluster.
+where $f_j = \sum_i q_{ij}$, the frequency per cluster.
 By squaring the observed distibution, the probability mass of $p_i$ is more concentrated
 about the centroid, forming purer clusters than $q_i$, thus creating a divergence
 between the distributions that facilitates learning.
