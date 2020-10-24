@@ -36,6 +36,8 @@ header-includes: |
     \useunder{\uline}{\ul}{}
 ---
 
+<!-- cSpell:disable -->
+
 <!-- \renewcommand{\baselinestretch}{1.5} -->
 <!--
 * Change neural network to deep neural network
@@ -484,7 +486,6 @@ The algorithm has two general steps:
     network such that each weight and bias is updated according to its effect on
     the overall error of the cost function.
 
-
 We explain step two in more detail here. For a complete derivation, see [@Rumelhart_et_al_1986].
 
 Consider a network of $L$ layers, with a cost function $C$, and an activation
@@ -539,7 +540,7 @@ which updates the weights accordingly.
 ## Convolutional Autoencoders
 
 Consider a neural network tasked with learning relevant features
-from an input dataset of $k = 1, ... , K$, $m \times n \times p$ images. Intuitively, a
+from an input dataset of $v = 1, ... , V$, $m \times n \times p$ images. Intuitively, a
 network might seem
 like an appropriate tool for identifying
 relationships between pixels: if pixel values are passed to neurons, then
@@ -774,7 +775,7 @@ p_{ij} = \frac{q_{ij}^2/f_j}{\sum_{j'} g_{ij'}^2/f_{j'}}
 \end{equation}
 
 where $f_j = \sum_i q_{ij}$, the frequency per cluster.
-By squaring the observed distibution, the probability mass of $p_i$ is more concentrated
+By squaring the observed distribution, the probability mass of $p_i$ is more concentrated
 about the centroid, forming purer clusters than $q_i$, thus creating a divergence
 between the distributions that facilitates learning.
 $p_i$ has favorable
@@ -788,7 +789,7 @@ to show that $p_i$ exhibits these properties.
 The overall effect of the clustering loss function is that samples
 which have a high confidence in belonging to certain cluster will contribute
 largely to defining the centroids for the target distribution, $p_i$.
-As a consequnce, the gradient of $L$ points more in the direction of these canonical
+As a consequence, the gradient of $L$ points more in the direction of these canonical
 examples, and network weights and biases are updated in a way that builds
 a feature space with purer clusters.
 
@@ -803,7 +804,7 @@ For a given number of clusters, $k$, the full DCEC-Paint algorithm proceeds as f
 3. Set $\gamma = 0.9$ in Equation \eqref{eq:loss}. Define a mini-batch size $b$,
    and while the stopping criteria is not met, for each mini-batch:
     1. Calculate $L_c$ and $L_r$ and update the autoencoder weights and cluster
-       centers according to SGD via backpopagation.
+       centers according to SGD via backpropagation.
     2. On every $T^{th}$ iteration, where $T$ is an update interval, update the
        target distribution $p$ using the entire dataset's most recent
        predictions.
@@ -917,12 +918,14 @@ auguste rodin                & 18  & 1840  & 1917  & drawing                    
 \end{table}
 \end{singlespace}
 
+<!-- cSpell:enable -->
+
 Compared to previous applications of this algorithm, we believe this dataset
 to represent a much broader set of artists, genres, and mediums. The dataset
 includes over a thousand photographs, including varied works by
 Ansel Adams, Henri Cartier-Bresson, and Hiroshi Sugimoto. The majority of the
 dataset consists of a diverse set of paintings including 19th century
-Traditional Chinese paintings, Rennaissance works, and Pop Art. Notably, the
+Traditional Chinese paintings, Renaissance works, and Pop Art. Notably, the
 dataset includes a large body of modern and contemporary works.
 
 <!-- Methods go here -->
@@ -941,13 +944,13 @@ dataset includes a large body of modern and contemporary works.
 
 We re-implemented DCEC on the Tensorflow v1.5 [@tf_2015] framework and trained it on
 Google Kubernetes Engine with a single NVIDIA Tesla T4 GPU with 16 GB of GDDR6.
-Following Casetellano and Vessio, we used an update interval of $140$, a
+Following Castellano and Vessio, we used an update interval of $140$, a
 learning rate of $0.001$, and pre-trained for $200$ epochs before attaching the
 clustering layer. With a larger GPU than the previous authors used, we increased
 batch size from $256$ to $512$. The model took on the order of 2 hours to
 cluster after pretraining the convolutional autoencoder. Clustering terminated
 when the proportion of samples which changed clusters between two consecutive
-update intervals was less than $0.001$. We ran the network for $k \in \{1..10\}$.
+update intervals was less than $0.001$. We ran the network for $k \in \{1, ... ,10\}$.
 
 <!-- # Prediction Evaluation -->
 <!-- How did we evaluate the model's performance -->
@@ -966,11 +969,11 @@ the Calinski-Harabasz index [@Calinski_Harabasz_1974]. We also measure the
 GAP statistic [@Tibshirani_2000]
 on the unclustered embedded space obtained after running the algorithm for $k=1$,
 which is the equivalent of pre-training the CAE to completion.
-This indicates the presense/absence of clusters before the algorithm begins
-learning cluster centers in earnest. In all cases we use euclidean distances.
+This indicates the presence/absence of clusters before the algorithm begins
+learning cluster centers in earnest. In all cases we use Euclidean distances.
 
 The silhouette score measures how similar a data point is to its own cluster,
-relative to the nearest cluster and is given, for a single datatum $x_i$, as:
+relative to the nearest cluster and is given, for a single datum $x_i$, as:
 
 \begin{equation} \label{eq:ss}
 s_i = \frac{b_i - a_i}{max\{a_i, b_i\}}
@@ -989,7 +992,8 @@ within cluster dispersion according to the following:
 CH_k = \frac{SS_B}{SS_W} \times \frac{N - 1}{k - 1}
 \end{equation}
 
-where $SS_W$ and $SS_B$ are the within and between cluster dispersion, given as:
+where $N$ is the total number of observations, $k$ is the number of clusters,
+and $SS_W$ and $SS_B$ are the within and between cluster dispersion, given as:
 
 \begin{equation} \label{eq:chssb}
 SS_B = \sum_{j=1}^{k} n_j ||m_j - m ||^2
@@ -1003,10 +1007,17 @@ where $k$ is the number of clusters, $n_j$ is the number of datapoints in the
 $j^{th}$ cluster, $m_j$ is the centroid of the $j^{th}$ cluster, $m$ is the
 mean of all the data, and x is the given datapoint.
 
-The Calinski-Harabasz index is unbounded in the positive direction. For this
-reason, we normalize the results for each cluster solution ($k \in \{1...10\}$) to
-the largest value to enable comparison. Higher values indicate a lower relative
+Higher Calinski-Harabasz values indicate a lower relative
 within cluster dispersion, i.e., tighter clusters.
+The CH index is unbounded in the positive direction. This can be
+seen by imagining, for fixed values of $k$ and $N$, forming progressively more
+distinct clusters. $SS_W$ decreases as each cluster approaches a point mass, and
+$\frac{SS_B}{SS_W}$ increases without bound. To enable a relative comparison
+between CH scores for different values of $k$, we divide each cluster
+score ($k \in \{1,...,10\}$)
+by the highest observed CH value to normalize values between 0 and 1. Thus, the best
+performing solution as measured by Calinski-Harabasz will have a normalized score
+of 1.
 
 DCEC and its predecessor algorithms do not extend to the one/no cluster solution.
 At each iteration in the clustering algorithm, the probability that sample $i$
@@ -1019,7 +1030,7 @@ algorithm is reduced to a CAE.
 This case is interesting, however, as it gives insight into the state of the
 algorithm after pretraining and highlights the importance of the clustering
 component in iteratively learning a feature space of $k$ clusters. To evaluate
-the presense of clusters after pretraining, we report the GAP
+the presence of clusters after pretraining, we report the GAP
 statistic [@Tibshirani_2000]. This statistic, for a given number of clusters,
 $k$, examines the within cluster dispersion relative to the expected value of
 some appropriate null reference distribution for the within cluster dispersion.
@@ -1027,17 +1038,17 @@ The appropriate cluster choice is the value for which the observed within cluste
 distribution is closest to the expected value:
 
 \begin{equation} \label{eq:gap}
-GAP_k = E(log(SS_{W_k})) - log(SS_{W_k})
+GAP_k = E(log(SS_{W_k})) - log(SS_{W_k}),
 \end{equation}
 
-Where $E$ is the expected value, and $SS_W$ is given by equation \ref{eq:chssw}.
+where $E$ is the expected value, and $SS_W$ is given by equation \ref{eq:chssw}.
 For a complete derivation, see [@Tibshirani_2000].
 
-In addition to these quantitative metrics we perform a more qualitative assesment
+In addition to these quantitative metrics we perform a more qualitative assessment
 of the results for the top performing clusters. In particular, for the most optimal
 values of $k$, we examine (1) the
 distribution of a few artists works across clusters; (2) the overall interpretation
-of the two top perfoming clusters; and (3) the distribution of different artistic
+of the two top performing clusters; and (3) the distribution of different artistic
 styles across the clusters. We also examine the distribution of some common color
 and image statistics for each cluster in the optimal solutions for $k$.
 
@@ -1048,7 +1059,7 @@ Table \ref{cluster_scores} and Figure \ref{score_plot} show the average
 silhouette and Calinski-Harabasz scores for values of k between $2$ and $10$,
 before and after beginning the clustering component of the algorithm (CAE+Kmeans
 vs. DCEC, respectively).
-The average silhouette and Caliski-Harabasz scores disagree slightly on the
+The average silhouette and Calinski-Harabasz scores disagree slightly on the
 optimal cluster solution. Using silhouette scores suggests that the optimal
 number of clusters is $8$ (followed by $9$ and $10$), while the relative CH
 coefficient suggests that the optimal solution is $3$, followed by $8$ and $9$.
@@ -1062,7 +1073,7 @@ set that partially optimizes for clustering loss.
 \centering
 \begin{tabular}{lllll}
 \hline
-k  & SS - CAE+Kmeans & CH - CAE+Kmeans & SS - DCEC & CH - DCEC \\ \hline
+k  & AS - CAE+Kmeans & CH - CAE+Kmeans & AS - DCEC & CH - DCEC \\ \hline
 2  & 0.2090          & 1.0000          & 0.7929    & 0.4744    \\
 3  & 0.1426          & 0.8219          & 0.8280    & 1.0000    \\
 4  & 0.1028          & 0.5754          & 0.7750    & 0.4775    \\
@@ -1073,14 +1084,14 @@ k  & SS - CAE+Kmeans & CH - CAE+Kmeans & SS - DCEC & CH - DCEC \\ \hline
 9  & 0.0463          & 0.2369          & 0.8520    & 0.6518    \\
 10 & 0.0772          & 0.2750          & 0.8284    & 0.4480   
 \end{tabular}
-\caption{Average silhouette and Calinski-Harabasz scores by cluster}
+\caption{Average silhouette and Calinski-Harabasz scores by cluster for Kmeans and DCEC solutions.}
 \label{cluster_scores}
 \end{table}
 \end{singlespace}
 
-![Average Silhouette and relative Calinski-Harabasz scores across number of clusters ($k$). According to CH, the optimal cluster solution is $3$, while silhouette scores suggest the optimal solution is $8$. For all values of $k$ the algorithm achieves a high ratio of within to between cluster dispersion.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=70% }
+![Average Silhouette and relative Calinski-Harabasz scores across number of clusters ($k$). According to CH, the optimal cluster solution is $3$, while average silhouette suggest the optimal solution is $8$. For all values of $k$ the algorithm achieves a high ratio of within to between cluster dispersion.\label{score_plot}](/home/dubs/dev/paap/img/dcec_metrics.png){ width=70% }
 
-It's clear that Kmeans, which is initally used to set the cluster centroids prior
+It's clear that Kmeans, which is initially used to set the cluster centroids prior
 to learning the final feature space, is quite ineffective in producing defined
 clusters. We expect this, to some extent, as the pretraining autoencoder step
 is exclusively optimized to minimize reconstruction loss. We examined the pre-clustering data by
@@ -1096,9 +1107,14 @@ space.
 
 Figure \ref{all_tsne} shows all t-SNE plots for $k \in \{2..10\}$ for the final
 32-dimensional feature space. For all values of $k$ the algorithm
-forms readily discernable clusters, as depicted by t-SNE.
+forms readily discernable clusters, as depicted by t-SNE. It is important to
+stress that t-SNE is being run on the distance matrix formed from the post-clustering vector output of DCEC,
+namely the $32$ dimensional embedded space pictured in Figure \ref{arch}. In other words,
+the t-SNE diagrams depicted here are 2D visualizations of the DCEC _learned_
+$32$ dimensional representation that minimizes Equation \ref{eq:loss} for that
+value of $k$.
 
-![t-SNE diagrams of the final $32$ dimensional feature (embedded) space. For all values of $k$ the algorithm appears to build a distinctly partitioned feature space.\label{all_tsne}](/home/dubs/dev/paap/img/all_tsne.png){ width=90% }
+![t-SNE diagrams of the final $32$ dimensional feature (embedded) space. For all values of $k$ the algorithm appears to build a distinctly partitioned feature space.\label{all_tsne}](/home/dubs/dev/paap/img/all_tsne.png){ width=80% }
 
 Figure \ref{tsne_evolution} visualizes cluster evolution. Immediately after the
 pretraining step (CAE+Kmeans) there are no discernable clusters. Within a few
@@ -1112,7 +1128,7 @@ in the KL divergence equation. This choice is effective in forming distinct clus
 
 Diving deeper into the individual cluster results, Figure \ref{images_8} shows
 a selection of images for each of the clusters in the $8$ cluster solution.
-Figure \ref{images_3} shows a selction for the $k=3$ solution. In these examples,
+Figure \ref{images_3} shows a selection for the $k=3$ solution. In these examples,
 the within cluster samples appear to be visually cohesive, but it's not immediately
 clear what artistic features each cluster share. These samples suggest that the
 clustering does not strictly follow artist or genre. For instance, in Figure
@@ -1132,7 +1148,7 @@ Figures \ref{fig:tsne_artists} and \ref{fig:tsne_genre} show the distribution of
 of artists and genres throughout the clusters, respectively. It's apparent from
 these figures that the clustering does not strictly follow artist or genre
 differences as all categories appear to be distributed across two or more
-clusters, for both the $3$ and $8$ clsuter solutions. On some level this is surprising. Works
+clusters, for both the $3$ and $8$ cluster solutions. On some level this is surprising. Works
 are categorized in genres due to their shared stylistic characteristics. These
 stylistic distinctions are taken to be artistically meaningful so we might expect
 clusters generated by DCEC to reflect genre differences. Take,
@@ -1144,7 +1160,7 @@ curious, this behavior is not without precedence.
 Wallraven et al. [@Wallraven_et_al_2008] asked naiive art viewers to cluster
 works of art and found
 that the resulting clusters did not correspond to art period, indicating
-percieved perceptual differences need not track genre or even artist. On the other
+perceived perceptual differences need not track genre or even artist. On the other
 hand, Figures \ref{fig:tsne_artists} and \ref{fig:tsne_genre} show that artists
 and genre are not evenly distributed throughout clusters, for instance traditional
 Chinese works (Guohou) are relatively pervasive in cluster three and nearly
@@ -1153,7 +1169,7 @@ algorithm to have - its feature space is constructed from numerous lower level
 abstractions which together form the visual structure of an image. Many works of
 a genre will share some of those visual abstractions, but will also share
 structural components with other genres. This pattern would lead to the diffuse
-grouping of images by genre or artist throughout the clsuters.
+grouping of images by genre or artist throughout the clusters.
 
 \begin{figure}
 \centering
@@ -1185,14 +1201,14 @@ grouping of images by genre or artist throughout the clsuters.
 \end{figure}
 
 Figure \ref{fig:tsne_medium} shows the distribution of photographs vs other mediums.
-Although not perfectly, the algorithm appears to cluster photgraphs together,
+Although not perfectly, the algorithm appears to cluster photographs together,
 with some clusters showing only a handful of photographs. Again, we expect some
 of this similarity. Many of the photographs are grayscale, converted to RGB, resulting
 in homogenous channel values for each pixel. This reduces pixel variability and is
 an image feature shared across all grayscale images. In addition, as explored
 below in figures \ref{color_hist_3} and \ref{color_hist_8}, the pixel intensity
 and entropy of photographs is likely to be more similar than the universe of
-paintings and photographs; visualising the natural world is a stricter constraint
+paintings and photographs; visualizing the natural world is a stricter constraint
 on artistic variability than what's possible with a brush and paint.
 
 \begin{figure}
@@ -1287,8 +1303,8 @@ learning a feature space while clustering, DCEC constructs artistically distinct
 clusters from endogenous properties of the image. Compared to previous
 methods for clustering artwork, which used engineered features, DCEC offers a new
 approach for discovering artistic similarities between artworks in a way that
-is independent of artist, genre, or medium. While this compelling, it is not
-without its drawbacks. DCEC, like other neural network methods, lacks interpretability,
+is independent of artist, genre, or medium. While this is compelling, it is not
+without its drawbacks. DCEC, like other neural network methods, lacks interpretability
 which can be especially frustrating in this context. An art expert employing
 DCEC for artwork similarity analysis would logically ask why two images are similar
 or dissimilar. DCEC's feature space is uninterpretable and the analyst must resort
@@ -1300,13 +1316,13 @@ methods, DCEC is computationally slow and expensive. On a relatively small
 dataset we needed to run this algorithm on a remote machine with specialized hardware.
 This makes the model intimidating to employ, especially when tasked with
 training and tuning on a new dataset.
-Neural networks have been shown to be fragile, in the sense that a minor pertubation
+Neural networks have been shown to be fragile, in the sense that a minor perturbation
 to an input, $x$, will result in a large change in the output. Future research
-should investigate DCEC's fragility; if small pertubations in the input images
+should investigate DCEC's fragility; if small perturbations in the input images
 result in different cluster assignments, then the algorithm's usefulness is further
 reduced.
-Finally, DCEC cannot clsuter an image dataset for $k=1$. This further limits the
-usefulness of the algorithm as an analyst cannot explor the one cluster
+Finally, DCEC cannot cluster an image dataset for $k=1$. This further limits the
+usefulness of the algorithm as an analyst cannot explore the one cluster
 solution.
 Yet, DCEC is effective in automated detection of similarities in artwork structure
 between pieces. In our opinion, it is most useful when employed in conjunction
@@ -1334,11 +1350,29 @@ and engineered features.
 8. What happens when we introduce vertical white lines into the images? Is the algorithm fragile?
 
 TODO Today
-* numbers on clusters
-* remove the duplicate image - done
-* rerun tsne for different artists
-
-* Statement about photographs (lack there of) in the 3rd cluster
+* X - Regenerate figures with new legends
+* X - Spell check document
+* What does his comment on page 26 mean?
+* cite gaap statistic function and add options that were used
+* X - Update comment about t-SNE and other stuff
+* look into the Gap statistic and clusGap package - read original paper and what not
+  * Redo gap statistic in R
+  * Add options to text and figure caption - B, kmeans
+  * Cite package used
+  * Explain how the optimal number of clusters is chosen
+  * Plot with standard errors
+* Cite other packages used, R, and python
+* send him email with revised copy
 
  -->
 <!-- e3ef5d3c-0ced-4f0d-a73d-752786435915,/home/dubs/dev/paap/data/img/christies/s128/final/e3ef5d3c-0ced-4f0d-a73d-752786435915.jpg,gerhard richter,1,8.272777786370273 -->
+
+
+<!-- 
+GAP:
+- Our estimate of the optimal number of clusters is then the value of k for which logWkfalls the farthestbelow this reference curve.
+- Ourestimate^kwill be the value maximizing Gapnkafter we take the sampling distribution intoaccoun
+- If the data actually haveKwell-separated clusters, we expect logWkto decrease fasterthan its expected rate2=plogkfork4K. Whenk>K, we are essentially adding an unnecessary) cluster centre in the middle of an approximately uniform cloud and simplealgebra shows that logWkshould decreasemore slowlythan its expected rate. Hence the gapstatistic should be largest whenkK.
+- Using this we choose the cluster size^kto be the smallestksuch that Gapk5Gapk1sk1
+- 415 is the page you're interested in
+ -->

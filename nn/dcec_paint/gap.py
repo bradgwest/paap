@@ -14,7 +14,7 @@ import scipy.spatial.distance
 dst = scipy.spatial.distance.euclidean
 
 
-def gap(data, refs=None, B=20, ks=range(1, 11)):
+def gap(data, refs=None, B=50, ks=range(1, 21)):
     """
     Compute the Gap statistic for an nxm dataset in data.
 
