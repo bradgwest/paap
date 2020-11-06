@@ -472,6 +472,7 @@ class Plotter(object):
 
     def plot_final_dataset(self, *args, **kwargs):
         self.final_df.to_json(self.final_df_path, orient="records", lines=True)
+        self.final_df.to_csv(os.path.join(self.img_dir, "df.csv"), index=False)
 
     def plot_gap(self, *args, **kwargs):
         if self.clusters != 1:
