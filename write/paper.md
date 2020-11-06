@@ -1086,21 +1086,20 @@ set that partially optimizes for clustering loss.
 \begin{singlespace}
 \begin{table}[]
 \centering
-\begin{tabular}{lllll}
+\begin{tabular}{lllllll}
 \hline
-k  & AS - CAE+KMeans & CH - CAE+KMeans & AS - DCEC & CH - DCEC \\ \hline
-2  & \textbf{0.2090}          & \textbf{1.0000 (3166)}          & 0.7929    & 0.4744 (91977)    \\
-3  & 0.1426          & 0.8219 (2602)         & 0.8280    & \textbf{1.0000 (193882)}    \\
-4  & 0.1028          & 0.5754 (1822)         & 0.7750    & 0.4775 (92569)   \\
-5  & 0.0934          & 0.4496 (1423)         & 0.8073    & 0.5089 (98661)   \\
-6  & 0.0819          & 0.3705 (1173)         & 0.7834    & 0.3245 (62924)   \\
-7  & 0.0884          & 0.3784 (1198)         & 0.7863    & 0.3873 (75088)   \\
-8  & 0.0811          & 0.3301 (1045)         & \textbf{0.8702}    & 0.9098 (176387)   \\
-9  & 0.0463          & 0.2369 (750)         & 0.8520    & 0.6518 (126363)   \\
-10 & 0.0772          & 0.2750 (870)         & 0.8284    & 0.4480 (86855)  
+k  & AS - CAE+KMeans & \multicolumn{2}{l}{CH - CAE+KMeans (rel/(abs))} & AS - DCEC & \multicolumn{2}{l}{CH - DCEC} \\ \hline
+2  & \textbf{0.2090}          & \textbf{1.0000} & \textbf{(3166)}          & 0.7929    & 0.4744 & (91977)    \\
+3  & 0.1426          & 0.8219 & (2602)         & 0.8280    & \textbf{1.0000} & \textbf{(193882)}    \\
+4  & 0.1028          & 0.5754 & (1822)         & 0.7750    & 0.4775 & (92569)   \\
+5  & 0.0934          & 0.4496 & (1423)         & 0.8073    & 0.5089 & (98661)   \\
+6  & 0.0819          & 0.3705 & (1173)         & 0.7834    & 0.3245 & (62924)   \\
+7  & 0.0884          & 0.3784 & (1198)         & 0.7863    & 0.3873 & (75088)   \\
+8  & 0.0811          & 0.3301 & (1045)         & \textbf{0.8702}    & 0.9098 & (176387)   \\
+9  & 0.0463          & 0.2369 & (750)         & 0.8520    & 0.6518 & (126363)   \\
+10 & 0.0772          & 0.2750 & (870)         & 0.8284    & 0.4480 & (86855)  
 \end{tabular}
 \caption{Average silhouette (AS) and Calinski-Harabasz (CH) scores (relative (absolute)) by cluster for the convolutional autoencoder (CAE) + KMeans and DCEC solutions. The CAE+Kmeans data show that the 2 cluster solution is optimal, but below we use the GAP statistic to demonstrate that the one cluster solution is the better interpretation. This is expected as CAE+Kmeans has not undergone weight and bias learning during the clustering optimization. It is exclusively clustering the feature space outputted by the convolutional autoencoder. DCEC, by contrast, shows optimal solutions of 8 and 3 clusters according to average silhouette and Calinski-Harabasz, respectively. The large magnitude differences between the CAE+Kmeans and DCEC average silhouette scores show the effectiveness in DCEC in learning a feature space which partitions into distinct clusters. See text for more discussion.}
-<!-- TODO better explain me -->
 \label{cluster_scores}
 \end{table}
 \end{singlespace}
