@@ -1,7 +1,7 @@
 ---
 title: "Deep Convolutional Embedded Clustering of Digitized Fine Art"
 author:
-    - Brad West
+    - Bradley West
 keywords: ["computer vision", "autoencoder", "clustering", "fine art"]
 abstract: |
     In this work, we replicate a convolutional neural network clustering algorithm, Deep
@@ -291,8 +291,8 @@ Over the past
 decade, the computer
 vision community has focused on designing algorithms which, rather than rely on
 extracted features, use neural networks to learn a relevant feature set.
-Applying deep learning concepts to art analysis has proved fruitful
-in a host of subfields, often employing convolutional neural nets
+Applying deep learning concepts to art analysis, often via CNNs, has proved fruitful
+in a host of subfields
 [@Cetinic_et_al_2016; @Cetinic_et_al_2018;
 Crowley_and_Zisserman_2014; @Tan_et_al_2016; @Garcia_et_al_2019].
 
@@ -445,7 +445,7 @@ connected to each neuron in layer $i + 1$ and inputs are passed forward
 (left to right) through the network.
 
 Stochastic gradient descent attempts to minimize the value of an error
-function (also known as an optimization or cost function), $\mathcal{C}(y - y')$,
+function (also known as an optimization or cost function), $\epsilon = \mathcal{C}(y - y')$,
 by progressively updating the network weights ($w$) and biases ($b$) in such a
 way as to follow the first derivative gradient of $\mathcal{C}$ with respect to
 the weights and biases ($\frac{\partial{\mathcal{C}}}{\partial{w}}$,
@@ -483,7 +483,7 @@ first appreciated by Rumelhart et al., 1986 [@Rumelhart_et_al_1986].
 The algorithm has two general steps:
 
 1.  Inputs are passed through the network and output values calculated, providing
-    the values needed to calculate epsilon and the derived gradients.
+    the values needed to calculate the error, epsilon, and the derived gradients.
 2.  The error signal from the output layer is propagated backwards through the
     network such that each weight and bias is updated according to its effect on
     the overall error of the cost function.
@@ -561,7 +561,7 @@ extract the spatial structure of an image than traditional networks because they
 (1) limit the connectectedness of the network by ensuring connected neurons correspond
 to spatially adjacent input pixels, (2) share weights among edges within the same
 layer, and (3) pool multiple layers to provide dimension reduction. For
-a full discussion of convolutional neural nets
+a full discussion of convolutional neural nets, see
 [@LeCun_et_al_1998]. We summarize briefly here.
 
 [^DNN]: Deep neural networks contain more than 2 hidden layers.
@@ -620,12 +620,12 @@ structure of the input image.
 ### Autoencoders
 
 Autoencoders are a type of unsupervised artificial neural network consisting of
-two components, an encoder, $x' = f(x)$,
-and a decoder $g(x')$, which perform, respectively, dimension reduction and
+two components, an encoder, $f(x)$,
+and a decoder $g(v)$, which perform, respectively, dimension reduction and
 expansion in such a way as to minimize the error of
-$y - y' = y - g(f(x))$, where $x'$ is a projection of the input, $x$, from the
+$x - x' = x - g(f(x))$, where $v$ is a projection of the input, $x$, from the
 data space into
-a much lower dimensional latent space. Figure \ref{ff_autoencoder} shows a
+a much lower dimensional latent (embedded) space. Figure \ref{ff_autoencoder} shows a
 rudimentary autoencoder.
 
 ![A simple feedforward autoencoder. The embedded space is also known as the feature or latent space, and is a much smaller representation of the image.\label{ff_autoencoder}](img/autoencoder.png){ width=100% }
@@ -635,7 +635,7 @@ of images, which are naturally highly dimensional. Typically the reconstruction
 loss function is taken to be the mean squared error:
 
 \begin{equation} \label{eq:mse}
-L = \frac{1}{n}\sum_{i=1}^{n} (x'_i - x_i)^2 = \frac{1}{n}\sum_{i=1}^{n} (g(f(x)) - x_i)^2
+L = \frac{1}{n}\sum_{i=1}^{n} (x'_i - x_i)^2 = \frac{1}{n}\sum_{i=1}^{n} (g(f(x)) - x_i)^2,
 \end{equation}
 
 The result is that the autoencoder encodes the image in the much reduced
@@ -696,7 +696,7 @@ have $32$, $64$, and $128$ filters, respectively. The kernel size (local recepti
 field) is $5 \times 5$ for the first two convolutional
 layers, and $3 \times 3$ for the final layer.
 In all cases the stride length,
-the amount by which the local receptive field is shifted asjacently for each neuron, is $2$ pixels.
+the amount by which the local receptive field is shifted adjacently for each neuron, is $2$ pixels.
 All layers use the ELU activation function.
 The output of the final convolutional layer is flattened into a vector of size
 $327,684$, which is fully connected to the embedded space. We follow
@@ -1016,12 +1016,12 @@ within cluster dispersion, i.e., tighter clusters.
 The CH index is unbounded in the positive direction. This can be
 seen by imagining, for fixed values of $k$ and $N$, forming progressively more
 distinct clusters. $SS_W$ decreases as each cluster approaches a point mass, and
-$\frac{SS_B}{SS_W}$ increases without bound. To enable a relative comparison
-between CH scores for different values of $k$, we divide each cluster
+$\frac{SS_B}{SS_W}$ increases without bound. To make a relative comparison
+between CH scores for different values of $k$ slightly easier, we divide each cluster
 score ($k \in \{1,...,10\}$)
 by the highest observed CH value to normalize values between 0 and 1. Thus, the best
 performing solution as measured by Calinski-Harabasz will have a normalized score
-of 1.
+of 1. We report both relative and non-adjusted CH scores.
 
 DCEC and its predecessor algorithms do not extend to the one/no cluster solution.
 At each iteration in the clustering algorithm, the probability that sample $i$
@@ -1309,12 +1309,12 @@ different structural image features.
 \begin{table}[ht]
 \centering
 \begin{tabular}{rrrrrrrrrrr}
-\multicolumn{10}{r}{\textbf{8 Cluster Solution}} \\
+\multicolumn{10}{r}{\textbf{k=8}} \\
   \hline
 & & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & Sum \\
   \hline
 & 1 & 477 & 253 & 10 & 39 & 616 & 605 & 725 & 674 & 3399 \\
-\multirow{3}{*}{\textbf{3 Cluster Solution}} & 2 & 423 & 565 & 1769 & 0 & 38 & 209 & 4 & 854 & 3862 \\
+\multirow{3}{*}{\textbf{k=3}} & 2 & 423 & 565 & 1769 & 0 & 38 & 209 & 4 & 854 & 3862 \\
   & 3 & 21 & 23 & 0 & 1884 & 117 & 116 & 1081 & 2 & 3244 \\
   & Sum & 921 & 841 & 1779 & 1923 & 771 & 930 & 1810 & 1530 & 10505 \\
    \hline
@@ -1379,7 +1379,7 @@ result in different cluster assignments, then the algorithm's usefulness is furt
 reduced.
 Finally, DCEC cannot cluster an image dataset for $k=1$. This further limits the
 usefulness of the algorithm as an analyst cannot explore the one cluster
-solution.
+solution to assess support for one versus more than one cluster.
 Yet, DCEC is effective in automated detection of similarities in artwork structure
 between pieces. In our opinion, it is most useful when employed in conjunction
 with more conventional methods for clustering, which incorporate artwork metadata
@@ -1423,10 +1423,10 @@ TODO Today
 * send him email with revised copy
 
 TODO 11/5
-* Add CH scores (actual values) to table in addition to relative
-* Review his comments again against the edited version
-* Add the cover letter
-* Submit again to turnitin
+* X - Add CH scores (actual values) to table in addition to relative
+* X - Review his comments again against the edited version
+* X - Add the cover letter
+* X - Submit again to turnitin
 * email to Mark
  -->
 

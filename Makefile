@@ -13,7 +13,10 @@ format:
 	black **/*.py
 	isort **/*.py
 
-paper:
+open-paper:
+	firefox ${WRITE}/paper.pdf
+
+paper-no-open:
 	pandoc ${WRITE}/paper.md \
 		--from=markdown \
 		--to=pdf \
@@ -21,8 +24,9 @@ paper:
 		--standalone \
 		--bibliography=${WRITE}/papers.bib \
 		--filter pandoc-citeproc \
-		--output ${WRITE}/paper.pdf && \
-	firefox ${WRITE}/paper.pdf
+		--output ${WRITE}/paper.pdf
+
+paper: paper-no-open open-paper
 
 paper-html:
 	pandoc ${WRITE}/paper.md \
@@ -35,3 +39,7 @@ paper-html:
 		--filter pandoc-citeproc \
 		--output ${WRITE}/paper.html && \
 	firefox ${WRITE}/paper.html
+
+paper-with-cover: paper-no-open
+	gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=write/bw_msu_ms_writing_proj_nov_2020.pdf -dBATCH write/coverpage.pdf write/paper.pdf
+	firefox ${WRITE}/bw_msu_ms_writing_proj_nov_2020.pdf
